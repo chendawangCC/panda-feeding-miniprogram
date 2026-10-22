@@ -1,0 +1,62 @@
+<view class="page-no-tab">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 顶部导航 -->
+  <view class="page-header-back">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">{{baby.name || '未命名宝宝'}}</text>
+      <view class="header-title header-title-sub">添加测量</view>
+    </view>
+  </view>
+
+  <!-- 测量表单 -->
+  <view class="measure-form">
+    <view class="form-row">
+      <text class="form-label">测量日期</text>
+      <picker mode="date" value="{{date}}" bindchange="onDate">
+        <view class="form-input picker">{{date}} ▾</view>
+      </picker>
+    </view>
+
+    <view class="form-row">
+      <text class="form-label">记录时间（选填）</text>
+      <picker mode="time" value="{{time || '12:00'}}" bindchange="onTime">
+        <view class="form-input picker {{time ? '' : 'ff-ph'}}">{{time || '选择时间'}} ▾</view>
+      </picker>
+    </view>
+
+    <view class="form-row">
+      <text class="form-label">身高（cm）</text>
+      <view class="measure-slide">
+        <slider class="form-slider" min="40" max="115" step="0.1" value="{{height || 66}}" activeColor="#FFD95A" backgroundColor="#F0E9D8" block-size="22" data-field="height" bindchanging="onSlide" />
+        <view class="measure-slide-val"><input class="measure-slide-input" type="digit" value="{{height}}" data-field="height" bindinput="onInput" placeholder="{{phHeight || '如66.2'}}" /><text class="measure-slide-unit">cm</text></view>
+      </view>
+    </view>
+
+    <view class="form-row">
+      <text class="form-label">体重（kg）</text>
+      <view class="measure-slide">
+        <slider class="form-slider" min="2" max="20" step="0.05" value="{{weight || 7}}" activeColor="#FFD95A" backgroundColor="#F0E9D8" block-size="22" data-field="weight" bindchanging="onSlide" />
+        <view class="measure-slide-val"><input class="measure-slide-input" type="digit" value="{{weight}}" data-field="weight" bindinput="onInput" placeholder="{{phWeight || '如7.4'}}" /><text class="measure-slide-unit">kg</text></view>
+      </view>
+    </view>
+
+    <view class="form-row">
+      <text class="form-label">头围（cm）</text>
+      <view class="measure-slide">
+        <slider class="form-slider" min="30" max="55" step="0.1" value="{{head || 42}}" activeColor="#FFD95A" backgroundColor="#F0E9D8" block-size="22" data-field="head" bindchanging="onSlide" />
+        <view class="measure-slide-val"><input class="measure-slide-input" type="digit" value="{{head}}" data-field="head" bindinput="onInput" placeholder="{{phHead || '如42.5'}}" /><text class="measure-slide-unit">cm</text></view>
+      </view>
+    </view>
+
+    <view class="measure-ref" wx:if="{{refText}}">{{refText}}</view>
+
+    <view class="form-actions">
+      <view class="form-btn solid" hover-class="btn-press" hover-stay-time="60" bindtap="save">保存测量</view>
+    </view>
+    <view class="form-actions del" wx:if="{{idx >= 0}}">
+      <view class="form-btn danger" hover-class="btn-press" hover-stay-time="60" bindtap="delMeasure">删除此记录</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,107 @@
+<!-- pages/plan/plan.wxml - 我的 -->
+<view class="page-no-tab">
+  <!-- 顶部安全区 + 返回（自定义导航栏规范） -->
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+  <view class="fa-nav">
+    <view class="fa-back" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">紧急照护指引</text>
+      <view class="header-title header-title-sub">我的</view>
+    </view>
+  </view>
+
+  <!-- 账号卡 -->
+  <view class="user-card" bindtap="onTapAccount">
+    <image
+      wx:if="{{loggedIn && user.avatarImg}}"
+      class="user-avatar user-avatar-img"
+      src="{{user.avatarImg}}"
+      mode="aspectFill"
+    ></image>
+    <view wx:else class="user-avatar">{{loggedIn ? user.avatar : '我'}}</view>
+    <view class="user-info">
+      <view class="user-name">{{loggedIn ? user.nickname : '点击注册/登录'}}</view>
+      <view class="user-desc">{{loggedIn ? (user.phone || '未填手机号') : '注册后可同步宝宝与跟学记录'}}</view>
+    </view>
+    <view class="user-arrow">›</view>
+  </view>
+
+  <!-- 数据概览 -->
+  <view class="stat-grid">
+    <view class="stat-cell" bindtap="onTapBaby">
+      <view class="stat-num">{{babies.length}}</view>
+      <view class="stat-label">宝宝</view>
+    </view>
+    <view class="stat-cell" bindtap="onTapKit">
+      <view class="stat-num">{{medProgress}}</view>
+      <view class="stat-label">常备药</view>
+    </view>
+    <view class="stat-cell" bindtap="onTapKit">
+      <view class="stat-num">{{kitProgress}}</view>
+      <view class="stat-label">急救包</view>
+    </view>
+    <view class="stat-cell" bindtap="onTapContact">
+      <view class="stat-num">{{contactCount}}</view>
+      <view class="stat-label">联系人</view>
+    </view>
+  </view>
+
+  <!-- 功能列表 -->
+  <view class="menu">
+    <view class="menu-item" bindtap="onTapFamily">
+      <view class="menu-icon">🏠</view>
+      <view class="menu-title">家庭急救 · 教学视频</view>
+      <view class="menu-desc">录制/上传</view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-item" bindtap="onTapBaby">
+      <view class="menu-icon">👶</view>
+      <view class="menu-title">宝宝管理</view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-item" bindtap="onTapKit">
+      <view class="menu-icon">🎒</view>
+      <view class="menu-title">家庭急救包清单</view>
+      <view class="menu-desc">{{kitProgress}}</view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-item" bindtap="onTapContact">
+      <view class="menu-icon">📞</view>
+      <view class="menu-title">紧急联系人</view>
+      <view class="menu-desc">{{contactCount}} 人</view>
+      <view class="menu-arrow">›</view>
+    </view>
+    <view class="menu-item" bindtap="onTapKit">
+      <view class="menu-icon">💊</view>
+      <view class="menu-title">家庭常备药清单</view>
+      <view class="menu-desc">{{medProgress}}</view>
+      <view class="menu-arrow">›</view>
+    </view>
+  </view>
+
+  <!-- 当前宝宝 -->
+  <view class="card" wx:if="{{activeBaby}}">
+    <view class="card-title">当前宝宝</view>
+    <view class="baby-row">
+      <view class="baby-avatar">{{activeBaby.name ? activeBaby.name.charAt(0) : '宝'}}</view>
+      <view class="baby-info">
+        <view class="baby-name">{{activeBaby.name || '未命名宝宝'}} {{activeBaby.gender === 'girl' ? '（小公主）' : (activeBaby.gender === 'boy' ? '（小王子）' : '')}}</view>
+        <view class="baby-desc">{{activeBaby.birthDate || '未设置出生日期'}}</view>
+      </view>
+      <view class="baby-go" bindtap="onTapBaby">管理 ›</view>
+    </view>
+  </view>
+
+  <!-- 退出登录 -->
+  <button class="btn-ghost logout-btn" wx:if="{{loggedIn}}" bindtap="onLogout">退出登录</button>
+
+  <!-- 免责声明 -->
+  <view class="disclaimer">
+    熊宝喂养 · 家庭急救 v1.0
+  </view>
+
+  <!-- 底部固定拨打120 -->
+  <view class="call-bar" bindtap="onCall120">
+    <text class="call-bar-text">☎ 紧急情况拨打 120</text>
+  </view>
+</view>

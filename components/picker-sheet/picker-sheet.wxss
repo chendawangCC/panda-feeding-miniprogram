@@ -1,0 +1,64 @@
+/* 自定义日期/时间选择器：底部弹出，高 240pt(480rpx)，顶部把手，底部叠加 34pt 安全区 */
+:host {
+  display: block;
+  position: relative;
+  z-index: 9999;
+}
+.ps-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+}
+.ps-sheet {
+  width: 100%;
+  height: 480rpx; /* 240pt */
+  box-sizing: content-box;
+  background: #fffdf7;
+  border-radius: 32rpx 32rpx 0 0; /* 上圆角16pt，下圆角0 */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 10000;
+}
+.ps-handle {
+  width: 80rpx;
+  height: 8rpx;
+  border-radius: 8rpx;
+  background: #e8e1d0;
+  align-self: center;
+  margin-top: 16rpx; /* 距抽屉顶部8pt */
+}
+.ps-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 32rpx 8rpx; /* 内边距：左右16pt、顶部16pt */
+}
+.ps-title {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.ps-btn {
+  font-size: 28rpx;
+}
+.ps-cancel { color: #8f896d; }
+.ps-confirm { color: #b97b05; font-weight: 800; }
+.ps-view {
+  flex: 1;
+  height: 320rpx;
+  text-align: center;
+}
+/* 每一行选项高度 44pt(88rpx)，文字 15pt(30rpx) */
+.ps-col {
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 30rpx;
+  color: #29281f;
+}

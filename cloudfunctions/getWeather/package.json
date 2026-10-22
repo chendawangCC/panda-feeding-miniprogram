@@ -1,0 +1,9 @@
+{
+  "name": "getWeather",
+  "version": "1.0.0",
+  "description": "实时天气云函数：调用和风天气免费 API 返回天气现象/温度",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

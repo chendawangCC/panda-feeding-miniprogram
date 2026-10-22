@@ -1,0 +1,173 @@
+/* pages/contact/contact.wxss - 品牌色：米白 FFFDF7 / 明黄 FFD95A / 深墨 29281F */
+.contact-page {
+  padding-bottom: 200rpx;
+}
+
+/* 顶部 120 卡 */
+.call120-card {
+  background: #29281F;
+  border-radius: 28rpx;
+  padding: 32rpx 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 36rpx;
+}
+.call120-left {
+  display: flex;
+  flex-direction: column;
+}
+.call120-num {
+  font-size: 72rpx;
+  font-weight: 800;
+  color: #FFD95A;
+  line-height: 1.1;
+}
+.call120-label {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.8);
+  margin-top: 6rpx;
+}
+.call120-btn {
+  background: #FFD95A;
+  color: #29281F;
+  font-size: 30rpx;
+  font-weight: 700;
+  padding: 16rpx 32rpx;
+  border-radius: 40rpx;
+}
+.call120-card:active .call120-btn {
+  background: #f2c944;
+}
+
+/* 列表 */
+.list-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #8f896d;
+  margin: 0 8rpx 20rpx;
+}
+.contact-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx 30rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.contact-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 16rpx;
+  background: transparent;
+  color: #29281F;
+  font-size: 34rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+.contact-info {
+  flex: 1;
+  min-width: 0;
+}
+.contact-name-row {
+  display: flex;
+  align-items: center;
+}
+.contact-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #29281F;
+}
+.contact-relation {
+  font-size: 22rpx;
+  color: #8f896d;
+  background: #fff9e7;
+  padding: 2rpx 14rpx;
+  border-radius: 20rpx;
+  margin-left: 12rpx;
+}
+.contact-phone {
+  font-size: 26rpx;
+  color: #8f896d;
+  margin-top: 8rpx;
+  display: block;
+}
+.contact-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+.contact-act-btn {
+  font-size: 24rpx;
+  padding: 8rpx 24rpx;
+  border-radius: 30rpx;
+  text-align: center;
+  font-weight: 600;
+}
+.contact-act-btn.call {
+  background: #FFD95A;
+  color: #29281F;
+}
+.contact-act-btn.edit {
+  background: #fff9e7;
+  color: #8f896d;
+}
+.contact-act-btn.del {
+  background: #f6f3eb;
+  color: #C0392B;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 40rpx;
+}
+.empty-icon {
+  font-size: 100rpx;
+}
+.empty-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #29281F;
+  margin-top: 24rpx;
+}
+.empty-sub {
+  font-size: 26rpx;
+  color: #8f896d;
+  margin-top: 12rpx;
+  text-align: center;
+}
+
+/* 提示 */
+.contact-tip {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 24rpx 30rpx;
+  margin-top: 8rpx;
+}
+.tip-line {
+  display: block;
+  font-size: 24rpx;
+  color: #8f896d;
+  line-height: 1.8;
+}
+
+/* 底部添加 */
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: rgba(255,253,247,0.95);
+  box-shadow: 0 -4rpx 16rpx rgba(41,40,31,0.05);
+}

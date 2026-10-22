@@ -1,0 +1,1059 @@
+page {
+  background: #f6f1e5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  color: #29281f;
+}
+.page-no-tab {
+  min-height: 100vh;
+  padding: 0 32rpx 128rpx; /* 左右16pt + 底部手势安全区34pt */
+  box-sizing: border-box;
+}
+.status-bar {
+  height: 176rpx; /* 导航禁止进入区 */
+}
+
+/* ==================== 顶部导航 ==================== */
+
+/* ==================== 页头 ==================== */
+
+/* ==================== 宝宝信息 ==================== */
+/* 我的-黄色块同款：宝宝信息 + 身高体重头围 */
+.gp-yellow {
+  margin: 24rpx 32rpx 0;
+  background: #ffd95a;
+  border-radius: 32rpx;
+  padding: 28rpx 32rpx;
+}
+.baby-info {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+/* 无宝宝空态 */
+.bp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #fffdf7;
+  border-radius: 32rpx;
+  padding: 64rpx 32rpx;
+}
+.bp-empty-title {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.bp-empty-desc {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+}
+.bp-empty-btn {
+  margin-top: 32rpx;
+  width: 300rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  background: #ffd95a;
+  color: #29281f;
+  font-size: 28rpx;
+  font-weight: 900;
+  border-radius: 32rpx;
+}
+.baby-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 16rpx;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52rpx;
+  margin-right: 24rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.baby-avatar-img {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 16rpx;
+  display: block;
+}
+/* 右侧：切换宝宝图标 */
+.baby-switch {
+  width: 56rpx;
+  height: 96rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8rpx;
+  flex-shrink: 0;
+}
+.baby-switch-ico {
+  width: 36rpx;
+  height: 72rpx;
+  display: block;
+}
+.baby-meta {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.baby-name {
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.baby-age {
+  margin-left: 12rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+}
+.baby-gender {
+  font-size: 36rpx;
+  color: #e2a93a;
+  font-weight: 700;
+}
+
+/* ==================== 三项测量卡片 ==================== */
+.measure-cards {
+  margin-top: 24rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+}
+.measure-card {
+  background: transparent;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  text-align: center;
+}
+.measure-label {
+  font-size: 24rpx;
+  color: #8f896d;
+}
+.measure-value {
+  margin-top: 12rpx;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+.measure-num {
+  font-size: 44rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.measure-unit {
+  margin-left: 6rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+}
+
+/* ==================== 最新测量变化 ==================== */
+.latest-card {
+  margin: 24rpx 32rpx 0;
+  background: #f6f1e5;
+  border-radius: 32rpx;
+  padding: 32rpx;
+}
+.latest-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.latest-label {
+  font-size: 20rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+  color: #a0812f;
+}
+.latest-text {
+  margin-top: 12rpx;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #5c4a10;
+}
+.latest-add {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 22rpx;
+  background: #ffd95a;
+  color: #5c4a10;
+  font-size: 40rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ==================== 生长曲线 ==================== */
+.curve-card {
+  margin: 24rpx 32rpx 0;
+  background: #fffdf7;
+  border-radius: 32rpx;
+  padding: 32rpx;
+}
+.curve-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.curve-title {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.curve-who {
+  font-size: 20rpx;
+  color: #a0812f;
+  font-weight: 700;
+  background: #fff9e7;
+  border-radius: 12rpx;
+  padding: 6rpx 14rpx;
+}
+.curve-tabs {
+  margin-top: 20rpx;
+  display: flex;
+  background: #f6f1e3;
+  border-radius: 18rpx;
+  padding: 6rpx;
+}
+.curve-tab {
+  flex: 1;
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #8f896d;
+  padding: 12rpx 0;
+  border-radius: 14rpx;
+  border: 2rpx solid transparent;
+  background: transparent;
+  transition: all 0.15s;
+}
+.curve-tab.active {
+  background: #fffdf7;
+  border: 2rpx solid #e2a93a;
+  color: #e2a93a;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+.curve-canvas {
+  margin-top: 24rpx;
+  width: 100%;
+  height: 520rpx;
+  display: block;
+  position: relative;
+  z-index: 0;
+}
+/* ECharts 画布：占满容器 */
+.curve-canvas ec-canvas,
+.curve-canvas .ec-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.curve-gesture-hint {
+  margin-top: 16rpx;
+  font-size: 20rpx;
+  color: #a49d86;
+  text-align: center;
+}
+.curve-note {
+  margin-top: 24rpx;
+  font-size: 20rpx;
+  color: #a49d86;
+  text-align: center;
+}
+
+/* ==================== 疫苗记录与提醒 ==================== */
+.vaccine-card {
+  margin: 24rpx 32rpx 32rpx;
+  background: #fffdf7;
+  border-radius: 32rpx;
+  padding: 32rpx 0 0;
+}
+.vaccine-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32rpx;
+}
+.vaccine-title {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.vaccine-all {
+  font-size: 22rpx;
+  color: #8f896d;
+}
+.vaccine-item {
+  margin-top: 24rpx;
+  display: flex;
+  align-items: center;
+  background: #f7f2e4;
+  border-radius: 24rpx;
+  padding: 26rpx 28rpx;
+}
+.vaccine-info {
+  flex: 1;
+  min-width: 0;
+}
+.vaccine-name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.vaccine-date {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+}
+.vaccine-days {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #e2a93a;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+}
+.vaccine-days.done {
+  color: #a0812f;
+}
+.vaccine-done {
+  margin-top: 20rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+  line-height: 1.6;
+}
+
+.bottom-space {
+  height: 100rpx;
+}
+
+/* ==================== 弹窗表单 ==================== */
+.form-body {
+  padding-top: 8rpx;
+}
+.form-row {
+  margin-bottom: 24rpx;
+}
+.form-label {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #8f896d;
+  margin-bottom: 10rpx;
+}
+.form-input {
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+  background: #f7f2e4;
+  border-radius: 20rpx;
+  font-size: 30rpx;
+  color: #29281f;
+}
+.form-input.picker {
+  display: flex;
+  align-items: center;
+  color: #4a4636;
+}
+.form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20rpx;
+  margin-top: 32rpx;
+}
+.form-btn {
+  flex: 1;
+  border-radius: 16rpx; /* 圆角8pt */
+  font-size: 28rpx;
+  font-weight: 700;
+  padding: 0 32rpx; /* 左右内边距16pt */
+  line-height: 96rpx; /* 高48pt */
+}
+.form-btn.solid {
+  width: 670rpx;
+  height: 104rpx;
+  line-height: 104rpx;
+  padding: 0;
+  flex: none;
+  background: #ffd95a;
+  color: #29281f;
+  border-radius: 32rpx;
+  text-align: center;
+  font-weight: 900;
+}
+
+/* ==================== 疫苗记录与提醒（完整表格内嵌） ==================== */
+.vc-hero {
+  margin: 8rpx 0 24rpx;
+  background: #fff;
+  border: 2rpx solid #eee7d6;
+  border-radius: 32rpx;
+  padding: 28rpx 32rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.vc-hero-left {
+  flex: 1;
+  min-width: 0;
+  padding-right: 16rpx;
+}
+.vc-baby {
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #29281f;
+}
+.vc-age {
+  font-size: 24rpx;
+  color: #a9905f;
+  font-weight: 500;
+  margin-left: 12rpx;
+}
+.vc-birth {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+}
+.vc-progress {
+  text-align: right;
+  flex-shrink: 0;
+}
+.vc-progress-num {
+  font-size: 44rpx;
+  font-weight: 900;
+  color: #b97b05;
+}
+.vc-progress-total {
+  font-size: 24rpx;
+  color: #8f896d;
+  font-weight: 600;
+}
+.vc-progress-label {
+  display: block;
+  font-size: 20rpx;
+  color: #8f896d;
+  margin-top: 2rpx;
+}
+.vc-progress-bar {
+  width: 160rpx;
+  height: 12rpx;
+  border-radius: 8rpx;
+  background: #f0ead9;
+  margin-top: 8rpx;
+  overflow: hidden;
+}
+.vc-progress-fill {
+  height: 100%;
+  border-radius: 8rpx;
+  background: linear-gradient(90deg, #ffd95a, #f6b94e);
+  transition: width 0.3s;
+}
+
+/* 下次接种提醒 */
+.vc-next {
+  margin: 24rpx 0 24rpx;
+  background: #fff2b9;
+  border-radius: 28rpx;
+  padding: 28rpx 32rpx;
+  box-shadow: 0 6rpx 20rpx rgba(150, 122, 20, 0.12);
+}
+.vc-next-label {
+  font-size: 22rpx;
+  color: #a0812f;
+  font-weight: 700;
+}
+.vc-next-body {
+  margin-top: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.vc-next-info {
+  min-width: 0;
+}
+.vc-next-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 900;
+  color: #29281f;
+}
+.vc-next-date {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #8f7a3e;
+}
+.vc-next-days {
+  flex-shrink: 0;
+  font-size: 28rpx;
+  font-weight: 900;
+  color: #c14c2e;
+}
+.vc-next-days.over {
+  color: #fff;
+  background: #d9534f;
+  border-radius: 16rpx;
+  padding: 6rpx 16rpx;
+}
+.vc-next-done .vc-next-title {
+  font-size: 26rpx;
+}
+
+/* 筛选 */
+.vc-tab {
+  margin: 0 44rpx 20rpx;
+}
+.tab-switch {
+  display: flex;
+  background: #f0ead9;
+  border-radius: 24rpx;
+  padding: 8rpx;
+}
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 0;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #8f896d;
+  border-radius: 20rpx;
+}
+.tab-item.active {
+  background: #fff;
+  color: #b97b05;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 疫苗表格（类似库存） */
+.vc-table-scroll {
+  margin: 0 32rpx 0;
+  background: #fffdf7;
+  border: 2rpx solid #f0e9d8;
+  border-radius: 24rpx;
+  white-space: nowrap;
+}
+.vc-table {
+  width: 100%;
+  min-width: 1180rpx;
+}
+.vc-tr {
+  display: flex;
+  align-items: stretch;
+  padding: 16rpx 16rpx;
+  min-height: 92rpx;
+  border-bottom: 2rpx solid #f6f1e3;
+}
+.vc-tr:last-child {
+  border-bottom: none;
+}
+.vc-th {
+  min-height: 76rpx;
+  background: #fff1df;
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #765d18;
+}
+.th-vname { flex: 1.6; min-width: 260rpx; }
+.th-vdue { flex: 1; min-width: 180rpx; text-align: center; }
+.th-vdate { flex: 1.2; min-width: 220rpx; text-align: center; }
+.th-vremind { flex: 0.9; min-width: 150rpx; text-align: center; }
+.th-vact { flex: 1.1; min-width: 210rpx; text-align: right; }
+
+.td-vname {
+  flex: 1.6;
+  min-width: 260rpx;
+}
+.td-vname-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #29281f;
+  line-height: 1.35;
+  word-break: break-all;
+}
+.td-vdose {
+  display: flex;
+  align-items: center;
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: #8f896d;
+  flex-wrap: wrap;
+}
+.td-vtype {
+  flex-shrink: 0;
+  margin-left: 10rpx;
+  font-size: 18rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 10rpx;
+}
+.td-vtype.free { color: #806c2e; background: #fff7e6; }
+.td-vtype.paid { color: #a0812f; background: #fff2b9; }
+
+.td-vdue {
+  flex: 1;
+  min-width: 180rpx;
+  text-align: center;
+}
+.td-vdue-age {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #29281f;
+  line-height: 1.3;
+  word-break: break-all;
+}
+.td-vdate {
+  flex: 1.2;
+  min-width: 220rpx;
+  text-align: center;
+  font-size: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vc-date-link {
+  color: #b97b05;
+  text-decoration: underline;
+  padding: 4rpx 6rpx;
+}
+.vc-date-edit {
+  color: #b97b05;
+  font-weight: 700;
+}
+
+.td-vremind {
+  flex: 0.9;
+  min-width: 150rpx;
+  text-align: center;
+  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.td-vremind-text {
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  line-height: 1.3;
+  white-space: normal;
+}
+.td-vremind.done .td-vremind-text { color: #806c2e; background: #fff7e6; }
+.td-vremind.skip .td-vremind-text { color: #8f896d; background: #f0ede4; }
+.td-vremind.today .td-vremind-text { color: #c14c2e; background: #ffe3cc; font-weight: 700; }
+.td-vremind.past .td-vremind-text { color: #d9534f; background: #fdecec; font-weight: 700; }
+.td-vremind.future .td-vremind-text { color: #a0812f; background: #fff6d9; }
+
+.td-vact {
+  flex: 1.1;
+  min-width: 210rpx;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8rpx;
+}
+.act-btn {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  padding: 8rpx 12rpx;
+  border-radius: 14rpx;
+  font-weight: 700;
+}
+.act-done { color: #5c4a10; background: #ffd95a; }
+.act-skip { color: #8f896d; background: #f0ede4; }
+.act-undo { color: #a0812f; background: #fff2b9; }
+
+.vc-tip {
+  margin-top: 12rpx;
+  font-size: 20rpx;
+  color: #a9905f;
+  line-height: 1.7;
+  text-align: center;
+  padding: 0 20rpx;
+}
+
+/* 空态（无宝宝档案） */
+.vc-empty {
+  margin: 40rpx 32rpx;
+  background: #fff;
+  border: 2rpx dashed #e4ddd0;
+  border-radius: 32rpx;
+  padding: 64rpx 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.vc-empty-icon {
+  width: 160rpx;
+  height: 160rpx;
+}
+.vc-empty-title {
+  margin-top: 24rpx;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.vc-empty-desc {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+  line-height: 1.6;
+}
+.vc-empty-btn {
+  margin-top: 32rpx;
+  background: #ffd95a;
+  color: #29281f;
+  font-size: 26rpx;
+  font-weight: 800;
+  border-radius: 28rpx;
+  padding: 0 48rpx;
+  line-height: 84rpx;
+}
+.vc-empty-btn::after {
+  border: none;
+}
+
+/* 默认熊猫 logo：白底完整显示，不裁切 */
+.baby-avatar-logo {
+  background: transparent;
+}
+
+/* 添加测量：WHO 月龄参考提示 */
+.measure-ref {
+  margin-top: 20rpx;
+  padding: 20rpx 24rpx;
+  background: #fff6df;
+  border-radius: 16rpx;
+  font-size: 23rpx;
+  color: #806c2e;
+  line-height: 1.6;
+}
+
+/* ==================== 切换宝宝抽屉（与记录页一致） ==================== */
+.baby-switch-body {
+  margin-top: 32rpx;
+}
+.baby-switch-item {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 2rpx solid #f0e6cf;
+  border-radius: 32rpx;
+  padding: 28rpx 32rpx;
+  margin-bottom: 20rpx;
+}
+.baby-switch-item.on {
+  border-color: #f0c46a;
+  background: #fffaf0;
+}
+.baby-switch-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 16rpx;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-right: 24rpx;
+}
+.baby-switch-avatar-img {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 16rpx;
+  display: block;
+}
+.baby-switch-avatar-img.baby-avatar-logo {
+  width: 76rpx;
+  height: 76rpx;
+}
+.baby-switch-meta {
+  flex: 1;
+}
+.baby-switch-name-row {
+  display: flex;
+  align-items: center;
+}
+.baby-switch-name {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.baby-switch-tag {
+  margin-left: 16rpx;
+  font-size: 20rpx;
+  color: #b97b05;
+  background: #fff2b9;
+  border-radius: 8rpx;
+  padding: 2rpx 12rpx;
+}
+.baby-switch-age {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+}
+.baby-switch-check {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  background: #ffd95a;
+  color: #765d18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  font-weight: 900;
+}
+.baby-switch-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx dashed #d9d0ba;
+  border-radius: 32rpx;
+  padding: 28rpx;
+  color: #8f896d;
+}
+.baby-switch-add-icon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #fff2b9;
+  color: #b97b05;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  margin-right: 16rpx;
+}
+.baby-switch-add-text {
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+/* 添加测量抽屉打开时：曲线图隐藏于抽屉下方（iOS 原生 canvas 层级兜底），关闭后自动恢复 */
+.curve-card.curve-under-sheet {
+  visibility: hidden;
+}
+
+/* 添加测量：滑动选择 + 右侧数值手动输入 */
+.measure-slide {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.form-slider {
+  flex: 1;
+  margin: 0;
+}
+.measure-slide-val {
+  display: flex;
+  align-items: baseline;
+  width: 150rpx;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+.measure-slide-input {
+  width: 96rpx;
+  text-align: right;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #29281f;
+  border-bottom: 2rpx solid #e5ddc8;
+  padding: 6rpx 0;
+}
+.measure-slide-unit {
+  font-size: 22rpx;
+  color: #8f896d;
+  margin-left: 6rpx;
+}
+
+/* ==================== 测量记录列表 ==================== */
+.ml-card {
+  margin: 24rpx 32rpx 0;
+  background: #fff;
+  border: 2rpx solid #eee7d6;
+  border-radius: 32rpx;
+  padding: 8rpx 32rpx;
+}
+.ml-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 0 8rpx;
+}
+.ml-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.ml-count {
+  font-size: 22rpx;
+  color: #a49d86;
+}
+.ml-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 0;
+  border-top: 2rpx solid #f3efe3;
+}
+.ml-left {
+  flex: 1;
+  min-width: 0;
+}
+.ml-date {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #29281f;
+}
+.ml-time {
+  margin-left: 12rpx;
+  font-size: 24rpx;
+  font-weight: 400;
+  color: #a49d86;
+}
+.ml-vals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx 24rpx;
+  margin-top: 10rpx;
+}
+.ml-val {
+  font-size: 23rpx;
+  color: #806c2e;
+}
+.ml-edit {
+  flex-shrink: 0;
+  margin-left: 20rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #b97b05;
+}
+.ml-empty {
+  padding: 32rpx 0;
+  text-align: center;
+  font-size: 24rpx;
+  color: #a49d86;
+}
+
+/* ==================== 疫苗时间轴 ==================== */
+.vax-timeline {
+  margin-top: 20rpx;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 880rpx;
+}
+/* 无轴卡片列表 */
+.tl-item {
+  position: relative;
+  margin-bottom: 32rpx;
+}
+.tl-time {
+  display: inline-block;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #b97b05;
+  padding: 4rpx 16rpx;
+  border-radius: 12rpx;
+  background: #fff6d9;
+}
+.tl-card {
+  margin-top: 16rpx;
+  width: 100%;
+  box-sizing: border-box;
+  border: 2rpx solid #eee7d6;
+  border-radius: 32rpx;
+  padding: 28rpx 32rpx;
+  background: #fff;
+}
+.tl-card.done {
+  background: #fff;
+  border-color: #eee7d6;
+}
+.tl-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tl-card-title {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.tl-type {
+  flex-shrink: 0;
+  font-size: 18rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 10rpx;
+  margin-right: 12rpx;
+}
+.tl-type.free { color: #806c2e; background: #fff7e6; }
+.tl-type.paid { color: #a0812f; background: #fff2b9; }
+.tl-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #29281f;
+  min-width: 0;
+  word-break: break-all;
+}
+.tl-check {
+  flex-shrink: 0;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 12rpx;
+  border: 4rpx solid #e0d6b8;
+  background: #fff;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 16rpx;
+}
+.tl-check.checked {
+  background: #FFD95A;
+  border-color: #FFD95A;
+}
+.tl-check-mark {
+  font-size: 26rpx;
+  color: #7a5b00;
+  font-weight: 800;
+  line-height: 1;
+}
+.tl-sub {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+}
+.tl-tip {
+  margin-top: 10rpx;
+  font-size: 18rpx;
+  color: #c9c2ae;
+}
+
+/* ==================== 宝宝号 ==================== */
+.baby-no {
+  margin-left: 12rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  font-weight: 500;
+  color: #8a5a00;
+  background: #fff3c4;
+}

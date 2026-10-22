@@ -1,0 +1,170 @@
+<!-- pages/kit/kit.wxml - 家庭储备清单（急救包 + 常备药） -->
+<view class="page-no-tab kit-page">
+  <!-- 顶部安全区 + 返回（自定义导航栏规范） -->
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+  <view class="fa-nav">
+    <view class="fa-back" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">紧急照护指引</text>
+      <view class="header-title header-title-sub">家庭储备清单</view>
+    </view>
+  </view>
+
+
+  <!-- ============ 家庭急救包（上一页） ============ -->
+  <view class="kit-sec-title">家庭急救包</view>
+  <view class="kit-sec">
+    <!-- 顶部进度卡 -->
+    <view class="progress-card">
+      <view class="progress-main">
+        <view class="progress-num">{{progress}}<text class="percent">%</text></view>
+        <view class="progress-label">已备齐 {{checkedItems}} / {{totalItems}} 项</view>
+      </view>
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{progress}}%;"></view>
+      </view>
+      <view class="essential-row">
+        <text class="essential-text">核心必备：{{essentialChecked}} / {{essentialTotal}} 已备齐</text>
+        <text class="essential-tip" wx:if="{{essentialChecked < essentialTotal}}">⚠ 核心项缺 {{essentialTotal - essentialChecked}} 项</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="op-row">
+      <button class="btn-ghost op-btn" bindtap="onReset">重置</button>
+      <button class="btn-primary op-btn" bindtap="onCheckAll">全部勾选</button>
+    </view>
+
+    <!-- 分享 / 打印 -->
+    <view class="share-row">
+      <button class="btn-ghost share-btn" bindtap="onShowActions">复制清单</button>
+      <button class="btn-primary share-btn" open-type="share">分享给家人</button>
+    </view>
+
+    <!-- 分类列表 -->
+    <view class="kit-groups">
+      <view class="kit-group" wx:for="{{categories}}" wx:key="id" wx:for-item="cat">
+        <view class="kit-cat-head" data-id="{{cat.id}}" bindtap="onToggleCategory">
+          <view class="kit-cat-left">
+            <image class="kit-cat-icon" src="{{cat.icon}}" mode="aspectFit" />
+            <text class="kit-cat-name">{{cat.name}}</text>
+          </view>
+          <view class="kit-cat-right">
+            <text class="kit-cat-count">{{cat.checkedInCat}}/{{cat.items.length}}</text>
+            <text class="kit-cat-arrow {{expanded[cat.id] ? 'open' : ''}}">▾</text>
+          </view>
+        </view>
+
+        <view class="kit-items" wx:if="{{expanded[cat.id]}}">
+          <view
+            class="kit-item {{item.checked ? 'checked' : ''}}"
+            wx:for="{{cat.items}}"
+            wx:key="id"
+            wx:for-item="item"
+            data-id="{{item.id}}"
+            bindtap="onToggleItem"
+          >
+            <view class="kit-checkbox {{item.checked ? 'checked' : ''}}">
+              <text class="kit-check-mark" wx:if="{{item.checked}}">✓</text>
+            </view>
+            <view class="kit-item-info">
+              <view class="kit-item-name-row">
+                <text class="kit-item-name">{{item.name}}</text>
+                <text class="kit-essential-badge" wx:if="{{item.essential}}">必备</text>
+              </view>
+              <view class="kit-item-note">{{item.note}}</view>
+              <view class="kit-item-qty" wx:if="{{item.qty}}">建议：{{item.qty}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部说明 -->
+    <view class="kit-footer">
+      <view class="kit-footer-title">使用建议</view>
+      <view class="kit-footer-line">• 每 3-6 个月检查一次药品效期，及时替换过期物品</view>
+      <view class="kit-footer-line">• 家里有宝宝，记得按需补充儿童专用退烧药、退热贴等</view>
+      <view class="kit-footer-line">• 清单依据 GB/T 36750-2025《家用防灾应急包》及急诊医生建议整理，可按家庭情况增删</view>
+    </view>
+  </view>
+
+  <!-- ============ 家庭常备药（下一页） ============ -->
+  <view class="kit-sec-title">家庭常备药</view>
+  <view class="kit-sec">
+    <!-- 顶部进度卡 -->
+    <view class="progress-card">
+      <view class="progress-main">
+        <view class="progress-num">{{medProgress}}<text class="percent">%</text></view>
+        <view class="progress-label">已备齐 {{medChecked}} / {{medTotal}} 项</view>
+      </view>
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{medProgress}}%;"></view>
+      </view>
+      <view class="essential-row">
+        <text class="essential-text">核心必备：{{medEssentialChecked}} / {{medEssentialTotal}} 已备齐</text>
+        <text class="essential-tip" wx:if="{{medEssentialChecked < medEssentialTotal}}">⚠ 核心项缺 {{medEssentialTotal - medEssentialChecked}} 项</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="op-row">
+      <button class="btn-ghost op-btn" bindtap="onResetMed">重置</button>
+      <button class="btn-primary op-btn" bindtap="onCheckAllMed">全部勾选</button>
+    </view>
+
+    <!-- 分享 / 打印 -->
+    <view class="share-row">
+      <button class="btn-ghost share-btn" bindtap="onShowActions">复制清单</button>
+      <button class="btn-primary share-btn" open-type="share">分享给家人</button>
+    </view>
+
+    <!-- 分类列表 -->
+    <view class="kit-groups">
+      <view class="kit-group" wx:for="{{medCategories}}" wx:key="id" wx:for-item="cat">
+        <view class="kit-cat-head" data-id="{{cat.id}}" bindtap="onToggleMedCategory">
+          <view class="kit-cat-left">
+            <image class="kit-cat-icon" src="{{cat.icon}}" mode="aspectFit" />
+            <text class="kit-cat-name">{{cat.name}}</text>
+          </view>
+          <view class="kit-cat-right">
+            <text class="kit-cat-count">{{cat.checkedInCat}}/{{cat.items.length}}</text>
+            <text class="kit-cat-arrow {{medExpanded[cat.id] ? 'open' : ''}}">▾</text>
+          </view>
+        </view>
+
+        <view class="kit-items" wx:if="{{medExpanded[cat.id]}}">
+          <view
+            class="kit-item {{item.checked ? 'checked' : ''}}"
+            wx:for="{{cat.items}}"
+            wx:key="id"
+            wx:for-item="item"
+            data-id="{{item.id}}"
+            bindtap="onToggleMed"
+          >
+            <view class="kit-checkbox {{item.checked ? 'checked' : ''}}">
+              <text class="kit-check-mark" wx:if="{{item.checked}}">✓</text>
+            </view>
+            <view class="kit-item-info">
+              <view class="kit-item-name-row">
+                <text class="kit-item-name">{{item.name}}</text>
+                <text class="kit-essential-badge" wx:if="{{item.essential}}">必备</text>
+              </view>
+              <view class="kit-item-note">{{item.note}}</view>
+              <view class="kit-item-qty" wx:if="{{item.type}}">适用：{{item.type}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部说明 -->
+    <view class="kit-footer">
+      <view class="kit-footer-title">用药安全提示</view>
+      <view class="kit-footer-line">• 本清单仅用于家庭日常储备核对，不构成用药建议；用药请遵医嘱或阅读说明书</view>
+      <view class="kit-footer-line">• 有 0-1 岁宝宝：退烧、腹泻用药务必选用儿童剂型，并按体重给药</view>
+      <view class="kit-footer-line">• 定期检查效期（每 3 个月一次），过期药品及时清理并妥善回收</view>
+    </view>
+  </view>
+
+</view>

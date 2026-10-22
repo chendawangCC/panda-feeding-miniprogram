@@ -1,0 +1,56 @@
+<view class="gd-page" style="padding-top: {{safeTop}}px;">
+
+  <!-- 顶部导航 -->
+  <view class="gd-nav">
+    <view class="gd-back" bindtap="goBack">‹</view>
+    <text class="gd-title">全部好物</text>
+    <view class="gd-nav-r"></view>
+  </view>
+
+  <view class="gd-sub">按宝宝月龄智能推荐 · 橱窗即将上线</view>
+
+  <!-- 商品列表 -->
+  <scroll-view class="gd-list" scroll-y>
+    <view class="gd-item" wx:for="{{goodsAll}}" wx:key="id" data-id="{{item.id}}" bindtap="openGoodsDetail">
+      <view class="gd-cat">{{item.cat}}</view>
+      <image class="gd-icon" src="{{item.icon}}" mode="aspectFit" />
+      <view class="gd-meta">
+        <view class="gd-name-row">
+          <text class="gd-name">{{item.title}}</text>
+          <text class="gd-age">{{item.min}}月+</text>
+          <text class="gd-fav" wx:if="{{item.faved}}">★</text>
+        </view>
+        <text class="gd-desc">{{item.desc}}</text>
+        <text class="gd-reason">{{item.reason}}</text>
+      </view>
+      <view class="gd-arrow">›</view>
+    </view>
+
+    <view class="gd-tip-card">
+      <text class="gd-tip-title">💡 橱窗预告</text>
+      <text class="gd-tip-text">好物种草即将接入购物橱窗：商品价格、购买链接、种草评价都会在这里上线。先点「加入关注」，上线后第一时间通知你。</text>
+    </view>
+    <view class="gd-bottom-space"></view>
+  </scroll-view>
+
+  <!-- 商品详情 -->
+  <dialog visible="{{goodsDetail}}" title="{{goodsDetail ? goodsDetail.title : ''}}" kicker="橱窗好物 · 智能推荐" bind:close="closeGoodsDetail">
+    <view class="gd-detail-body" wx:if="{{goodsDetail}}">
+      <view class="gd-detail-hero">
+        <image class="gd-detail-icon" src="{{goodsDetail.icon}}" mode="aspectFit" />
+        <text class="gd-detail-cat">{{goodsDetail.cat}} · {{goodsDetail.min}}月+ 适用</text>
+      </view>
+      <text class="gd-detail-desc">{{goodsDetail.desc}}</text>
+      <view class="gd-detail-reason">💡 {{goodsDetail.reason}}</view>
+      <view class="gd-detail-price">
+        <text class="gd-detail-price-label">参考价格</text>
+        <text class="gd-detail-price-val">{{goodsDetail.price || '待上架'}}</text>
+      </view>
+      <view class="gd-detail-actions">
+        <view class="gd-btn ghost {{goodsDetail.faved ? 'on' : ''}}" bindtap="toggleGoodsFav">{{goodsDetail.faved ? '已关注' : '加入关注'}}</view>
+        <view class="gd-btn solid" bindtap="toggleGoodsFav">前往购买</view>
+      </view>
+      <text class="gd-detail-tip">橱窗功能即将上线，届时可直接购买</text>
+    </view>
+  </dialog>
+</view>

@@ -1,0 +1,9 @@
+{
+  "name": "familyCloud",
+  "version": "1.0.0",
+  "description": "多人协作：家庭创建/扫码加入/邀请码/成员管理/云端数据同步/订阅消息登记",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

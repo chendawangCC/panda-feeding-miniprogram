@@ -1,0 +1,7 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "dialog": "/components/dialog/index",
+    "picker-sheet": "/components/picker-sheet/picker-sheet"
+  }
+}

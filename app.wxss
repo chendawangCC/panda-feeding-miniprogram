@@ -1,0 +1,209 @@
+/* ============ 全局设计令牌（来自原型 panda-feeding_home8.24.html） ============ */
+page {
+  --bg-page: #fffdf7;        /* 主内容背景 */
+  --bg-shell: #f6f3eb;       /* 外层背景 */
+  --ink: #29281f;            /* 主文字 */
+  --ink-2: #8f896d;          /* 次级文字 */
+  --ink-3: #806c2e;          /* 黄卡上的文字 */
+  --yellow: #ffd95a;         /* 主黄色 */
+  --yellow-soft: #fff2b9;    /* 浅黄 */
+  --yellow-pale: #fff9e7;    /* 更浅黄 */
+  --yellow-ghost: #ffe994;   /* 装饰 */
+  --amber: #b97b05;          /* 强调橙 */
+  --line: #eee7d6;           /* 分割线/边框 */
+  --line-2: #e8e1d0;
+
+  background: var(--bg-page);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 28rpx;
+  -webkit-font-smoothing: antialiased;
+}
+
+view, text, button, input, scroll-view, picker, slider, switch {
+  box-sizing: border-box;
+}
+
+button::after {
+  border: none;
+}
+
+/* ============ 通用布局（375×812 PT 设计稿规范） ============ */
+/* 状态栏：顶部导航禁止进入区 y=0 h=200rpx（100pt），视觉内容全部下移 */
+.status-bar {
+  height: 176rpx; /* 导航禁止进入区 */
+  background: var(--bg-page);
+}
+
+/* Tab 页面容器：左右 16pt(32rpx) 安全边距；底部为 tabBar(68px)+手势安全区留出空间 */
+.page {
+  padding: 0 32rpx calc(160rpx + env(safe-area-inset-bottom));
+  background: var(--bg-page);
+  min-height: 100vh;
+}
+/* 非 Tab 页面容器：左右 16pt(32rpx) 安全边距；底部手势安全区 34pt(68rpx) */
+.page-no-tab {
+  padding: 0 32rpx 128rpx; /* 底部 = 内容余量 60rpx + 手势安全区 68rpx(34pt) */
+  background: var(--bg-page);
+  min-height: 100vh;
+}
+
+/* 页头 */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 16rpx;
+}
+.page-header-left {
+  flex: 1;
+  min-width: 0;
+}
+.header-kicker {
+  font-size: 24rpx;
+  color: var(--ink-2);
+}
+.header-title {
+  margin-top: 8rpx;
+  font-size: 48rpx;
+  font-weight: 900;
+  letter-spacing: -2rpx;
+}
+.header-title-sub {
+  font-size: 40rpx;
+}
+.header-title .emoji {
+  font-size: 34rpx;
+}
+
+/* 带头部返回按钮的页头 */
+.page-header-back {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  height: 88rpx; /* 44pt 标题栏：状态栏44pt + 标题栏44pt = 顶部空出88pt */
+  box-sizing: border-box;
+}
+.back-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 24rpx;
+  background: #f3f0e7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+
+/* 圆形图标按钮 */
+.round-btn {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: var(--yellow-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  flex-shrink: 0;
+}
+
+/* 区块标题 */
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 48rpx;
+}
+.section-title {
+  font-size: 32rpx;
+  font-weight: 900;
+}
+.section-desc {
+  font-size: 24rpx;
+  color: var(--ink-2);
+  margin-top: 8rpx;
+}
+.section-link {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--amber);
+  flex-shrink: 0;
+}
+
+/* 卡片 */
+.card {
+  background: #fff;
+  border: 2rpx solid var(--line);
+  border-radius: 32rpx;
+}
+
+/* 圆形状态点 */
+.dot {
+  position: absolute;
+  left: -70rpx;
+  top: 8rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  border: 8rpx solid var(--bg-page);
+}
+
+/* ============ 急救模块（SOS）自定义导航返回条 ============ */
+.fa-nav {
+  height: 88rpx; /* 44pt 标题栏 */
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 0 8rpx;
+  margin-bottom: 24rpx;
+}
+.fa-back {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 24rpx;
+  background: #f3f0e7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  color: var(--ink);
+}
+.fa-back:active { background: #e8e1d0; }
+
+/* SOS 开始跟做等主操作按钮：品牌黄 · 方形圆角 */
+.btn-primary {
+  background: #FFD95A;
+  color: #29281F;
+  border: none;
+  border-radius: 16rpx;
+  font-weight: 800;
+}
+.btn-primary::after { border: none; }
+.btn-primary:active { opacity: .85; }
+/* SOS 次要操作按钮（重来/返回列表等）：品牌黄 · 方形圆角（与主按钮一致） */
+.btn-ghost {
+  background: #FFD95A;
+  color: #29281F;
+  border: none;
+  border-radius: 16rpx;
+  font-weight: 800;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 30rpx;
+  padding: 0;
+}
+.btn-ghost::after { border: none; }
+.btn-ghost:active { opacity: .85; }
+.btn-big {
+  width: 100%;
+  height: 96rpx;
+  font-size: 32rpx;
+  line-height: 96rpx;
+  padding: 0;
+}
+
+/* 保存类按钮统一按压反馈（view 仿 button 交互） */
+.btn-press { opacity: .82; transform: scale(.98); }

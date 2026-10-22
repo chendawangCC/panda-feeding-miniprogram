@@ -1,0 +1,125 @@
+.editor-card {
+  margin-top: 40rpx;
+  padding: 32rpx;
+}
+.member-head {
+  display: flex;
+  align-items: center;
+}
+.member-avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 16rpx;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  margin-right: 24rpx;
+}
+.member-name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+.member-sub {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+}
+
+.form-group {
+  margin-top: 40rpx;
+}
+.form-label {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+.picker-box {
+  margin-top: 16rpx;
+  width: 100%;
+  background: #fffdf7;
+  border: 2rpx solid #e8e1d0;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.picker-arrow {
+  color: #8f896d;
+  font-size: 24rpx;
+}
+
+.perm-box {
+  margin-top: 32rpx;
+  background: #fff9e7;
+  border-radius: 32rpx;
+  padding: 8rpx 32rpx;
+}
+.perm-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 0;
+  border-bottom: 2rpx solid #f4e6b8;
+}
+.perm-item:last-child {
+  border-bottom: none;
+}
+.perm-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+.perm-sub {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: #8f896d;
+}
+
+.btn-primary {
+  margin: 48rpx auto 0;
+  background: #ffd95a;
+  color: #29281f;
+  font-size: 28rpx;
+  font-weight: 900;
+  border-radius: 32rpx;
+  height: 104rpx;
+  line-height: 104rpx;
+  padding: 0;
+  width: 602rpx;
+  text-align: center;
+}
+.btn-wechat {
+  margin: 24rpx auto 0;
+  background: #fff9e7;
+  border: 2rpx solid #e4bd39;
+  color: #9a6b09;
+  font-size: 28rpx;
+  font-weight: 700;
+  border-radius: 32rpx;
+  height: 104rpx;
+  line-height: 104rpx;
+  padding: 0;
+  width: 602rpx;
+  text-align: center;
+}
+.btn-danger {
+  margin: 24rpx auto 0;
+  background: #fffdf7;
+  color: #c14c2e;
+  font-size: 28rpx;
+  font-weight: 700;
+  border-radius: 32rpx;
+  height: 104rpx;
+  line-height: 104rpx;
+  padding: 0;
+  width: 602rpx;
+  text-align: center;
+}

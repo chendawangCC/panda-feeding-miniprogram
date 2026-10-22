@@ -1,0 +1,52 @@
+<wxs src="../../utils/avatar.wxs" module="av" />
+<view class="page-no-tab">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 页头 -->
+  <view class="page-header-back">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">新建宝宝 · 切换与管理</text>
+      <view class="header-title">我的宝贝</view>
+    </view>
+    <view class="add-btn" wx:if="{{babies.length && !hasSharedBaby}}" bindtap="addBaby">
+      <image class="add-btn-ico" src="/images/icons/baby-add.png" mode="aspectFit" />
+      <text>添加宝宝</text>
+    </view>
+  </view>
+
+  <!-- 宝宝列表 -->
+  <view class="baby-list">
+    <view
+      wx:for="{{babies}}"
+      wx:key="id"
+      class="baby-card {{item.id === currentBabyId ? 'active' : ''}}"
+      data-id="{{item.id}}"
+      bindtap="switchBaby"
+    >
+      <view class="baby-info">
+        <text class="baby-name">{{item.name || '未命名宝宝'}}</text>
+        <text class="baby-meta">{{item.gender || '未设置性别'}} · {{item.birthday || '未填写出生日期'}}</text>
+      </view>
+      <view class="baby-tag" wx:if="{{item.isShared}}">共享</view>
+      <view class="baby-tag" wx:if="{{item.id === currentBabyId}}">当前</view>
+      <view class="baby-actions" wx:if="{{!item.isShared}}">
+        <view class="baby-act edit" catchtap="editBaby" data-id="{{item.id}}">编辑</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:if="{{!babies.length}}">
+    <image class="empty-icon-img" src="/images/icons/empty-baby.png" mode="aspectFit" />
+    <text class="empty-title">{{isFamilyMember ? '暂无共享宝宝' : '还没有宝宝'}}</text>
+    <text class="empty-desc">{{isFamilyMember ? '等待家庭创建者共享宝宝信息' : '添加第一个宝宝，开始记录喂养日常'}}</text>
+    <view class="empty-btn" wx:if="{{!hasSharedBaby}}" bindtap="addBaby">
+      <image class="add-btn-ico" src="/images/icons/baby-add.png" mode="aspectFit" />
+      <text>添加宝宝</text>
+    </view>
+  </view>
+
+  <view class="tip">点击宝宝卡片可切换当前记录的宝宝；编辑宝宝资料请点右侧「编辑」</view>
+</view>
+

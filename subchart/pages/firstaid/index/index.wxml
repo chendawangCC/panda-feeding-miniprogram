@@ -1,0 +1,117 @@
+<!-- pages/index/index.wxml -->
+<view class="page-no-tab home-page">
+  <!-- 顶部安全区 + 返回（自定义导航栏规范） -->
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+  <view class="fa-nav">
+    <view class="fa-back" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">紧急照护指引</text>
+      <view class="header-title header-title-sub">SOS 指导</view>
+    </view>
+  </view>
+
+  <!-- 搜索框 -->
+  <view class="search-bar">
+    <view class="search-input-wrap">
+      <image class="search-icon" src="/subchart/pages/firstaid/icons/swallow.png" mode="aspectFit" />
+      <input
+        class="search-input"
+        placeholder="搜索技能，如：海姆立克、湿疹、凯格尔…"
+        placeholder-class="search-placeholder"
+        value="{{keyword}}"
+        bindinput="onSearchInput"
+        confirm-type="search"
+      />
+      <text class="search-clear" wx:if="{{keyword}}" bindtap="onSearchClear">✕</text>
+    </view>
+  </view>
+
+  <!-- 搜索结果 -->
+  <block wx:if="{{searching}}">
+    <view class="search-head">
+      <text class="search-head-title">搜索"{{keyword}}" · {{searchResults.length}} 项</text>
+      <text class="search-head-clear" bindtap="onSearchClear">清除</text>
+    </view>
+    <view
+      class="skill-card"
+      wx:for="{{searchResults}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="onTapSkill"
+    >
+      <image class="skill-icon" src="{{item.icon}}" mode="aspectFit" />
+      <view class="skill-info">
+        <view class="skill-name">{{item.name}}</view>
+        <view class="skill-desc">{{item.category}} · {{item.description}}</view>
+      </view>
+      <view class="skill-arrow">›</view>
+    </view>
+    <view class="search-empty" wx:if="{{!searchResults.length}}">
+      <image class="search-empty-icon" src="/subchart/pages/firstaid/icons/swallow.png" mode="aspectFit" />
+      <view class="search-empty-text">没有找到相关技能，换个关键词试试</view>
+    </view>
+  </block>
+
+  <!-- 非搜索状态 -->
+  <block wx:else>
+    <!-- 工具 2×2 网格 -->
+    <view class="tools-grid">
+      <view class="tool-card" wx:for="{{tools}}" wx:key="key" data-key="{{item.key}}" bindtap="onTapTool">
+        <image class="tool-icon" src="{{item.icon}}" mode="aspectFit" />
+        <view class="tool-name">{{item.name}}</view>
+        <view class="tool-desc">{{item.desc}}</view>
+      </view>
+    </view>
+
+    <!-- 个性化推荐：按宝宝年龄/性别 -->
+    <view class="recommend-block" wx:if="{{recommendation}}">
+      <view class="recommend-head">
+        <view class="recommend-title">🎯 为{{recommendation.genderTitle}}推荐</view>
+        <view class="recommend-note">{{recommendation.ageText}} · {{recommendation.band.label}}</view>
+      </view>
+      <view class="recommend-desc">{{recommendation.band.note}}</view>
+      <view
+        class="recommend-card"
+        wx:for="{{recommendation.items}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="onTapRecommend"
+      >
+        <image class="recommend-icon" src="{{item.icon}}" mode="aspectFit" />
+        <view class="recommend-info">
+          <view class="recommend-name">{{item.name}}</view>
+          <view class="recommend-desc">{{item.desc}}</view>
+        </view>
+        <view class="recommend-arrow">›</view>
+      </view>
+    </view>
+
+    <!-- 四大模块聚合卡片 -->
+    <view class="section-title">技能模块</view>
+    <view class="module-grid">
+      <view
+        class="module-card"
+        wx:for="{{modules}}"
+        wx:key="key"
+        data-key="{{item.key}}"
+        bindtap="onTapModule"
+      >
+        <image class="module-icon" src="{{item.icon}}" mode="aspectFit" />
+        <view class="module-name">{{item.name}}</view>
+        <view class="module-tagline">{{item.tagline}}</view>
+        <view class="module-count">{{item.count}} 项 ›</view>
+      </view>
+    </view>
+
+  </block>
+
+  <!-- 免责声明 -->
+  <view class="disclaimer">
+    本应用用于日常学习与演练，不能替代专业急救培训与真实急救处置。遇紧急情况请立即拨打 120。
+  </view>
+
+  <!-- 底部固定拨打120 -->
+  <view class="call-bar" bindtap="onCall120">
+    <text class="call-bar-text">☎ 紧急情况拨打 120</text>
+  </view>
+</view>

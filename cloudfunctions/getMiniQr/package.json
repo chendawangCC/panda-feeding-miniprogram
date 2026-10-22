@@ -1,0 +1,9 @@
+{
+  "name": "getMiniQr",
+  "version": "1.0.0",
+  "description": "获取小程序码（周报保存图/分享图二维码）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

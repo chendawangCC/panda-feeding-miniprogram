@@ -1,0 +1,9 @@
+/* 宝宝头像统一渲染：无效值/默认 logo 兜底为品牌 logo（白底等比），自定义图 aspectFill */
+function isValid(v) {
+  return !!v && (v.indexOf('/') === 0 || v.indexOf('http') === 0 || v.indexOf('wxfile') === 0 || v.indexOf('data:') === 0);
+}
+module.exports = {
+  src: function (v) { return isValid(v) ? v : '/images/brand-logo.png'; },
+  isLogo: function (v) { return !isValid(v) || v === '/images/brand-logo.png'; },
+  mode: function (v) { return (!isValid(v) || v === '/images/brand-logo.png') ? 'aspectFit' : 'aspectFill'; }
+};

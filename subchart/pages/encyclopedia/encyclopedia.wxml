@@ -1,0 +1,54 @@
+<view class="page-no-tab">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 顶部导航 -->
+  <view class="page-header-back">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">每天一点，育儿更安心</text>
+      <view class="header-title header-title-sub">育儿百科全书</view>
+    </view>
+  </view>
+
+  <!-- 标签切换 -->
+  <view class="tab-switch">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="key"
+      class="tab-item {{activeTab === item.key ? 'active' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="switchTab"
+    >{{item.label}}</view>
+  </view>
+
+  <!-- 分类标题 -->
+  <view class="cate-title">{{activeTab === 'baby' ? '宝宝成长指南' : '妈妈安心手册'}}</view>
+
+  <!-- 分类卡片 2 列 4 行 -->
+  <view class="cate-grid">
+    <view
+      wx:for="{{items}}"
+      wx:key="key"
+      class="cate-card"
+      data-key="{{item.key}}"
+      bindtap="openArticle"
+    >
+      <image class="cate-img" src="{{item.img}}" mode="aspectFit" />
+      <text class="cate-name">{{item.title}}</text>
+      <text class="cate-desc">{{item.desc}}</text>
+    </view>
+  </view>
+
+  <!-- 今日推荐 -->
+  <view class="today-card" bindtap="openToday">
+    <view class="today-icon">✨</view>
+    <view class="today-info">
+      <text class="today-label">今日推荐</text>
+      <text class="today-title">{{today.title}}</text>
+    </view>
+    <text class="today-arrow">›</text>
+  </view>
+
+  <view class="bottom-space"></view>
+</view>
+

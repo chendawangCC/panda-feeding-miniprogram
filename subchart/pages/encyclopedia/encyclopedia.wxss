@@ -1,0 +1,122 @@
+page {
+  background: #f6f1e5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  color: #29281f;
+}
+.page-no-tab {
+  min-height: 100vh;
+  padding: 0 32rpx 128rpx; /* 左右16pt + 底部手势安全区34pt */
+  box-sizing: border-box;
+}
+.status-bar {
+  height: 176rpx; /* 导航禁止进入区 */
+}
+
+/* ==================== 顶部导航 ==================== */
+/* back-btn 使用全局标准样式（72rpx 米灰圆角） */
+
+/* ==================== 页头 ==================== */
+
+/* ==================== 标签切换 ==================== */
+.tab-switch {
+  display: flex;
+  background: #ece4d2;
+  border-radius: 20rpx;
+  padding: 6rpx;
+  margin-top: 32rpx; /* 与上方标题拉开距离 */
+}
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 0;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #8f896d;
+  border-radius: 16rpx;
+}
+.tab-item.active {
+  background: #fffdf7;
+  color: #29281f;
+}
+
+/* ==================== 分类标题 ==================== */
+.cate-title {
+  margin-top: 40rpx;
+  margin-bottom: 20rpx;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+
+/* ==================== 分类卡片 ==================== */
+.cate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+}
+.cate-card {
+  background: #fff;
+  border: 2rpx solid #eee7d6;
+  border-radius: 28rpx;
+  padding: 28rpx 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(117, 101, 43, 0.04);
+}
+.cate-img {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 24rpx;
+  background: #f7f2e4;
+}
+.cate-name {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.cate-desc {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+  line-height: 1.4;
+}
+
+/* ==================== 今日推荐 ==================== */
+.today-card {
+  margin-top: 40rpx;
+  display: flex;
+  align-items: center;
+  background: #fff2b9;
+  border-radius: 28rpx;
+  padding: 28rpx 28rpx;
+}
+.today-icon {
+  font-size: 44rpx;
+  margin-right: 20rpx;
+}
+.today-info {
+  flex: 1;
+  min-width: 0;
+}
+.today-label {
+  display: block;
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #a0812f;
+}
+.today-title {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #5c4a10;
+}
+.today-arrow {
+  font-size: 32rpx;
+  color: #a0812f;
+}
+
+.bottom-space {
+  height: 60rpx;
+}

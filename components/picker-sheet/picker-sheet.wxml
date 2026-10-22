@@ -1,0 +1,41 @@
+<view class="ps-mask" wx:if="{{visible}}" bindtap="onClose" catchtouchmove="noop">
+  <view class="ps-sheet" catchtap="noop" catchtouchmove="noop">
+    <view class="ps-handle"></view>
+    <view class="ps-head">
+      <text class="ps-btn ps-cancel" bindtap="onClose">取消</text>
+      <text class="ps-title">{{mode === 'date' ? '选择日期' : '选择时间'}}</text>
+      <text class="ps-btn ps-confirm" bindtap="onConfirm">确定</text>
+    </view>
+
+    <picker-view
+      wx:if="{{mode === 'date'}}"
+      class="ps-view"
+      value="{{indexes}}"
+      bindchange="onChange"
+    >
+      <picker-view-column>
+        <view class="ps-col" wx:for="{{years}}" wx:key="*this">{{item}}年</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view class="ps-col" wx:for="{{months}}" wx:key="*this">{{item}}月</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view class="ps-col" wx:for="{{days}}" wx:key="*this">{{item}}日</view>
+      </picker-view-column>
+    </picker-view>
+
+    <picker-view
+      wx:else
+      class="ps-view"
+      value="{{indexes}}"
+      bindchange="onChange"
+    >
+      <picker-view-column>
+        <view class="ps-col" wx:for="{{hours}}" wx:key="*this">{{item}}时</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view class="ps-col" wx:for="{{minutes}}" wx:key="*this">{{item}}分</view>
+      </picker-view-column>
+    </picker-view>
+  </view>
+</view>

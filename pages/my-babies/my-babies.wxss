@@ -1,0 +1,158 @@
+.add-btn {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #5c4a10;
+  background: #ffd95a;
+  padding: 16rpx 28rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==================== 宝宝列表 ==================== */
+.baby-list {
+  padding: 24rpx 32rpx;
+}
+.baby-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  border: 3rpx solid transparent;
+  box-shadow: 0 6rpx 20rpx rgba(169, 143, 87, 0.08);
+}
+.baby-card.active {
+  border-color: #ffd95a;
+  background: #fffdf3;
+}
+.baby-avatar {
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 16rpx;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56rpx;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.baby-avatar-img {
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 16rpx;
+  display: block;
+}
+.baby-info {
+  flex: 1;
+  min-width: 0;
+}
+.baby-name {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.baby-meta {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+}
+.baby-tag {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #5c4a10;
+  background: #ffd95a;
+  padding: 8rpx 18rpx;
+  border-radius: 20rpx;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+}
+.baby-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-left: 16rpx;
+  flex-shrink: 0;
+}
+.baby-act {
+  font-size: 24rpx;
+  font-weight: 700;
+  padding: 8rpx 26rpx;
+  border-radius: 24rpx;
+  text-align: center;
+}
+.baby-act.edit {
+  background: #fff2b9;
+  color: #b97b05;
+}
+.baby-act.remove {
+  background: #fdeaea;
+  color: #c14c2e;
+}
+
+/* ==================== 空状态 ==================== */
+.empty {
+  padding: 120rpx 60rpx;
+  text-align: center;
+}
+.empty-icon {
+  font-size: 96rpx;
+  display: block;
+}
+.empty-icon-img {
+  width: 96rpx;
+  height: 96rpx;
+  display: block;
+  margin: 0 auto;
+}
+.empty-title {
+  display: block;
+  margin-top: 24rpx;
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.empty-desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #8f896d;
+}
+.empty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 40rpx;
+  background: #ffd95a;
+  color: #5c4a10;
+  font-size: 28rpx;
+  font-weight: 800;
+  padding: 20rpx 56rpx;
+  border-radius: 44rpx;
+}
+
+.tip {
+  margin: 0 48rpx 40rpx;
+  font-size: 22rpx;
+  color: #a49d86;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* 添加宝宝图标 */
+.add-btn-ico {
+  width: 64rpx;
+  height: 64rpx;
+  margin-right: 12rpx;
+}
+
+/* 默认熊猫 logo：白底完整显示，不裁切 */
+.baby-avatar-logo {
+  background: transparent;
+}

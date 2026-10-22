@@ -1,0 +1,70 @@
+/* pages/module/module.wxss - 品牌色：米白 FFFDF7 / 明黄 FFD95A / 深墨 29281F */
+.page-no-tab {
+  padding-bottom: 60rpx;
+}
+
+/* 模块头 */
+
+/* 分组 */
+.group {
+  margin-bottom: 40rpx;
+}
+.group-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #8f896d;
+  margin: 0 8rpx 20rpx;
+}
+
+/* 技能卡片 */
+.skill-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.skill-card:active {
+  transform: scale(0.98);
+}
+.skill-icon {
+  width: 88rpx;
+  height: 88rpx;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+.skill-info {
+  flex: 1;
+  min-width: 0;
+}
+.skill-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #29281F;
+}
+.skill-desc {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.skill-arrow {
+  color: #e8e1d0;
+  font-size: 48rpx;
+  margin-left: 12rpx;
+}
+
+/* 免责 */
+.disclaimer {
+  font-size: 22rpx;
+  color: #8f896d;
+  line-height: 1.7;
+  padding: 8rpx 12rpx;
+  margin-top: 8rpx;
+}

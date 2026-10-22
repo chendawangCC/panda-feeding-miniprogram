@@ -1,0 +1,99 @@
+<view class="page-no-tab">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 顶部导航 -->
+  <view class="page-header-back">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">按宝宝出生日期自动推算接种计划</text>
+      <view class="header-title header-title-sub">疫苗记录</view>
+    </view>
+  </view>
+
+  <!-- 宝宝信息 + 进度 -->
+  <view class="vc-hero" wx:if="{{birthday}}">
+    <view class="vc-hero-left">
+      <view class="vc-baby">{{babyName || '我的宝贝'}} <text class="vc-age">{{ageText}}</text></view>
+      <view class="vc-birth">出生 {{birthday}} · 免费/自费参考标准</view>
+    </view>
+    <view class="vc-progress">
+      <text class="vc-progress-num">{{stats.done}}<text class="vc-progress-total">/{{stats.total}} 剂</text></text>
+      <text class="vc-progress-label">已接种</text>
+      <view class="vc-progress-bar">
+        <view class="vc-progress-fill" style="width: {{stats.total ? (stats.done / stats.total * 100) : 0}}%"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 下次接种提醒（按月龄规律，最近一剂未接种） -->
+  <view class="vc-next" wx:if="{{next}}">
+    <view class="vc-next-label">下次接种提醒</view>
+    <view class="vc-next-body">
+      <view class="vc-next-info">
+        <text class="vc-next-title">{{next.title}}</text>
+        <text class="vc-next-date">应种 {{next.dueDate}}</text>
+      </view>
+      <view class="vc-next-days {{next.due < 0 ? 'over' : ''}}">{{next.daysText}}</view>
+    </view>
+  </view>
+  <view class="vc-next vc-next-done" wx:if="{{!next}}">
+    <view class="vc-next-label">下次接种提醒</view>
+    <view class="vc-next-body">
+      <text class="vc-next-title">当前计划疫苗已全部处理 🎉</text>
+    </view>
+  </view>
+
+  <!-- 无出生日期 → 引导添加宝宝 -->
+  <view class="vc-empty" wx:if="{{!birthday}}">
+    <image class="vc-empty-icon" src="/images/icons/vaccine-empty.png" mode="aspectFit" />
+    <text class="vc-empty-title">还没有宝宝档案</text>
+    <text class="vc-empty-desc">添加宝宝后，将自动按出生日期生成免费+自费完整接种计划</text>
+  </view>
+
+  <block wx:if="{{birthday}}">
+    <!-- 筛选 -->
+    <view class="tab-switch vc-tab">
+      <view
+        wx:for="{{filters}}"
+        wx:key="key"
+        class="tab-item {{filter === item.key ? 'active' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="switchFilter"
+      >{{item.label}}</view>
+    </view>
+
+    <!-- 疫苗时间轴：点选勾框标记已接种，长按整条移除计划 -->
+    <scroll-view class="vax-timeline" scroll-y enhanced show-scrollbar="{{false}}">
+      <view
+        wx:for="{{plan}}"
+        wx:key="id"
+        class="tl-item {{item.status === 'done' ? 'done' : ''}} {{index === plan.length - 1 ? 'tl-last' : ''}}"
+      >
+        <text class="tl-time" data-index="{{index}}" bindtap="onTapDueDate">应种 {{item.dueDate}}</text>
+        <view class="tl-card vax-card {{item.status === 'done' ? 'done' : ''}}">
+          <view class="tl-card-head">
+            <view class="tl-card-title">
+              <text class="tl-type {{item.type === '免费' ? 'free' : 'paid'}}">{{item.type}}</text>
+              <text class="tl-name">{{item.group}} {{item.dose}}</text>
+            </view>
+            <view
+              class="tl-check {{item.status === 'done' ? 'checked' : ''}}"
+              catchtap="onToggleDone"
+              data-index="{{index}}"
+            >
+              <text wx:if="{{item.status === 'done'}}" class="tl-check-mark">✓</text>
+            </view>
+          </view>
+          <view class="tl-sub">{{item.note}}</view>
+          <view class="tl-tip">点击应种日期可修改 · 点选勾框标记已接种 · 长按移除</view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="vc-tip">
+      免费疫苗依据《国家免疫规划疫苗儿童免疫程序及说明（2021年版）》；自费疫苗为常用推荐程序，具体剂次、间隔以当地接种门诊及疫苗说明书为准。
+    </view>
+
+  <!-- 自定义日期选择器（点击点选框选择实际接种日期） -->
+  <picker-sheet visible="{{showDoneDatePicker}}" mode="date" value="{{doneDateTarget ? doneDateTarget.date : ''}}" bind:confirm="onDoneDateChange" bind:close="closeDoneDatePicker" />
+  </block>
+</view>

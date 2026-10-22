@@ -1,0 +1,108 @@
+/* 通用弹窗组件：灰底 + 面板，z-index 远高于底部导航栏（tabBar z-index:10），弹出时覆盖全屏含 tabBar */
+/* 组件根节点提升层级，确保在任意机型都盖住自定义 tabBar */
+:host {
+  display: block;
+  position: relative;
+  z-index: 9999;
+}
+.d-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+}
+.d-mask-center {
+  align-items: center;
+  justify-content: center;
+  padding: 56rpx;
+}
+.d-sheet {
+  width: 100%;
+  background: #fffdf7;
+  border-radius: 32rpx 32rpx 0 0; /* 上圆角16pt，下圆角0 */
+  padding: 32rpx 32rpx 32rpx; /* 内边距：左右16pt、顶部16pt、底部16pt（不做安全区遮盖） */
+  box-sizing: border-box;
+  max-height: calc(100vh - 176rpx); /* 最大高度724pt = 812-88，避开顶部导航 */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 10000;
+}
+.d-center {
+  border-radius: 40rpx;
+  padding: 40rpx 36rpx 32rpx;
+  max-height: 82vh;
+}
+.d-handle {
+  width: 80rpx;
+  height: 8rpx;
+  border-radius: 8rpx;
+  background: #e8e1d0;
+  position: absolute;
+  top: 16rpx; /* 距抽屉顶部8pt */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+}
+.d-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.d-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 0 24rpx;
+}
+.d-header-txt {
+  flex: 1;
+  min-width: 0;
+}
+.d-kicker {
+  display: block;
+  font-size: 22rpx;
+  color: #a49d86;
+  margin-bottom: 6rpx;
+}
+.d-title {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+  .d-close {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #f3efe4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  color: #8f896d;
+  margin-left: 24rpx;
+  flex-shrink: 0;
+}
+.d-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 关闭图标 */
+  .d-close-img {
+  width: 72rpx;
+  height: 72rpx;
+}
+
+/* 无安全区模式：底部贴底，不加 env(safe-area-inset-bottom) */
+.d-sheet-no-safe {
+  padding-bottom: 32rpx;
+}

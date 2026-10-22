@@ -1,0 +1,162 @@
+<view class="page-no-tab">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 页头 -->
+  <view class="page-header-back">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">{{babyName ? (babyName + '的成长记录') : '成长记录'}}</text>
+      <view class="header-title">喂养统计</view>
+    </view>
+  </view>
+
+  <!-- 每日喂养小结（可勾选显示项，真实统计） -->
+  <view class="summary-head">
+    <text class="summary-title">每日喂养小结</text>
+    <view class="summary-set" bindtap="toggleSummarySettings">
+      <image class="summary-set-ico" src="/images/icons/settings-gear.png" mode="aspectFit" />
+    </view>
+  </view>
+  <view class="summary-grid">
+    <view class="summary-card" wx:for="{{summaryItems}}" wx:key="key">
+      <text class="sc-label">{{item.label}}</text>
+      <view class="sc-value"><text>{{item.value}}</text><text class="sc-unit">{{item.unit}}</text></view>
+    </view>
+    <view class="summary-memo" wx:if="{{summaryOpts.memo}}" bindtap="openMemoEdit">
+      <text class="sm-label">今日小记</text>
+      <text class="sm-text {{memoText ? '' : 'sm-empty'}}">{{memoText || '点击写下今天的点滴…'}}</text>
+    </view>
+  </view>
+
+  <!-- 小结设置弹窗 -->
+  <dialog visible="{{summarySettingsVisible}}" title="设置喂养小结" kicker="勾选要显示的统计项" bind:close="closeSummarySettings">
+    <view class="ss-list">
+      <view class="ss-item" wx:for="{{['feeds','milkPowder','milkBreast','pee','poop','sleep','memo']}}" wx:key="*this" data-key="{{item}}" bindtap="onSummaryOptToggle">
+        <text class="ss-name">{{['今日喂奶次数','总奶粉量','总瓶喂母乳量','小便次数','大便次数','总睡眠时长','今日小记'][index]}}</text>
+        <view class="ss-check {{summaryOpts[item] ? 'on' : ''}}">{{summaryOpts[item] ? '✓' : ''}}</view>
+      </view>
+    </view>
+  </dialog>
+
+  <!-- 今日小记编辑 -->
+  <dialog visible="{{memoEditVisible}}" title="今日小记" kicker="记录今天宝宝的点滴" bind:close="closeMemoEdit">
+    <view class="memo-edit-body">
+      <textarea class="memo-edit-ta" value="{{memoText}}" bindinput="onMemoEditInput" placeholder="记录今天宝宝的小变化、趣事或心情…" maxlength="500" auto-height cursor-spacing="20" />
+      <view class="memo-edit-save {{memoText ? '' : 'disabled'}}" bindtap="saveMemoEdit">保存</view>
+    </view>
+  </dialog>
+
+  <!-- 近期喂养统计：瓶喂奶量 / 亲喂时长 -->
+  <view class="card chart-card">
+    <view class="chart-head">
+      <view>
+        <view class="chart-title">近期</view>
+        <view class="chart-sub">{{chartSub}}</view>
+      </view>
+      <view class="chart-action" bindtap="genReport">生成周报</view>
+    </view>
+    <view class="chart-modes">
+      <view class="cm {{chartMode === 0 ? 'on' : ''}}" data-mode="0" bindtap="onChartMode">瓶喂</view>
+      <view class="cm {{chartMode === 1 ? 'on' : ''}}" data-mode="1" bindtap="onChartMode">亲喂</view>
+    </view>
+    <scroll-view class="feed-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="feed-chart">
+        <view class="fc-day" wx:for="{{feedDays}}" wx:key="date">
+          <view class="fc-bars">
+            <view class="fc-col" wx:for="{{item.blocks}}" wx:for-item="b" wx:for-index="bi" wx:key="bi">
+              <text class="fc-val">{{b.v}}</text>
+              <view class="fc-bar" style="height: {{b.h}}rpx; background: {{feedColor}}"></view>
+            </view>
+          </view>
+          <text class="fc-label {{item.isToday ? 'fc-label-today' : ''}}">{{item.label}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 喂养时间分布 -->
+  <view class="card timeline-card">
+    <view class="chart-head">
+      <view>
+        <view class="chart-title">喂养时间分布</view>
+        <view class="chart-sub">横向日期 · 纵向每小时一格</view>
+      </view>
+      <view class="ref-btn" bindtap="toggleReference">喂养参考表</view>
+    </view>
+
+    <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="filter-row">
+        <view
+          wx:for="{{filters}}"
+          wx:key="name"
+          class="filter-chip {{item.active ? 'chip-active' : ''}}"
+          style="{{item.active ? 'background:#29281f;color:#fff' : 'background:' + item.bg + ';color:' + item.color}}"
+          data-name="{{item.name}}"
+          bindtap="onFilter"
+        >{{item.name}}</view>
+      </view>
+    </scroll-view>
+
+    <scroll-view class="tl-scroll" scroll-y show-scrollbar="{{false}}" bindtouchstart="onTlTouchStart" bindtouchmove="onTlTouchMove" bindtouchend="onTlTouchEnd" bindtouchcancel="onTlTouchEnd">
+      <view class="timeline-grid">
+        <view class="tl-hour" style="height: {{24 * hourUnit}}rpx">
+          <text wx:for="{{hours}}" wx:key="*this" style="height: {{hourUnit}}rpx; line-height: {{hourUnit}}rpx">{{item}}</text>
+        </view>
+        <view class="tl-track-wrap">
+          <view class="tl-track" style="height: {{24 * hourUnit}}rpx">
+            <view
+              wx:for="{{bars}}"
+              wx:key="title"
+              wx:if="{{item.show}}"
+              class="tl-bar {{item.circle ? 'tl-dot' : ''}}"
+              style="left: {{item.left}}%; bottom: {{item.bottomRpx}}rpx; width: {{item.w}}%; height: {{item.hRpx}}rpx; background: {{item.color}}"
+              hover-class="tl-bar-hover"
+              data-index="{{index}}"
+              bindtap="onBarTap"
+            ></view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="tl-days">
+      <text wx:for="{{days}}" wx:key="*this" class="{{item === '今天' ? 'today' : ''}}">{{item}}</text>
+    </view>
+
+    <view class="legend">
+      <view class="legend-item" wx:for="{{legend}}" wx:key="name">
+        <view class="legend-dot" style="background: {{item.color}}"></view>
+        <text>{{item.name}}</text>
+      </view>
+    </view>
+
+    <!-- 喂养块详情（与喂养记录时间轴内容一致） -->
+    <view class="tl-detail-mask" wx:if="{{tlDetail.visible}}" bindtap="closeTlDetail">
+      <view class="tl-detail-card" catchtap="noop">
+        <text class="tld-title">{{tlDetail.title}}</text>
+        <text class="tld-desc" wx:if="{{tlDetail.desc}}">{{tlDetail.desc}}</text>
+        <text class="tld-tip">点击空白处关闭</text>
+      </view>
+    </view>
+  </view>
+
+<!-- 喂养参考表 -->
+<dialog visible="{{showReference}}" title="喂养参考表" kicker="按宝宝月龄自动匹配 · 国标推荐" bind:close="toggleReference">
+    <view class="ref-stage">
+      <view class="ref-stage-label">{{feedStage.label}}</view>
+      <view class="ref-stage-age">宝宝当前 {{feedStage.monthText}}</view>
+    </view>
+    <view class="ref-table">
+      <view class="ref-row ref-head">
+        <text>项目</text><text>建议频次</text><text>参考量</text>
+      </view>
+      <view class="ref-row" wx:for="{{feedStage.rows}}" wx:key="item">
+        <text class="ref-bold">{{item.item}}</text>
+        <text>{{item.freq}}</text>
+        <text>{{item.qty}}</text>
+      </view>
+    </view>
+    <view class="ref-note">{{feedStage.note}}</view>
+    <view class="ref-tip">依据《中国居民膳食指南（2022）》及 7—24 月龄婴幼儿喂养指南整理，仅供参考；个体情况差异较大，特殊喂养需求请咨询儿科医生或专业人士。</view>
+</dialog>
+</view>
+

@@ -1,0 +1,78 @@
+<wxs module="idx">
+module.exports = {
+  of: function (list, item) {
+    if (!list) return 0;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] === item) return i;
+    }
+    return 0;
+  }
+}
+</wxs>
+
+<view class="page-no-tab">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 页头 -->
+  <view class="page-header-back">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">设置亲友的协作范围</text>
+      <view class="header-title">编辑亲友</view>
+    </view>
+  </view>
+
+  <!-- 亲友信息 -->
+  <view class="card editor-card">
+    <view class="member-head">
+      <view class="member-avatar">{{member.avatar}}</view>
+      <view>
+        <text class="member-name">{{member.name}}</text>
+        <text class="member-sub">共同守护{{babyName}}的成长</text>
+      </view>
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">他是宝宝的</text>
+      <picker range="{{relations}}" value="{{idx.of(relations, member.relation)}}" bindchange="onRelation">
+        <view class="picker-box">{{member.relation}}<text class="picker-arrow">▾</text></view>
+      </picker>
+    </view>
+
+    <view class="perm-box">
+      <view class="perm-item">
+        <view class="perm-info">
+          <text class="perm-title">邀请权限</text>
+          <text class="perm-sub">可邀请其他亲友加入</text>
+        </view>
+        <switch checked="{{member.invite}}" color="#d59f11" data-field="invite" bindchange="onToggle" />
+      </view>
+      <view class="perm-item">
+        <view class="perm-info">
+          <text class="perm-title">记录权限</text>
+          <text class="perm-sub">可新增和管理日常记录</text>
+        </view>
+        <switch checked="{{member.record}}" color="#d59f11" data-field="record" bindchange="onToggle" />
+      </view>
+      <view class="perm-item">
+        <view class="perm-info">
+          <text class="perm-title">分享与下载权限</text>
+          <text class="perm-sub">可分享或导出家庭记录</text>
+        </view>
+        <switch checked="{{member.share}}" color="#d59f11" data-field="share" bindchange="onToggle" />
+      </view>
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">喂养记录权限</text>
+      <picker range="{{feedingOptions}}" value="{{idx.of(feedingOptions, member.feeding)}}" bindchange="onFeeding">
+        <view class="picker-box">{{member.feeding}}<text class="picker-arrow">▾</text></view>
+      </picker>
+    </view>
+
+    <view class="btn-primary" hover-class="btn-press" hover-stay-time="60" bindtap="save">保存亲友设置</view>
+    <view class="btn-wechat" hover-class="btn-press" hover-stay-time="60" bindtap="inviteWechat">💬 微信邀请亲友</view>
+    <view class="btn-danger" hover-class="btn-press" hover-stay-time="60" bindtap="remove">移除亲友</view>
+  </view>
+</view>
+

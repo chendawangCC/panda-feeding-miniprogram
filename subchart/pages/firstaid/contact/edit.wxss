@@ -1,0 +1,77 @@
+/* pages/contact/edit.wxss - 品牌色：米白 FFFDF7 / 明黄 FFD95A / 深墨 29281F */
+.edit-page {
+  padding-bottom: 200rpx;
+}
+
+/* 表单卡 */
+.form-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 8rpx 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.form-item {
+  display: flex;
+  align-items: center;
+  padding: 32rpx 0;
+  border-bottom: 2rpx solid #f6f3eb;
+}
+.form-item:last-child {
+  border-bottom: none;
+}
+.form-label {
+  width: 140rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #29281F;
+  flex-shrink: 0;
+}
+.form-input {
+  flex: 1;
+  font-size: 30rpx;
+  color: #29281F;
+}
+.form-placeholder {
+  color: #e8e1d0;
+}
+
+/* picker */
+.form-picker {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.form-picker-value {
+  font-size: 30rpx;
+  color: #29281F;
+}
+.form-picker-arrow {
+  font-size: 28rpx;
+  color: #e8e1d0;
+}
+
+/* 说明 */
+.form-tip {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 24rpx 30rpx;
+  margin-top: 24rpx;
+}
+.tip-line {
+  display: block;
+  font-size: 24rpx;
+  color: #8f896d;
+  line-height: 1.8;
+}
+
+/* 底部保存 */
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: rgba(255,253,247,0.95);
+  box-shadow: 0 -4rpx 16rpx rgba(41,40,31,0.05);
+}

@@ -1,0 +1,317 @@
+<view class="page">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 顶部导航 -->
+  <view class="page-header-back">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">{{baby.name || '未命名宝宝'}}的喂养库存管理</text>
+      <view class="header-title header-title-sub">喂养台</view>
+    </view>
+  </view>
+
+  <!-- ==================== 模块1 耗材库存管理 ==================== -->
+  <view class="section">
+    <view class="section-head">
+      <text class="section-title">耗材库存管理</text>
+      <view class="add-btn" bindtap="addStock" bindtouchstart="voiceTouchStart" bindtouchend="voiceTouchEnd" bindtouchcancel="voiceTouchCancel">＋</view>
+    </view>
+    <text class="section-sub sub-tight">库存多少早知道</text>
+
+    <!-- 耗材库存表格：表头冻结（固定在上方），数据行滚动查看 -->
+    <view class="stock-table-wrap">
+      <view class="stock-tr stock-th stock-th-fixed">
+        <text class="th-name">商品名称</text>
+        <text class="th-count">数量</text>
+        <text class="th-price">价格</text>
+      </view>
+      <scroll-view scroll-y class="stock-table-scroll" show-scrollbar="{{false}}">
+        <view class="stock-table">
+          <view
+            class="stock-tr"
+            wx:for="{{stockItems}}"
+            wx:key="id"
+            data-id="{{item.id}}"
+            bindtap="editStock"
+          >
+            <view class="td-name">
+              <text class="td-name-text">{{item.name}}</text>
+              <text class="td-size" wx:if="{{item.sizeText}}">{{item.sizeText}}</text>
+              <text class="td-size" wx:if="{{item.brand}}">{{item.brand}}</text>
+            </view>
+            <view class="td-count">
+              <text class="td-num">{{item.count}}</text>
+              <text class="td-unit">{{item.unit}}</text>
+            </view>
+            <text class="td-price {{item.price ? '' : 'muted'}}">{{item.price ? item.priceText : '--'}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+    <view class="table-tip" wx:if="{{!stockItems.length}}">暂无库存商品，点右上角「＋」添加</view>
+  </view>
+
+  <!-- ==================== 模块2 保质期提醒 ==================== -->
+  <view class="section">
+    <view class="section-head">
+      <text class="section-title">保质期提醒</text>
+    </view>
+
+    <!-- 母乳储存提醒（自动关联吸奶记录 · 国标时限） -->
+    <view class="milk-warn-block" wx:if="{{milkWarnings.length}}">
+      <view class="milk-warn-head">
+        <text class="milk-warn-title">🍼 母乳储存提醒</text>
+        <text class="milk-warn-sub">关联吸奶记录 · 按国标到期丢弃</text>
+      </view>
+      <view class="milk-warn-item" wx:for="{{milkWarnings}}" wx:key="id">
+        <view class="milk-warn-top">
+          <text class="milk-warn-name">{{item.name}}</text>
+          <text class="milk-warn-amt">{{item.amount}}</text>
+        </view>
+        <view class="milk-store-row">
+          <view class="milk-store-chip {{item.storage === 'room' ? 'on' : ''}}" data-idx="{{item.idx}}" data-st="room" catchtap="setMilkStorage">室温 4h</view>
+          <view class="milk-store-chip {{item.storage === 'fridge' ? 'on' : ''}}" data-idx="{{item.idx}}" data-st="fridge" catchtap="setMilkStorage">冷藏 48h</view>
+          <view class="milk-store-chip {{item.storage === 'freezer' ? 'on' : ''}}" data-idx="{{item.idx}}" data-st="freezer" catchtap="setMilkStorage">冷冻 3月</view>
+        </view>
+        <view class="milk-warn-bottom">
+          <text class="milk-warn-storage">{{item.storageLabel}}</text>
+          <view class="milk-warn-right">
+            <text class="milk-warn-days {{item.expired ? 'over' : ''}}">{{item.daysLabel}}</text>
+            <view class="warn-ok-btn" data-id="{{item.id}}" bindtap="dismissMilkWarning" wx:if="{{item.expired}}">知道了</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="warn-list" wx:if="{{shelfWarnings.length}}">
+      <view
+        wx:for="{{shelfWarnings}}"
+        wx:key="id"
+        class="warn-item"
+        data-id="{{item.id}}"
+        bindtap="editWarning"
+      >
+        <view class="warn-dot {{item.daysLeft < 0 ? 'over' : (item.daysLeft <= 3 ? 'urgent' : '')}}"></view>
+        <view class="warn-info">
+          <text class="warn-name">{{item.name}}</text>
+          <text class="warn-tip">{{item.tip}}</text>
+        </view>
+        <text class="warn-days {{item.daysLeft < 0 ? 'over' : (item.daysLeft <= 3 ? 'urgent' : '')}}">{{item.daysLabel}}</text>
+      </view>
+    </view>
+    <view class="warn-empty" wx:if="{{!shelfWarnings.length && !milkWarnings.length}}">
+      <text class="warn-empty-text">录入带生产日期和保质期的耗材后，自动同步提醒</text>
+    </view>
+  </view>
+
+  <!-- ==================== 模块2.5 保修期提醒（自动） ==================== -->
+  <view class="section">
+    <view class="section-head">
+      <text class="section-title">保修期提醒</text>
+    </view>
+    <view class="section-sub">电器录入保修期后自动同步 · 到期前 30 天开始提醒</view>
+    <view class="warn-list" wx:if="{{warrantyWarnings.length}}">
+      <view class="warn-item" wx:for="{{warrantyWarnings}}" wx:key="id">
+        <view class="warn-dot {{item.over ? 'over' : (item.urgent ? 'urgent' : '')}}"></view>
+        <view class="warn-info">
+          <text class="warn-name">{{item.name}}</text>
+          <text class="warn-tip">{{item.tip}}</text>
+        </view>
+        <text class="warn-days {{item.over ? 'over' : (item.urgent ? 'urgent' : '')}}">{{item.daysLabel}}</text>
+      </view>
+    </view>
+    <view class="warn-empty" wx:else>
+      <text class="warn-empty-text">暂无保修期提醒，录入电器并设置保修期后自动开启</text>
+    </view>
+  </view>
+
+  <!-- ==================== 模块2.6 库存提醒（自动） ==================== -->
+  <view class="section">
+    <view class="section-head">
+      <text class="section-title">库存提醒</text>
+    </view>
+    <view class="section-sub">录入库存后自动开启 · 低于建议量自动提醒补货</view>
+    <view class="warn-list" wx:if="{{stockWarnings.length}}">
+      <view class="warn-item" wx:for="{{stockWarnings}}" wx:key="id">
+        <view class="warn-dot {{item.over ? 'over' : (item.urgent ? 'urgent' : '')}}"></view>
+        <view class="warn-info">
+          <text class="warn-name">{{item.name}}</text>
+          <text class="warn-tip">{{item.tip}}</text>
+        </view>
+        <text class="warn-days {{item.over ? 'over' : (item.urgent ? 'urgent' : '')}}">{{item.daysLabel}}</text>
+        <view class="warn-ok-btn" data-id="{{item.id}}" catchtap="dismissStockWarning">知道了</view>
+      </view>
+    </view>
+    <view class="warn-empty" wx:else>
+      <text class="warn-empty-text">库存充足，无需提醒</text>
+    </view>
+  </view>
+
+  <!-- ==================== 模块3 好物种草 ==================== -->
+  <view class="section">
+    <view class="section-head">
+      <text class="section-title">好物种草</text>
+      <text class="section-more" bindtap="moreGoods">更多 ›</text>
+    </view>
+    <text class="section-sub">按宝宝月龄挑到刚刚好</text>
+
+    <view class="goods-list">
+      <view class="goods-card" wx:for="{{goods}}" wx:key="id" data-id="{{item.id}}" bindtap="openGoodsDetail">
+        <view class="goods-left">
+          <view class="goods-age">{{item.min}}月+ 适用</view>
+          <image class="goods-icon" src="{{item.icon}}" mode="aspectFit" />
+        </view>
+        <view class="goods-right">
+          <text class="goods-name">{{item.title}}</text>
+          <text class="goods-desc">{{item.desc}}</text>
+          <text class="goods-reason">{{item.reason}}</text>
+        </view>
+        <view class="goods-fav" wx:if="{{item.faved}}">★</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ==================== 好物详情（橱窗占位） ==================== -->
+  <dialog visible="{{goodsDetail}}" title="{{goodsDetail ? goodsDetail.title : ''}}" kicker="橱窗好物 · 智能推荐" bind:close="closeGoodsDetail">
+    <view class="gd-body" wx:if="{{goodsDetail}}">
+      <view class="gd-hero">
+        <image class="gd-icon" src="{{goodsDetail.icon}}" mode="aspectFit" />
+        <text class="gd-cat">{{goodsDetail.cat}} · {{goodsDetail.min}}月+ 适用</text>
+      </view>
+      <text class="gd-desc">{{goodsDetail.desc}}</text>
+      <view class="gd-reason">💡 {{goodsDetail.reason}}</view>
+      <view class="gd-price">
+        <text class="gd-price-label">参考价格</text>
+        <text class="gd-price-val">{{goodsDetail.price || '待上架'}}</text>
+      </view>
+      <view class="gd-actions">
+        <view class="gd-btn ghost {{goodsDetail.faved ? 'on' : ''}}" bindtap="toggleGoodsFav">{{goodsDetail.faved ? '已关注' : '加入关注'}}</view>
+        <view class="gd-btn solid" bindtap="toggleGoodsFav">前往购买</view>
+      </view>
+      <text class="gd-tip">橱窗功能即将上线，届时可直接购买，敬请期待</text>
+    </view>
+  </dialog>
+
+  <view class="bottom-space"></view>
+
+  <!-- ==================== 耗材 新增/编辑 弹窗 ==================== -->
+  <dialog visible="{{stockDialog.visible}}" title="{{stockDialog.id ? '编辑物品' : '新增物品'}}" kicker="管理宝宝用品库存" bind:close="closeStockDialog">
+    <view class="form-body">
+      <view class="form-row">
+        <text class="form-label">名称</text>
+        <input class="form-input" value="{{stockDialog.name}}" data-field="name" bindinput="onStockInput" placeholder="如：奶粉 / 纸尿裤" />
+      </view>
+      <view class="form-row">
+        <text class="form-label">品牌名称</text>
+        <input class="form-input" value="{{stockDialog.brand}}" data-field="brand" bindinput="onStockInput" placeholder="选填，如：雀巢 / 花王" />
+      </view>
+      <view class="form-row">
+        <text class="form-label">数量</text>
+        <input class="form-input" type="number" value="{{stockDialog.count}}" data-field="count" bindinput="onStockInput" placeholder="数量" />
+      </view>
+      <view class="form-row">
+        <text class="form-label">单位</text>
+        <picker mode="selector" range="{{unitOptions}}" value="{{unitIndex}}" bindchange="onStockUnit">
+          <view class="form-input picker">{{stockDialog.unit || '选择单位'}} ▾</view>
+        </picker>
+      </view>
+      <!-- 奶粉：克数滑动选择 -->
+      <view class="form-row" wx:if="{{stockKind === 'milk'}}">
+        <text class="form-label">净含量</text>
+        <view class="form-slider-wrap">
+          <slider class="form-slider" min="100" max="1200" step="10" value="{{stockDialog.grams}}" activeColor="#FFD95A" backgroundColor="#f0ead8" block-size="24" bindchange="onMilkGrams" bindchanging="onMilkGrams" />
+          <text class="form-slider-val">{{stockDialog.grams}}g</text>
+        </view>
+      </view>
+      <!-- 电器：保修期选择 -->
+      <view class="form-row" wx:elif="{{stockKind === 'appliance'}}">
+        <text class="form-label">保修期</text>
+        <picker mode="selector" range="{{warrantyOptions}}" value="{{stockDialog.warrantyMonths ? Math.max(0, warrantyOptions.indexOf(String(stockDialog.warrantyMonths))) : 1}}" bindchange="onWarranty">
+          <view class="form-input picker">{{stockDialog.warrantyMonths || 12}} 个月保修 ▾</view>
+        </picker>
+      </view>
+      <!-- 其他：尺码选择（纸尿裤 NB/S…、衣物 52/59…、纸巾 S/M…） -->
+      <view class="form-row" wx:else>
+        <text class="form-label">尺码</text>
+        <picker mode="selector" range="{{sizeOptions}}" value="{{stockDialog.sizeIndex}}" bindchange="onStockSize">
+          <view class="form-input picker">{{stockDialog.size || '通用'}} ▾</view>
+        </picker>
+      </view>
+      <view class="form-row" wx:if="{{stockKind !== 'appliance'}}">
+        <text class="form-label">生产日期</text>
+        <view class="form-input picker" bindtap="openProduceDatePicker">{{stockDialog.produceDate || '选择生产日期'}} ▾</view>
+      </view>
+      <view class="form-row" wx:if="{{stockKind === 'appliance'}}">
+        <text class="form-label">购买日期</text>
+        <view class="form-input picker" bindtap="openProduceDatePicker">{{stockDialog.produceDate || '选择购买日期'}} ▾</view>
+      </view>
+      <view class="form-row" wx:if="{{stockKind !== 'appliance'}}">
+        <text class="form-label">保质期</text>
+        <view class="form-input-wrap">
+          <input class="form-input flex" type="number" value="{{stockDialog.shelfLife}}" data-field="shelfLife" bindinput="onStockInput" placeholder="如 180" />
+          <text class="form-unit">天</text>
+        </view>
+      </view>
+      <view class="form-row">
+        <text class="form-label">购入价格</text>
+        <view class="form-input-wrap">
+          <text class="form-unit">¥</text>
+          <input class="form-input flex" type="digit" value="{{stockDialog.price}}" data-field="price" bindinput="onStockInput" placeholder="0.00" />
+        </view>
+      </view>
+      <view class="form-actions">
+        <view class="form-btn solid" hover-class="btn-press" hover-stay-time="60" bindtap="saveStock">保存</view>
+        <view class="form-btn ghost" wx:if="{{stockDialog.id}}" hover-class="btn-press" hover-stay-time="60" bindtap="removeStock">删除</view>
+      </view>
+    </view>
+  </dialog>
+
+  <!-- ==================== 保质期 新增/编辑 弹窗 ==================== -->
+  <dialog visible="{{warnDialog.visible}}" title="{{warnDialog.id ? '编辑提醒' : '添加提醒'}}" kicker="管理保质期到期提醒" bind:close="closeWarnDialog">
+    <view class="form-body">
+      <view class="form-row">
+        <text class="form-label">名称</text>
+        <input class="form-input" value="{{warnDialog.name}}" data-field="name" bindinput="onWarnInput" placeholder="如：8.25 开封奶粉" />
+      </view>
+      <view class="form-row">
+        <text class="form-label">建议日期</text>
+        <view class="form-input picker" bindtap="openWarnDatePicker">{{warnDialog.date}} ▾</view>
+      </view>
+      <view class="form-actions">
+        <view class="form-btn solid" hover-class="btn-press" hover-stay-time="60" bindtap="saveWarning">保存</view>
+        <view class="form-btn ghost" wx:if="{{warnDialog.id}}" hover-class="btn-press" hover-stay-time="60" bindtap="removeWarning">删除</view>
+      </view>
+    </view>
+  </dialog>
+
+  <!-- 自定义日期选择器 -->
+  <picker-sheet visible="{{showProduceDatePicker}}" mode="date" value="{{stockDialog.produceDate}}" bind:confirm="onProduceDate" bind:close="closeProduceDatePicker" />
+  <picker-sheet visible="{{showWarnDatePicker}}" mode="date" value="{{warnDialog.date}}" bind:confirm="onWarnDate" bind:close="closeWarnDatePicker" />
+
+  <!-- 语音录入浮层：长按+号录音中（白卡片+黄麦+声波） -->
+  <view class="voice-overlay" wx:if="{{voiceState.recording}}">
+    <view class="voice-card">
+      <view class="voice-mic-circle">
+        <image class="voice-mic-img" src="/images/icons/rec-voice.png" mode="aspectFit" />
+      </view>
+      <view class="voice-waves">
+        <view class="wave-bar"></view>
+        <view class="wave-bar"></view>
+        <view class="wave-bar"></view>
+        <view class="wave-bar"></view>
+        <view class="wave-bar"></view>
+      </view>
+      <text class="voice-title">正在聆听</text>
+      <text class="voice-sub">松开即可完成语音输入</text>
+      <view class="voice-tips">
+        <text class="voice-tips-title">库存识别示例：</text>
+        <text class="voice-tips-line">· 买了 2 包纸尿裤 NB</text>
+        <text class="voice-tips-line">· 奶粉还剩 3 罐</text>
+        <text class="voice-tips-line">· 棉柔巾用完了</text>
+        <text class="voice-tips-line">· 纸尿裤 M 号用了 5 片</text>
+        <text class="voice-tips-line">· 买了 1 瓶维生素D</text>
+      </view>
+    </view>
+  </view>
+</view>
+

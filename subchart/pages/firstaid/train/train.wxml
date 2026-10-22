@@ -1,0 +1,102 @@
+<!-- pages/train/train.wxml -->
+<view class="page-no-tab train-page" wx:if="{{skill}}">
+  <!-- 顶部安全区 + 返回（自定义导航栏规范） -->
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+  <view class="fa-nav">
+    <view class="fa-back" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">紧急照护指引</text>
+      <view class="header-title header-title-sub">{{skill.name}}</view>
+    </view>
+  </view>
+
+
+
+  <!-- 顶部：技能名 + 循环进度 + 语音开关 -->
+  <view class="top-bar">
+    <view class="skill-name">{{skill.name}}</view>
+    <view class="top-right">
+      <view class="round-text" wx:if="{{roundText}}">{{roundText}}</view>
+    </view>
+  </view>
+
+  <!-- 进度条 -->
+  <view class="progress-wrap">
+    <view class="progress-track">
+      <view class="progress-fill" style="width: {{percent}}%;"></view>
+    </view>
+    <view class="progress-text">{{stepIndex}} / {{totalSteps}}</view>
+  </view>
+
+  <!-- 主体：动作动画示意 + 计数/倒计时 大显示 -->
+  <view class="stage">
+    <!-- 步骤图示：有对应图片时显示，否则显示视频占位 -->
+    <image wx:if="{{stepImage}}" class="step-image" src="{{stepImage}}" mode="aspectFit" />
+    <view wx:else class="train-video-ph">
+      <view class="tv-icon">📺</view>
+      <view class="tv-title">跟做视频</view>
+      <view class="tv-tip">专业团队统一制作 · 即将上线</view>
+    </view>
+
+    <!-- 计数/倒计时 数字叠加显示 -->
+    <view class="anim-overlay">
+      <block wx:if="{{isPress}}">
+        <view class="beat-circle {{beatOn ? 'beat-on' : ''}}">
+          <text class="beat-count">{{countText}}</text>
+          <text class="beat-target">{{countTarget}}</text>
+        </view>
+        <view class="beat-hint">按压节奏 · {{metronomeBpm}} 次/分</view>
+      </block>
+      <block wx:elif="{{isCountdown}}">
+        <view class="count-circle">
+          <text class="count-num">{{countText}}</text>
+          <text class="count-unit">秒</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 步骤说明 -->
+  <view class="step-info">
+    <view class="step-title">{{step.title}}</view>
+    <view class="step-desc">{{step.text}}</view>
+  </view>
+
+  <!-- 操作区 -->
+  <view class="action-area">
+    <!-- 手动步骤：下一步 -->
+    <block wx:if="{{isManual}}">
+      <button class="btn-primary btn-big" bindtap="onNext" wx:if="{{phase !== 'done'}}">下一步</button>
+    </block>
+
+    <!-- 计时步骤：运行控制 -->
+    <block wx:elif="{{phase !== 'done'}}">
+      <view class="ctrl-row">
+        <button class="btn-ghost" bindtap="onPrev" wx:if="{{stepIndex > 0}}">上一步</button>
+        <button class="btn-primary btn-big" bindtap="onNext" wx:if="{{phase === 'running' || phase === 'paused'}}">
+          下一步
+        </button>
+        <button class="btn-primary" bindtap="onStart" wx:elif="{{phase === 'idle'}}">开始</button>
+      </view>
+    </block>
+  </view>
+
+  <!-- 完成页 -->
+  <view class="done-mask" wx:if="{{phase === 'done'}}">
+    <view class="done-card">
+      <view class="done-icon">🎉</view>
+      <view class="done-title">恭喜你做的很好！</view>
+      <view class="done-cheer">你已经完成了「{{skill.name}}」的全部跟做练习</view>
+      <view class="done-points">
+        <view class="done-point-title">核心要点回顾</view>
+        <view class="done-point" wx:for="{{skill.keyPoints}}" wx:key="*this">{{item}}</view>
+      </view>
+      <view class="done-warn" wx:if="{{skill.warnings.length}}">
+        <view class="done-point-title">⚠ 后续需要注意</view>
+        <view class="done-point warn" wx:for="{{skill.warnings}}" wx:key="*this">{{item}}</view>
+      </view>
+      <button class="btn-primary" bindtap="onGoHome">完成</button>
+    </view>
+  </view>
+
+</view>

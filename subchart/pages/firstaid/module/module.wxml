@@ -1,0 +1,37 @@
+<!-- pages/module/module.wxml - 模块细分页 -->
+<view class="page-no-tab">
+  <!-- 顶部安全区 + 返回（自定义导航栏规范） -->
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+  <view class="fa-nav">
+    <view class="fa-back" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">紧急照护指引</text>
+      <view class="header-title header-title-sub">{{module.name}}</view>
+    </view>
+  </view>
+
+  <!-- 分组技能列表 -->
+  <view class="group" wx:for="{{groups}}" wx:key="name" wx:for-item="group">
+    <view class="group-title">{{group.name}}</view>
+    <view
+      class="skill-card"
+      wx:for="{{group.items}}"
+      wx:key="id"
+      wx:for-item="skill"
+      data-id="{{skill.id}}"
+      bindtap="onTapSkill"
+    >
+      <image class="skill-icon" src="{{skill.icon}}" mode="aspectFit" />
+      <view class="skill-info">
+        <view class="skill-name">{{skill.name}}</view>
+        <view class="skill-desc">{{skill.description}}</view>
+      </view>
+      <view class="skill-arrow">›</view>
+    </view>
+  </view>
+
+  <!-- 免责声明 -->
+  <view class="disclaimer">
+    本应用用于日常学习与演练，不能替代专业急救培训与真实急救处置。遇紧急情况请立即拨打 120。
+  </view>
+</view>

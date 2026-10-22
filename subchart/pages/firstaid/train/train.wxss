@@ -1,0 +1,903 @@
+/* pages/train/train.wxss - 品牌色：米白 FFFDF7 / 明黄 FFD95A / 深墨 29281F */
+.train-page {
+  padding-bottom: 60rpx;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* 顶部 */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 8rpx 20rpx;
+}
+.skill-name {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #29281F;
+}
+.top-right {
+  display: flex;
+  align-items: center;
+}
+.round-text {
+  font-size: 26rpx;
+  color: #29281F;
+  background: #FFD95A;
+  padding: 8rpx 20rpx;
+  border-radius: 30rpx;
+  font-weight: 700;
+}
+
+/* 进度条 */
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+.progress-track {
+  flex: 1;
+  height: 14rpx;
+  background: #eee7d6;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFD95A, #FFB800);
+  border-radius: 8rpx;
+}
+.progress-text {
+  margin-left: 20rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+  min-width: 90rpx;
+  text-align: right;
+}
+
+/* 真人教学入口 */
+
+/* 主体大圆 */
+
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 560rpx;
+  padding: 20rpx 0;
+}
+
+/* ===== 跟练动画示意层 ===== */
+.anim-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.anim-scene {
+  position: relative;
+  width: 440rpx;
+  height: 360rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.anim-label {
+  position: absolute;
+  top: -16rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #FFD95A;
+  color: #29281F;
+  font-size: 22rpx;
+  font-weight: 700;
+  padding: 4rpx 22rpx;
+  border-radius: 24rpx;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+/* 计数数字覆盖层（压在动画之上） */
+/* 跟做视频站位（开发统一制作上传，keep 跟练模式） */
+.train-video-ph {
+  width: 100%;
+  height: 420rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(160deg, #29281F 0%, #3d3a2e 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  box-sizing: border-box;
+}
+.tv-icon { font-size: 72rpx; opacity: .9; }
+.tv-title { font-size: 34rpx; font-weight: 800; color: #FFD95A; }
+.tv-tip { font-size: 24rpx; color: rgba(255,255,255,.6); }
+
+.step-image {
+  width: 100%;
+  height: 420rpx;
+  border-radius: 28rpx;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.anim-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* ---- 心肺复苏按压 ---- */
+.a-press-body {
+  position: absolute;
+  width: 240rpx;
+  height: 130rpx;
+  background: #29281F;
+  border-radius: 30rpx;
+  bottom: 30rpx;
+}
+.a-press-hands { position: absolute; bottom: 96rpx; }
+.a-hand {
+  width: 130rpx;
+  height: 46rpx;
+  border-radius: 24rpx;
+  background: #FFD95A;
+  margin: -8rpx auto 0;
+}
+
+
+/* ---- 拍背 ---- */
+.a-pat-baby {
+  position: relative;
+  width: 120rpx;
+  transform: rotate(-12deg);
+}
+.a-pat-head {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  background: #29281F;
+  margin: 0 auto;
+}
+.a-pat-body {
+  width: 120rpx;
+  height: 170rpx;
+  background: #FFD95A;
+  border-radius: 40rpx;
+  margin-top: -6rpx;
+}
+.a-pat-hand {
+  position: absolute;
+  right: 26rpx;
+  top: 150rpx;
+  width: 90rpx;
+  height: 40rpx;
+  border-radius: 20rpx;
+  background: #29281F;
+transform-origin: right center;
+}
+
+
+/* ---- 两指压胸 ---- */
+.a-chest-baby {
+  position: relative;
+  width: 150rpx;
+  transform: rotate(4deg);
+}
+.a-chest-head {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 50%;
+  background: #29281F;
+  margin: 0 auto;
+}
+.a-chest-body {
+  width: 150rpx;
+  height: 130rpx;
+  background: #FFD95A;
+  border-radius: 40rpx;
+  margin-top: -6rpx;
+}
+.a-chest-fingers {
+  position: absolute;
+  top: 96rpx;
+  width: 60rpx;
+  height: 34rpx;
+  border-radius: 18rpx;
+  background: #29281F;
+}
+
+
+/* ---- 腹部冲击 ---- */
+.a-thrust-person { position: relative; }
+.a-thrust-head {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  background: #29281F;
+  margin: 0 auto 0;
+}
+.a-thrust-body {
+  width: 150rpx;
+  height: 190rpx;
+  background: #FFD95A;
+  border-radius: 34rpx;
+  margin-top: -6rpx;
+}
+.a-thrust-fist {
+  position: absolute;
+  left: 50%;
+  top: 96rpx;
+  margin-left: -24rpx;
+  width: 48rpx;
+  height: 60rpx;
+  border-radius: 16rpx;
+  background: #29281F;
+}
+
+
+/* ---- 人工呼吸吹气 ---- */
+.a-blow-mouth { position: relative; z-index: 2; }
+.a-blow-lips {
+  width: 120rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #29281F;
+}
+.a-blow-wave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  border: 6rpx solid #FFD95A;
+  opacity: 0;
+}
+
+
+/* ---- 收缩（凯格尔） ---- */
+.a-contract-ring {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 50%;
+  border: 12rpx solid #FFD95A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.a-contract-core {
+  width: 90rpx;
+  height: 90rpx;
+  border-radius: 50%;
+  background: #FFD95A;
+}
+
+
+
+/* ---- 放松 ---- */
+.a-relax-ring {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  border: 10rpx dashed #FFD95A;
+}
+.a-relax-core {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: #FFD95A;
+  opacity: 0.5;
+}
+
+
+/* ---- 呼吸/收腹 ---- */
+.a-breathe-belly {
+  width: 200rpx;
+  height: 150rpx;
+  border-radius: 60% 60% 50% 50%;
+  background: #29281F;
+}
+.a-breathe-core {
+  position: absolute;
+  bottom: 30rpx;
+  width: 90rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: #FFD95A;
+}
+.a-breathe-in {
+  position: absolute;
+  top: 40rpx;
+  left: 40rpx;
+  color: #FFD95A;
+  font-size: 24rpx;
+  opacity: 0;
+}
+.a-breathe-out {
+  position: absolute;
+  top: 40rpx;
+  right: 40rpx;
+  color: #FFD95A;
+  font-size: 24rpx;
+  opacity: 0;
+}
+
+
+
+
+
+/* ---- 冲洗 ---- */
+.a-rinse-hand {
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 50%;
+  background: #29281F;
+}
+.a-rinse-drop {
+  position: absolute;
+  top: 30rpx;
+  width: 18rpx;
+  height: 26rpx;
+  border-radius: 50%;
+  background: #FFD95A;
+  opacity: 0;
+}
+.a-rinse-d1 { left: 160rpx; }
+.a-rinse-d2 { left: 210rpx; }
+.a-rinse-d3 { left: 260rpx; }
+
+
+/* ---- 观察计时 ---- */
+.a-observe-eye {
+  width: 200rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: #fff;
+  border: 8rpx solid #29281F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.a-observe-pupil {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  background: #29281F;
+}
+
+
+/* ---- 冰敷 ---- */
+.a-ice-body {
+  width: 220rpx;
+  height: 120rpx;
+  border-radius: 30rpx;
+  background: #29281F;
+}
+.a-ice-cube {
+  position: absolute;
+  top: 40rpx;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 12rpx;
+  background: #FFD95A;
+}
+.a-ice-c1 { left: 110rpx; }
+.a-ice-c2 { left: 190rpx; }
+
+
+/* ---- 拍嗝 ---- */
+.a-burp-baby {
+  position: relative;
+  width: 110rpx;
+  transform: rotate(-8deg);
+}
+.a-burp-head {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: #29281F;
+  margin: 0 auto;
+}
+.a-burp-body {
+  width: 110rpx;
+  height: 120rpx;
+  background: #FFD95A;
+  border-radius: 34rpx;
+  margin-top: -6rpx;
+}
+.a-burp-hand {
+  position: absolute;
+  top: 120rpx;
+  right: 30rpx;
+  width: 80rpx;
+  height: 38rpx;
+  border-radius: 20rpx;
+  background: #29281F;
+}
+
+
+/* ---- 打圈按摩 ---- */
+.a-massage-body {
+  width: 220rpx;
+  height: 120rpx;
+  border-radius: 30rpx;
+  background: #29281F;
+}
+.a-massage-dot {
+  position: absolute;
+  top: 36rpx;
+  width: 30rpx;
+  height: 30rpx;
+  border-radius: 50%;
+  background: #FFD95A;
+}
+.a-massage-d1 { left: 90rpx; }
+.a-massage-d2 { left: 170rpx; }
+.a-massage-d3 { left: 250rpx; }
+
+
+/* ---- 洗澡 ---- */
+.a-bath-tub {
+  width: 240rpx;
+  height: 130rpx;
+  background: #29281F;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.a-bath-baby {
+  width: 120rpx;
+  text-align: center;
+}
+.a-bath-head {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #FFD95A;
+  margin: 0 auto;
+}
+.a-bath-bubble {
+  position: absolute;
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: #FFD95A;
+  opacity: 0;
+}
+.a-bath-b1 { left: 140rpx; top: 100rpx; }
+.a-bath-b2 { left: 270rpx; top: 120rpx; }
+
+
+
+/* ---- 哺乳 ---- */
+.a-feed-mom {
+  position: relative;
+  width: 160rpx;
+  height: 120rpx;
+  background: #29281F;
+  border-radius: 40rpx;
+}
+.a-feed-arm {
+  position: absolute;
+  right: -30rpx;
+  bottom: 20rpx;
+  width: 100rpx;
+  height: 26rpx;
+  border-radius: 20rpx;
+  background: #29281F;
+}
+.a-feed-baby {
+  position: absolute;
+  right: -90rpx;
+  bottom: 0;
+  width: 90rpx;
+}
+.a-feed-head {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: #FFD95A;
+}
+
+
+/* ---- 侧卧 ---- */
+.a-side-person {
+  position: relative;
+  width: 220rpx;
+}
+.a-side-head {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: #29281F;
+  margin-left: 70rpx;
+}
+.a-side-body {
+  width: 220rpx;
+  height: 110rpx;
+  background: #FFD95A;
+  border-radius: 30rpx;
+  margin-top: -12rpx;
+  transform: rotate(-4deg);
+}
+
+/* ---- 拨打120 ---- */
+.a-call-phone {
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 26rpx;
+  background: #29281F;
+}
+.a-call-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 6rpx solid #FFD95A;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+
+
+/* ---- 伤口包扎 ---- */
+.a-wound-limb {
+  width: 90rpx;
+  height: 240rpx;
+  background: #29281F;
+  border-radius: 30rpx;
+}
+.a-wound-bandage {
+  position: absolute;
+  top: 90rpx;
+  left: 50%;
+  margin-left: -55rpx;
+  width: 110rpx;
+  height: 70rpx;
+  background: #FFD95A;
+  border-radius: 12rpx;
+}
+
+
+/* ---- 夹板固定 ---- */
+.a-splint-limb {
+  width: 80rpx;
+  height: 240rpx;
+  background: #FFD95A;
+  border-radius: 26rpx;
+}
+.a-splint-board {
+  position: absolute;
+  top: 20rpx;
+  left: 50%;
+  margin-left: -46rpx;
+  width: 92rpx;
+  height: 200rpx;
+  border: 6rpx dashed #29281F;
+  border-radius: 18rpx;
+}
+
+/* ---- 捏鼻（鼻出血） ---- */
+.a-pinch-face {
+  position: relative;
+  width: 170rpx;
+  height: 210rpx;
+  background: #FFD95A;
+  border-radius: 60% 60% 46% 46%;
+}
+.a-pinch-eye {
+  position: absolute;
+  top: 60rpx;
+  width: 22rpx;
+  height: 26rpx;
+  border-radius: 50%;
+  background: #29281F;
+}
+.a-pinch-e1 { left: 44rpx; }
+.a-pinch-e2 { right: 44rpx; }
+.a-pinch-fingers {
+  position: absolute;
+  top: 118rpx;
+  left: 50%;
+  margin-left: -42rpx;
+  width: 84rpx;
+  height: 34rpx;
+  border-radius: 18rpx;
+  background: #29281F;
+}
+
+
+/* ---- 冷水浸泡 ---- */
+.a-soak-basin {
+  position: absolute;
+  bottom: 20rpx;
+  width: 260rpx;
+  height: 130rpx;
+  background: #29281F;
+  border-radius: 24rpx;
+}
+.a-soak-hand {
+  position: absolute;
+  top: 90rpx;
+  width: 90rpx;
+  height: 130rpx;
+  background: #FFD95A;
+  border-radius: 30rpx;
+}
+.a-soak-wave {
+  position: absolute;
+  bottom: 36rpx;
+  width: 30rpx;
+  height: 8rpx;
+  border-radius: 8rpx;
+  background: #FFD95A;
+}
+.a-soak-w1 { left: 150rpx; }
+.a-soak-w2 { left: 200rpx; }
+
+
+/* ---- 纱布覆盖 ---- */
+.a-cover-limb {
+  width: 90rpx;
+  height: 240rpx;
+  background: #FFD95A;
+  border-radius: 30rpx;
+}
+.a-cover-gauze {
+  position: absolute;
+  top: 80rpx;
+  left: 50%;
+  margin-left: -60rpx;
+  width: 120rpx;
+  height: 90rpx;
+  background: #fff;
+  border: 6rpx solid #29281F;
+  border-radius: 16rpx;
+}
+
+
+/* ---- 倒计时通用 ---- */
+.a-count-ring {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 50%;
+  border: 12rpx solid #FFD95A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.a-count-core {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 50%;
+  background: #FFD95A;
+}
+
+
+/* ---- 阅读示意 ---- */
+.a-read-book {
+  width: 200rpx;
+  height: 150rpx;
+  background: #29281F;
+  border-radius: 12rpx;
+  position: relative;
+}
+.a-read-page {
+  position: absolute;
+  top: 20rpx;
+  bottom: 20rpx;
+  left: 50%;
+  width: 4rpx;
+  background: #FFD95A;
+  opacity: 0.6;
+}
+
+
+/* 按压节拍圆 - 深墨底（覆盖在动画上的数字） */
+.beat-circle {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 50%;
+  background: rgba(41,40,31,0.92);
+  color: #FFD95A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6rpx 20rpx rgba(41,40,31,0.25);
+}
+.beat-circle.beat-on {
+  background: #FFD95A;
+  color: #29281F;
+  animation: beatPulse 0.55s ease-in-out infinite;
+}
+.beat-count {
+  font-size: 40rpx;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.beat-target {
+  font-size: 18rpx;
+  opacity: 0.75;
+  margin-top: 2rpx;
+  text-align: center;
+}
+.beat-hint {
+  margin-top: 8rpx;
+  font-size: 18rpx;
+  color: #8f896d;
+  font-weight: 500;
+  background: rgba(255,253,247,0.95);
+  padding: 4rpx 12rpx;
+  border-radius: 20rpx;
+  text-align: center;
+}
+
+/* 倒计时圆 - 明黄底 */
+.count-circle {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 50%;
+  border: 4rpx solid #FFD95A;
+  background: rgba(255,253,247,0.95);
+  color: #29281F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
+  animation: countPulse 1s ease-in-out infinite;
+}
+.count-num {
+  font-size: 40rpx;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.count-unit {
+  font-size: 18rpx;
+  margin-left: 4rpx;
+  font-weight: 500;
+}
+
+/* 步骤说明 */
+.step-info {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-top: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.step-title {
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #29281F;
+  margin-bottom: 14rpx;
+}
+.step-desc {
+  font-size: 28rpx;
+  color: #66635a;
+  line-height: 1.7;
+}
+
+/* 操作区 */
+.action-area {
+  margin-top: 40rpx;
+}
+.ctrl-row {
+  display: flex;
+  gap: 24rpx;
+}
+.ctrl-row button {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0;
+  margin: 0;
+  font-size: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 完成页遮罩 */
+.done-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(41,40,31,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+  padding: 40rpx;
+  box-sizing: border-box;
+}
+.done-card {
+  width: 100%;
+  max-height: 86vh;
+  overflow-y: auto;
+  background: #FFFDF7;
+  border-radius: 32rpx;
+  padding: 48rpx 36rpx 40rpx;
+  box-sizing: border-box;
+  text-align: center;
+}
+.done-icon {
+  font-size: 96rpx;
+}
+.done-title {
+  font-size: 44rpx;
+  font-weight: 800;
+  color: #29281F;
+  margin-top: 16rpx;
+}
+.done-sub {
+  font-size: 28rpx;
+  color: #8f896d;
+  margin-top: 8rpx;
+}
+.done-cheer {
+  display: inline-block;
+  margin-top: 16rpx;
+  padding: 10rpx 28rpx;
+  border-radius: 999rpx;
+  background: #FFD95A;
+  color: #29281F;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+.done-points {
+  text-align: left;
+  margin: 32rpx 0;
+}
+.done-point-title {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #29281F;
+  margin-bottom: 12rpx;
+}
+.done-point {
+  font-size: 26rpx;
+  color: #66635a;
+  line-height: 1.7;
+  padding: 6rpx 0;
+}
+.done-point.warn {
+  color: #FFD95A;
+}
+.done-warn {
+  text-align: left;
+  background: #29281F;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 32rpx;
+}
+.done-warn .done-point-title {
+  color: #FFD95A;
+}
+.done-card button {
+  margin-top: 20rpx;
+}
+
+/* keep 跟练节奏动画：节拍脉冲 + 倒计时轻脉冲 */
+@keyframes beatPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+@keyframes countPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}

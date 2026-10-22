@@ -1,0 +1,38 @@
+<view class="page-no-tab">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 顶部导航 -->
+  <view class="nav-bar">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <text class="nav-title">{{tag}}</text>
+  </view>
+
+  <scroll-view scroll-y class="body-scroll">
+    <!-- 文章头 -->
+    <view class="article-head">
+      <text class="article-tag">{{tag}}</text>
+      <view class="article-title">{{title}}</view>
+      <text class="article-intro">{{intro}}</text>
+    </view>
+
+    <!-- 正文段落 -->
+    <view class="article-section" wx:for="{{sections}}" wx:key="h">
+      <view class="sec-h">{{item.h}}</view>
+      <view class="sec-list">
+        <view class="sec-item" wx:for="{{item.list}}" wx:for-item="li" wx:key="*this">
+          <view class="sec-dot"></view>
+          <text class="sec-text">{{li}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 温馨提示 -->
+    <view class="tips-card" wx:if="{{tips.length}}">
+      <view class="tips-title">💡 温馨提示</view>
+      <text class="tips-text" wx:for="{{tips}}" wx:key="*this">{{item}}</text>
+    </view>
+
+    <view class="bottom-space"></view>
+  </scroll-view>
+</view>
+

@@ -1,0 +1,67 @@
+<!-- pages/contact/contact.wxml -->
+<view class="page-no-tab contact-page">
+  <!-- 顶部安全区 + 返回（自定义导航栏规范） -->
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+  <view class="fa-nav">
+    <view class="fa-back" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">紧急照护指引</text>
+      <view class="header-title header-title-sub">紧急联系人</view>
+    </view>
+  </view>
+
+
+  <!-- 顶部 120 快捷卡 -->
+  <view class="call120-card" bindtap="onCall120">
+    <view class="call120-left">
+      <text class="call120-num">120</text>
+      <text class="call120-label">急救电话 · 紧急情况请拨打</text>
+    </view>
+    <text class="call120-btn">☎ 拨打</text>
+  </view>
+
+  <!-- 联系人列表 -->
+  <view class="contact-list" wx:if="{{hasContacts}}">
+    <view class="list-title">我的紧急联系人</view>
+    <view
+      class="contact-card"
+      wx:for="{{contacts}}"
+      wx:key="id"
+      wx:for-item="item"
+      data-id="{{item.id}}"
+    >
+      <view class="contact-avatar">{{item.avatar}}</view>
+      <view class="contact-info">
+        <view class="contact-name-row">
+          <text class="contact-name">{{item.name}}</text>
+          <text class="contact-relation">{{item.relation}}</text>
+        </view>
+        <text class="contact-phone">{{item.phone}}</text>
+      </view>
+      <view class="contact-actions">
+        <view class="contact-act-btn call" data-id="{{item.id}}" bindtap="onCall">拨打</view>
+        <view class="contact-act-btn edit" data-id="{{item.id}}" bindtap="onEdit">编辑</view>
+        <view class="contact-act-btn del" data-id="{{item.id}}" bindtap="onDelete">删除</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <text class="empty-icon">📞</text>
+    <text class="empty-text">还没有紧急联系人</text>
+    <text class="empty-sub">添加家人、医生的电话，紧急时刻一键拨打</text>
+  </view>
+
+  <!-- 提示 -->
+  <view class="contact-tip">
+    <text class="tip-line">• 联系人仅保存在本机，请放心填写</text>
+    <text class="tip-line">• 建议至少添加 2 位家人 + 1 位就近医生</text>
+  </view>
+
+  <!-- 底部添加按钮 -->
+  <view class="bottom-bar">
+    <button class="btn-primary btn-big" bindtap="onAdd">+ 添加紧急联系人</button>
+  </view>
+
+</view>

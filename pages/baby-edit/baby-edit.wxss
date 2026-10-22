@@ -1,0 +1,221 @@
+/* ==================== 页头 ==================== */
+.page-header-back {
+  display: flex;
+  align-items: center;
+  height: 88rpx; /* 44pt 标题栏 */
+  padding: 0 32rpx;
+  box-sizing: border-box;
+}
+.header-kicker {
+  display: block;
+  font-size: 22rpx;
+  color: #8f896d;
+}
+.header-title {
+  font-size: 36rpx;
+  font-weight: 900;
+  color: #29281f;
+  margin-top: 4rpx;
+}
+
+/* ==================== 头像 ==================== */
+.avatar-pick {
+  display: flex;
+  align-items: center;
+  margin: 32rpx 32rpx 0;
+  background: #fff9e7;
+  border: 2rpx solid #f0e6cf;
+  border-radius: 32rpx;
+  padding: 32rpx;
+}
+.avatar-btn {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 16rpx;
+  background: transparent;
+  border: 2rpx solid #f0eadb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60rpx;
+  margin-right: 24rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+/* 默认熊猫 logo：白底完整显示，不裁切 */
+.avatar-logo {
+  background: transparent;
+}
+/* 新添加默认：+号 icon（点击登录图片） */
+.avatar-plus {
+  width: 96rpx;
+  height: 96rpx;
+  margin: auto;
+  background: transparent;
+}
+.avatar-txt {
+  font-size: 60rpx;
+}
+.avatar-info {
+  flex: 1;
+  min-width: 0;
+}
+.avatar-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #29281f;
+}
+.avatar-name {
+  margin-top: 16rpx;
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  box-sizing: border-box;
+  background: #fffdf7;
+  border: 2rpx solid #e8e1d0;
+  border-radius: 24rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+.avatar-sub {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 20rpx;
+  color: #806c2e;
+}
+
+/* ==================== 表单 ==================== */
+.form-group {
+  margin: 32rpx 32rpx 0;
+}
+.form-label {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #29281f;
+}
+.optional {
+  font-weight: 400;
+  color: #8f896d;
+}
+.input-box {
+  margin-top: 16rpx;
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  box-sizing: border-box;
+  background: #fffdf7;
+  border: 2rpx solid #e8e1d0;
+  border-radius: 24rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+.picker-box {
+  margin-top: 16rpx;
+  width: 100%;
+  box-sizing: border-box;
+  background: #fffdf7;
+  border: 2rpx solid #e8e1d0;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.picker-box.placeholder {
+  color: #b5af9b;
+  font-weight: 400;
+}
+.picker-arrow {
+  color: #8f896d;
+  font-size: 24rpx;
+}
+
+.gender-row {
+  display: flex;
+  margin-top: 16rpx;
+}
+.gender-btn {
+  flex: 1;
+  background: #f3f0e7;
+  color: #6d674e;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  text-align: center;
+  font-size: 24rpx;
+  font-weight: 700;
+  margin-right: 16rpx;
+}
+.gender-btn:last-child {
+  margin-right: 0;
+}
+.gender-btn.on {
+  background: #ffd95a;
+  color: #29281f;
+}
+
+.relation-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 16rpx;
+}
+.relation-chip {
+  background: #f3f0e7;
+  color: #6d674e;
+  border-radius: 24rpx;
+  padding: 16rpx 28rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  margin: 0 16rpx 16rpx 0;
+}
+.relation-chip.on {
+  background: #ffd95a;
+  color: #29281f;
+}
+.relation-chip.relation-add {
+  background: #fff;
+  border: 2rpx dashed #d59f11;
+  color: #a0812f;
+}
+
+
+/* ==================== 保存 / 移除 ==================== */
+.btn-save {
+  margin: 48rpx auto 0;
+  width: 670rpx;
+  height: 104rpx;
+  line-height: 104rpx;
+  padding: 0;
+  text-align: center;
+  background: #ffd95a;
+  color: #29281f;
+  font-size: 28rpx;
+  font-weight: 900;
+  border-radius: 32rpx;
+  display: block;
+  box-sizing: border-box;
+}
+.remove-baby {
+  width: 670rpx;
+  height: 104rpx;
+  line-height: 104rpx;
+  padding: 0;
+  margin: 24rpx auto 48rpx;
+  text-align: center;
+  background: #fffdf7;
+  color: #c14c2e;
+  font-size: 28rpx;
+  font-weight: 900;
+  border-radius: 32rpx;
+  box-sizing: border-box;
+}

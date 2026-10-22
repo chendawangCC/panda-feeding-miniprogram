@@ -1,0 +1,9 @@
+{
+  "name": "cloudData",
+  "version": "1.0.0",
+  "description": "熊宝喂养全量数据云端同步（多端/多成员）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

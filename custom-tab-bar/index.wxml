@@ -1,0 +1,31 @@
+<view class="tab-bar" wx:if="{{!hidden}}">
+  <view
+    class="tab-item {{selected === 0 ? 'active' : ''}}"
+    data-path="/pages/index/index"
+    bindtap="switchTab"
+  >
+    <view class="tab-icon {{selected === 0 ? 'active' : ''}}">
+      <image class="tab-ico {{selected === 0 ? 'active' : ''}}" src="{{selected === 0 ? '/images/icons/tab-home-active.png' : '/images/icons/tab-home.png'}}" mode="aspectFit" />
+    </view>
+    <text class="tab-label {{selected === 0 ? 'active' : ''}}">首页</text>
+  </view>
+
+  <view
+    class="tab-add {{selected === 1 ? 'active' : ''}}"
+    bindtap="onAdd"
+    bindlongpress="onAddLong"
+  >
+    <image class="tab-add-img" src="/images/tabbar/add.png" mode="aspectFit" />
+  </view>
+
+  <view
+    class="tab-item {{selected === 2 ? 'active' : ''}}"
+    data-path="/pages/plan/plan"
+    bindtap="switchTab"
+  >
+    <view class="tab-icon {{selected === 2 ? 'active' : ''}}">
+      <image class="tab-ico {{selected === 2 ? 'active' : ''}}" src="{{selected === 2 ? '/images/icons/tab-mine-active.png' : '/images/icons/tab-mine.png'}}" mode="aspectFit" />
+    </view>
+    <text class="tab-label {{selected === 2 ? 'active' : ''}}">我的</text>
+  </view>
+</view>

@@ -1,0 +1,6 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "picker-sheet": "/components/picker-sheet/picker-sheet"
+  }
+}

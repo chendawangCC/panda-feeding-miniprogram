@@ -1,0 +1,79 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/plan/plan",
+    "pages/settings/settings",
+    "pages/baby-edit/baby-edit",
+    "pages/my-babies/my-babies",
+    "pages/measure-add/measure-add"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#fffdf7",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#8f896d",
+    "selectedColor": "#b97b05",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/plan/plan",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "subPackages": [
+    {
+      "root": "subchart",
+      "pages": [
+        "pages/firstaid/index/index",
+        "pages/firstaid/account/account",
+        "pages/firstaid/baby/baby",
+        "pages/firstaid/contact/contact",
+        "pages/firstaid/contact/edit",
+        "pages/firstaid/family/family",
+        "pages/firstaid/kit/kit",
+        "pages/firstaid/mine/mine",
+        "pages/firstaid/module/module",
+        "pages/firstaid/prepare/prepare",
+        "pages/firstaid/record/record",
+        "pages/firstaid/train/train",
+        "pages/vaccine/vaccine",
+        "pages/baby-profile/baby-profile",
+        "pages/stats/stats",
+        "pages/collaboration/collaboration",
+        "pages/family-editor/family-editor",
+        "pages/privacy/privacy",
+        "pages/weekly/weekly",
+        "pages/inventory/inventory",
+        "pages/encyclopedia/encyclopedia",
+        "pages/encyclopedia-detail/encyclopedia-detail",
+        "pages/goods/goods",
+        "pages/service/service"
+      ]
+    },
+    {
+      "root": "subchart-assets",
+      "pages": []
+    }
+  ],
+  "lazyCodeLoading": "requiredComponents",
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于获取当前位置的实时天气与温度"
+    }
+  }
+}

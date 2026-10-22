@@ -1,0 +1,105 @@
+<!-- pages/account/account.wxml -->
+<view class="page-no-tab">
+  <!-- 顶部安全区 + 返回（自定义导航栏规范） -->
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+  <view class="fa-nav">
+    <view class="fa-back" bindtap="goBack">‹</view>
+  </view>
+
+
+  <!-- 已登录状态 -->
+  <block wx:if="{{loggedIn}}">
+    <view class="user-card">
+      <block wx:if="{{user.avatarImg}}">
+        <image class="user-avatar user-avatar-img" src="{{user.avatarImg}}" mode="aspectFill"></image>
+      </block>
+      <view wx:else class="user-avatar">{{user.avatar}}</view>
+      <view class="user-info">
+        <view class="user-nickname">{{user.nickname}}</view>
+        <view class="user-phone">{{user.phone || '未填写手机号'}}</view>
+      </view>
+      <view class="user-badge">{{user.loginType === 'wechat' ? '微信登录' : '已注册'}}</view>
+    </view>
+
+    <view class="action-card" bindtap="onGoBaby">
+      <view class="action-icon">👶</view>
+      <view class="action-info">
+        <view class="action-title">宝宝信息</view>
+        <view class="action-desc">完善宝宝信息，首页自动推荐适合的技能</view>
+      </view>
+      <view class="action-arrow">›</view>
+    </view>
+
+    <view class="action-card" bindtap="onEdit">
+      <view class="action-icon">✏️</view>
+      <view class="action-info">
+        <view class="action-title">修改账号信息</view>
+        <view class="action-desc">修改昵称或手机号</view>
+      </view>
+      <view class="action-arrow">›</view>
+    </view>
+
+    <button class="btn-danger" bindtap="onLogout">退出登录</button>
+  </block>
+
+  <!-- 未登录：微信一键登录 + 注册表单 -->
+  <block wx:else>
+    <view class="form-head">
+      <view class="form-title">登录 / 注册</view>
+      <view class="form-sub">登录后可同步宝宝信息与个性化技能推荐</view>
+    </view>
+
+    <!-- 微信一键登录 -->
+    <button
+      class="btn-wechat"
+      bindtap="onWechatLogin"
+      loading="{{wechatLogging}}"
+      disabled="{{wechatLogging}}"
+    >
+      <image class="btn-wechat-icon" src="/images/icons/wechat.png" mode="aspectFit" />
+      <text>微信一键登录</text>
+    </button>
+    <view class="wechat-tip">点击后授权微信头像与昵称，即可完成登录</view>
+
+    <!-- 分隔 -->
+    <view class="divider">
+      <view class="divider-line"></view>
+      <text class="divider-text">或使用昵称注册</text>
+      <view class="divider-line"></view>
+    </view>
+
+    <view class="form-card">
+      <view class="form-item">
+        <text class="form-label">昵称</text>
+        <input
+          class="form-input"
+          placeholder="请输入昵称"
+          placeholder-class="form-placeholder"
+          value="{{nickname}}"
+          bindinput="onNicknameInput"
+          maxlength="12"
+        />
+      </view>
+      <view class="form-item">
+        <text class="form-label">手机号</text>
+        <input
+          class="form-input"
+          placeholder="选填，用于紧急联系"
+          placeholder-class="form-placeholder"
+          type="number"
+          value="{{phone}}"
+          bindinput="onPhoneInput"
+          maxlength="11"
+        />
+      </view>
+    </view>
+
+    <view class="form-tip">
+      <text class="tip-line">• 账号信息仅保存在本机，不会上传</text>
+      <text class="tip-line">• 注册后建议继续填写宝宝信息，享受个性化推荐</text>
+    </view>
+
+    <button class="btn-primary btn-big" bindtap="onRegister">注册 / 保存</button>
+  </block>
+
+</view>

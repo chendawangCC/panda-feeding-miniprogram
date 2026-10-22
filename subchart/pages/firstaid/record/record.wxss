@@ -1,0 +1,182 @@
+/* pages/record/record.wxss - 品牌色：米白 FFFDF7 / 明黄 FFD95A / 深墨 29281F */
+.page {
+  padding: 30rpx;
+  padding-bottom: 60rpx;
+}
+
+/* 头部 */
+.record-head { text-align: center; padding: 20rpx 0 32rpx; }
+.record-title { font-size: 40rpx; font-weight: 800; color: #29281F; }
+.record-sub { font-size: 24rpx; color: #8f896d; margin-top: 12rpx; line-height: 1.6; padding: 0 20rpx; }
+
+/* 视频选择 */
+.video-picker {
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.video-preview {
+  width: 100%;
+  height: 420rpx;
+  background: #29281F;
+}
+.pick-placeholder {
+  height: 300rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx dashed #eee7d6;
+  border-radius: 24rpx;
+  background: #fff9e7;
+}
+.pick-icon { font-size: 60rpx; }
+.pick-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #8f896d;
+  margin-top: 16rpx;
+}
+.pick-tip { font-size: 22rpx; color: #8f896d; margin-top: 8rpx; }
+
+/* 表单 */
+.form-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 6rpx 0;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.form-item {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 2rpx solid #f6f3eb;
+}
+.form-item:last-child { border-bottom: none; }
+.form-item-col { flex-direction: column; align-items: flex-start; }
+.form-label {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #29281F;
+  width: 130rpx;
+  flex-shrink: 0;
+  margin-bottom: 18rpx;
+}
+.form-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #29281F;
+}
+.form-textarea {
+  width: 100%;
+  height: 120rpx;
+  font-size: 26rpx;
+  color: #29281F;
+  line-height: 1.6;
+}
+.form-placeholder { color: #e8e1d0; }
+
+/* 选项 chips */
+.chips { display: flex; flex-wrap: wrap; }
+.chip {
+  font-size: 25rpx;
+  color: #8f896d;
+  background: #F5F0E2;
+  border: 2rpx solid #eee7d6;
+  border-radius: 30rpx;
+  padding: 12rpx 30rpx;
+  margin: 0 16rpx 12rpx 0;
+}
+.chip.active {
+  background: #FFD95A;
+  color: #29281F;
+  border-color: #FFD95A;
+  font-weight: 700;
+}
+
+/* 提示 */
+.form-tip {
+  background: #f6f3eb;
+  border-radius: 20rpx;
+  padding: 24rpx 28rpx;
+  margin-bottom: 30rpx;
+}
+.tip-line {
+  font-size: 23rpx;
+  color: #8f896d;
+  display: block;
+  line-height: 1.7;
+}
+
+.btn-primary {
+  background: #FFD95A;
+  color: #29281F;
+  border: none;
+  border-radius: 20rpx;
+  font-weight: 800;
+}
+.btn-big { height: 96rpx; font-size: 32rpx; line-height: 96rpx; }
+
+/* 我的录制 */
+.my-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #29281F;
+  margin: 40rpx 8rpx 20rpx;
+}
+.my-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.my-video {
+  width: 200rpx;
+  height: 130rpx;
+  border-radius: 16rpx;
+  background: #29281F;
+  flex-shrink: 0;
+  margin-right: 20rpx;
+}
+.my-body { flex: 1; min-width: 0; }
+.my-name {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #29281F;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.my-meta {
+  font-size: 21rpx;
+  color: #8f896d;
+  margin-top: 8rpx;
+}
+.my-del {
+  font-size: 24rpx;
+  color: #C8102E;
+  padding: 12rpx;
+  flex-shrink: 0;
+}
+.my-empty {
+  text-align: center;
+  font-size: 24rpx;
+  color: #8f896d;
+  padding: 40rpx 0;
+  background: #fff;
+  border-radius: 20rpx;
+  border: 2rpx dashed #eee7d6;
+}
+
+.disclaimer {
+  font-size: 22rpx;
+  color: #8f896d;
+  line-height: 1.7;
+  padding: 20rpx 12rpx 8rpx;
+}

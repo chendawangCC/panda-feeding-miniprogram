@@ -1,0 +1,181 @@
+/* 页头（与其他页面一致：使用全局 page-header-back / back-btn 样式） */
+.header-kicker {
+  display: block;
+  font-size: 22rpx;
+  color: #8f896d;
+}
+.header-title {
+  font-size: 36rpx;
+  font-weight: 900;
+  color: #29281f;
+  margin-top: 4rpx;
+}
+
+/* 周报卡片 */
+.weekly-card {
+  margin: 24rpx 32rpx 0;
+  background: #fffaf0;
+  border: 2rpx solid #f0e6cf;
+  border-radius: 40rpx;
+  padding: 40rpx 32rpx;
+}
+.wc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.wc-title {
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #29281f;
+}
+.wc-range {
+  font-size: 22rpx;
+  color: #8f896d;
+}
+
+/* 指标 */
+.wc-metrics {
+  display: flex;
+  margin-top: 32rpx;
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 28rpx 8rpx;
+}
+.wc-metric {
+  flex: 1;
+  text-align: center;
+}
+.wc-m-value {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #b97b05;
+}
+.wc-m-label {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: #8f896d;
+}
+
+/* 每日明细 */
+.wc-daily-title {
+  margin-top: 40rpx;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.wc-daily-head,
+.wc-daily {
+  display: flex;
+  align-items: center;
+  padding: 18rpx 20rpx;
+  font-size: 22rpx;
+}
+.wc-daily-head {
+  margin-top: 16rpx;
+  color: #8f896d;
+}
+.wc-daily {
+  background: #fff;
+  border-radius: 20rpx;
+  margin-bottom: 12rpx;
+  color: #29281f;
+  font-weight: 700;
+}
+.wc-daily-head text,
+.wc-daily text {
+  flex: 1;
+  text-align: center;
+}
+.wc-daily .wd-date {
+  flex: 2;
+  text-align: left;
+}
+.wc-daily-head text:first-child {
+  flex: 2;
+  text-align: left;
+}
+.wc-daily .wd-feeds,
+.wc-daily-head text:nth-child(2) { color: #b97b05; }
+.wc-daily .wd-milk,
+.wc-daily-head text:nth-child(3) { color: #8f896d; }
+.wc-daily .wd-min,
+.wc-daily-head text:nth-child(4) { color: #806c2e; }
+.wc-daily .wd-pee,
+.wc-daily-head text:nth-child(5) { color: #a0812f; }
+.wc-daily .wd-poop,
+.wc-daily-head text:nth-child(6) { color: #c99a54; }
+
+/* 操作按钮 */
+.wc-actions {
+  display: flex;
+  margin: 32rpx;
+  gap: 20rpx;
+}
+.wc-share,
+.wc-save {
+  flex: 1;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  font-weight: 800;
+  padding: 24rpx 0;
+}
+.wc-share {
+  background: #29281f;
+  color: #fff;
+}
+.wc-save {
+  background: #ffd95a;
+  color: #765d18;
+}
+.wc-tip {
+  text-align: center;
+  font-size: 22rpx;
+  color: #b9b2a0;
+  margin: 0 32rpx 48rpx;
+}
+
+/* 空状态 */
+.empty {
+  margin: 200rpx 48rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.empty-icon {
+  font-size: 100rpx;
+}
+.empty-title {
+  margin-top: 32rpx;
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.empty-desc {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+  text-align: center;
+}
+.empty-btn {
+  margin-top: 40rpx;
+  background: #ffd95a;
+  color: #765d18;
+  font-size: 28rpx;
+  font-weight: 800;
+  border-radius: 40rpx;
+  padding: 20rpx 80rpx;
+}
+
+/* 周报标题：品牌 logo（白底圆形）+ 标题 */
+.wc-title-wrap { display: flex; align-items: center; }
+.wc-logo {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 12rpx; /* 圆角方形，不裁切 logo 耳朵 */
+  background: #fff;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}

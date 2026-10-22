@@ -1,0 +1,10 @@
+{
+  "name": "exportXlsx",
+  "version": "1.0.0",
+  "description": "数据导出：生成 xlsx 表格文件并返回临时下载链接",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "node-xlsx": "^0.24.0"
+  }
+}

@@ -1,0 +1,18 @@
+<view class="d-mask {{position === 'center' ? 'd-mask-center' : ''}}" wx:if="{{visible}}" bindtap="{{maskClosable ? 'onClose' : 'noop'}}" catchtouchmove="noop">
+  <view class="d-sheet {{position === 'center' ? 'd-center' : ''}} {{noSafe ? 'd-sheet-no-safe' : ''}}" style="{{bg ? 'background:' + bg : ''}}" catchtap="noop" catchtouchmove="noop">
+    <view class="d-handle" wx:if="{{position !== 'center' && !noHandle}}"></view>
+    <view class="d-header" wx:if="{{kicker || title}}">
+      <view class="d-header-txt">
+        <text class="d-kicker" wx:if="{{kicker}}">{{kicker}}</text>
+        <view class="d-title">{{title}}</view>
+      </view>
+      <view class="d-header-right">
+        <slot name="header-right"></slot>
+        <view class="d-close" wx:if="{{!noClose}}" bindtap="onClose">
+          <image class="d-close-img" src="/images/icons/rec-close.png" mode="aspectFit" />
+        </view>
+      </view>
+    </view>
+    <view class="d-body"><slot></slot></view>
+  </view>
+</view>

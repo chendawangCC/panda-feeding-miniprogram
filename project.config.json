@@ -1,0 +1,53 @@
+{
+  "description": "熊宝喂养 · 新生儿喂养助手（由 HTML 原型初步转制的微信小程序）",
+  "packOptions": {
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "cloudfunctions"
+      },
+      {
+        "type": "folder",
+        "value": ".git"
+      },
+      {
+        "type": "file",
+        "value": "README-后端部署.md"
+      },
+      {
+        "type": "suffix",
+        "value": ".zip"
+      },
+      {
+        "type": "suffix",
+        "value": ".DS_Store"
+      }
+    ],
+    "include": []
+  },
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "coverView": true,
+    "showShadowRootInWxmlPanel": true,
+    "packNpmManually": false,
+    "ignoreUploadUnusedFiles": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "compileType": "miniprogram",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "libVersion": "3.6.6",
+  "appid": "wx3f2438f1d6db2341",
+  "projectname": "panda-feeding",
+  "condition": {},
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  }
+}

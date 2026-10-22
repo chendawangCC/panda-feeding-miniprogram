@@ -1,0 +1,279 @@
+const REMIND_KEY = 'panda_remind_settings';
+const PUSH_KEY = 'panda_push_enabled';
+const cs = require('../../../utils/cloud-sync.js');
+
+const app = getApp();
+const SCOLE_LIST_CONST = () => SCOPE_LIST;
+
+// 权限清单：仅列当前小程序真实使用的能力，点击可实际触发授权
+const SCOPE_LIST = [
+  { scope: 'scope.record', key: 'record', icon: '/images/icons/rec-voice.png', name: '麦克风', desc: '语音录入' },
+  { scope: 'scope.userLocation', key: 'userLocation', icon: '/images/icons/icon-location.png', name: '位置信息', desc: '获取所在地区实时天气' },
+  { scope: 'scope.writePhotosAlbum', key: 'writePhotosAlbum', icon: '/images/icons/icon-album.png', name: '保存到相册', desc: '导出图片 / 周报保存到手机相册' }
+];
+
+const REMIND_DEF = { vaccine: true, nutrition: true, stock: true, milk: true, feed: true, memo: true };
+const REMIND_ITEMS = [
+  { key: 'vaccine', icon: '/images/icons/icon-vaccine.png', name: '疫苗提醒', desc: '临期疫苗应种提醒（含日历红点）' },
+  { key: 'nutrition', icon: '/images/icons/rec-supplement.png', name: '营养品提醒', desc: '维生素 D / 营养品补充提醒' },
+  { key: 'stock', icon: '/images/icons/cube.svg', name: '库存与保质期', desc: '库存预警、耗材保质期与保修期到期' },
+  { key: 'milk', icon: '/images/icons/rec-bottle.png', name: '母乳到期', desc: '吸奶记录按国标时限到期提醒' },
+  { key: 'feed', icon: '/images/icons/rec-nursing.png', name: '喂养提醒', desc: '喂养间隔 / 补奶建议提醒' },
+  { key: 'memo', icon: '/images/icons/book.svg', name: '每日小记', desc: '每天到点提醒记录今日小记' }
+];
+
+Page({
+  data: { logged: false, },
+
+  onShareAppMessage() {
+    return {
+        imageUrl: '/images/share-cover.png', title: '熊宝喂养 · 隐私与权限', path: 'pages/privacy/privacy' };
+  },
+  onShareTimeline() {
+    return { title: '熊宝喂养 · 隐私与权限' };
+  },
+  data: {
+    safeTop: (app.globalData && app.globalData.safeTop) || 88,
+    permissions: [],
+    reminds: Object.assign({}, REMIND_DEF),
+    remindItems: REMIND_ITEMS,
+    storageText: '0 KB',
+    pushEnabled: false
+  },
+
+  /* 注销账号：二次确认 → 云端永久删除 → 本地清空 → 回到未登录 */
+  onDeleteAccount() {
+    const cloudData = require('../../../utils/cloud-data.js');
+    const cloudSync = require('../../../utils/cloud-sync.js');
+    wx.showModal({
+      title: '注销账号',
+      content: '注销后，你的全部喂养记录、宝宝档案、库存、疫苗记录将被永久删除，且无法恢复。共享给你的宝宝数据仍保留在创建者账号中。再次登录将是全新账号。确定继续吗？',
+      confirmText: '确认注销',
+      cancelText: '再想想',
+      confirmColor: '#d9534f',
+      success: (res) => {
+        if (!res.confirm) return;
+        wx.showLoading({ title: '正在注销...', mask: true });
+        
+        // 第一步：退出家庭（如果在家庭中），确保共享宝宝数据不被删除
+        const logoutFlow = () => {
+          cloudData.deleteAccount().then(() => {
+            wx.hideLoading();
+            app.clearAllLocalData();
+            app.saveUser({ logged: false, phone: '', openid: '', nickname: '', avatar: '' });
+            this.setData({ logged: false });
+            wx.showModal({
+              title: '已注销',
+              content: '账号数据已全部删除，再次登录将是全新账号',
+              showCancel: false,
+              success: () => {
+                wx.switchTab({ url: '/pages/plan/plan' });
+              }
+            });
+          }).catch(err => {
+            wx.hideLoading();
+            wx.showToast({ title: '注销失败：' + (err.message || ''), icon: 'none' });
+          });
+        };
+        
+        // 先获取我的家庭和待审核状态，然后退出/取消申请
+        cloudSync.getMyFamilies().then(fams => {
+          const myOpenid = (app.globalData.user && app.globalData.user.openid) || '';
+          // 找出我加入的所有家庭（包括待审核的）
+          const myFamilies = (fams || []).filter(fam => 
+            (fam.members || []).some(m => m.openid === myOpenid)
+          );
+          if (myFamilies.length) {
+            // 逐个退出/取消申请
+            const promises = myFamilies.map(fam => cloudSync.leaveFamily(fam._id));
+            return Promise.all(promises);
+          }
+        }).then(() => {
+          console.log('[注销] 已退出所有家庭和待审核申请');
+          logoutFlow();
+        }).catch(() => {
+          // 失败也继续注销
+          console.log('[注销] 退出家庭失败，继续注销');
+          logoutFlow();
+        });
+      }
+    });
+  },
+
+  onLoad() {
+    let saved = {};
+    try { saved = wx.getStorageSync(REMIND_KEY) || {}; } catch (e) {}
+    this.setData({ reminds: Object.assign({}, REMIND_DEF, saved) });
+    this.refreshPermissions();
+    this.refreshStorage();
+  },
+
+  onShow() {
+    this.setData({ logged: !!(app.globalData.user && app.globalData.user.logged) });
+    // 从设置页返回后刷新授权状态
+    this.refreshPermissions();
+    this.setData({ pushEnabled: !!wx.getStorageSync(PUSH_KEY) });
+  },
+
+  /* 开启提醒推送：无需家庭，主账户即可使用（需先配置订阅消息模板） */
+  enablePush() {
+    cs.enableRemind().then(() => {
+      wx.setStorageSync(PUSH_KEY, true);
+      this.setData({ pushEnabled: true });
+      wx.showToast({ title: '提醒推送已开启', icon: 'success' });
+    }).catch(e => {
+      wx.showToast({ title: e.message || '开启失败', icon: 'none' });
+    });
+  },
+
+  /* 读取真实授权状态：getSetting + getAppAuthorizeSetting 双源，授权后进入页面/返回页面即同步 */
+  refreshPermissions() {
+    const self = this;
+    wx.getSetting({
+      success: (res) => {
+        const auth = res.authSetting || {};
+        let appAuth = {};
+        try { appAuth = wx.getAppAuthorizeSetting ? wx.getAppAuthorizeSetting() : {}; } catch (e) {}
+        const scopeMap = {
+          'scope.record': appAuth.microphoneAuthorized,
+          'scope.userLocation': appAuth.locationAuthorized,
+          'scope.writePhotosAlbum': appAuth.albumAuthorized
+        };
+        const stateOf = (scope) => {
+          const v = auth[scope];
+          if (v === true) return '已授权';
+          if (v === false) return '已拒绝';
+          const aa = scopeMap[scope];
+          if (aa === 'authorized') return '已授权';
+          if (aa === 'denied') return '已拒绝';
+          return '未开启';
+        };
+        const list = SCOLE_LIST_CONST().map((it) => Object.assign({}, it, { state: stateOf(it.scope) }));
+        self.setData({ permissions: list });
+      },
+      fail: () => {
+        const list = SCOLE_LIST_CONST().map((it) => Object.assign({}, it, { state: '未开启' }));
+        self.setData({ permissions: list });
+      }
+    });
+  },
+
+  /* 点击权限项：真实触发授权；已拒绝则引导去设置 */
+  requestAuth(e) {
+    const scope = e.currentTarget.dataset.scope;
+    const item = SCOLE_LIST_CONST().find(x => x.scope === scope);
+    if (!scope || !item) return;
+    wx.authorize({
+      scope: scope,
+      success: () => {
+        wx.showToast({ title: '已授权' + item.name, icon: 'success' });
+        this.refreshPermissions();
+      },
+      fail: () => {
+        wx.showModal({
+          title: '需要授权',
+          content: '「' + item.name + '」未获得授权，部分功能将无法使用。是否前往设置开启？',
+          confirmText: '去设置',
+          confirmColor: '#b97b05',
+          success: (r) => {
+            if (r.confirm) {
+              wx.openSetting({ success: () => setTimeout(() => this.refreshPermissions(), 500) });
+            }
+          }
+        });
+      }
+    });
+  },
+
+  /* 打开小程序设置页统一调整权限 */
+  openSetting() {
+    wx.openSetting({
+      success: () => this.refreshPermissions()
+    });
+  },
+
+  /* 站内提醒开关：同步首页每日提醒弹窗 / 日历红点 / 每日小记 */
+  onRemindSwitch(e) {
+    const key = e.currentTarget.dataset.key;
+    const val = e.detail.value;
+    const reminds = Object.assign({}, this.data.reminds, { [key]: val });
+    this.setData({ reminds });
+    try { wx.setStorageSync(REMIND_KEY, reminds); } catch (e) {}
+    wx.showToast({ title: val ? '已开启' : '已关闭', icon: 'none' });
+  },
+
+  /* 存储占用 */
+  refreshStorage() {
+    try {
+      const info = wx.getStorageInfoSync();
+      const kb = (info.currentSize / 1024).toFixed(1);
+      this.setData({ storageText: kb + ' KB' });
+    } catch (e) {}
+  },
+
+  /* 清除本地数据（强确认） */
+  clearCache() {
+    wx.showModal({
+      title: '清除本地数据',
+      content: '将删除全部喂养记录、宝宝档案与库存数据，且无法恢复。确定要清除吗？',
+      confirmText: '仍要清除',
+      confirmColor: '#d9534f',
+      success: (res) => {
+        if (!res.confirm) return;
+        wx.showModal({
+          title: '二次确认',
+          content: '此操作不可恢复，请再次确认是否清除所有本地数据？',
+          confirmText: '确认清除',
+          confirmColor: '#d9534f',
+          success: (res2) => {
+            if (!res2.confirm) return;
+            try { wx.clearStorageSync(); } catch (e) {}
+            // 重新从云端拉取数据，更新全局数据
+            const app = getApp();
+            if (app.cloudSync && app.cloudSync.pull) {
+              wx.showLoading({ title: '同步云端数据...', mask: true });
+              app.cloudSync.pull().then(() => {
+                wx.hideLoading();
+                wx.showToast({ title: '已清除本地数据并同步云端', icon: 'none' });
+                this.refreshStorage();
+                // 通知所有页面刷新
+                const pages = getCurrentPages();
+                pages.forEach(pg => { if (pg.onShow) pg.onShow(); });
+              }).catch(() => {
+                wx.hideLoading();
+                wx.showToast({ title: '已清除，重启小程序生效', icon: 'none' });
+              });
+            } else {
+              wx.showToast({ title: '已清除，重启小程序生效', icon: 'none' });
+            }
+            this.refreshStorage();
+          }
+        });
+      }
+    });
+  },
+
+  /* 隐私政策 */
+  showPolicy() {
+    wx.showModal({
+      title: '隐私政策',
+      content: '熊宝喂养是面向母婴家庭的宝宝喂养与成长记录工具。\n1. 我们仅收集你主动录入的宝宝档案、喂养记录、库存提醒等必要信息，用于为你提供记录、提醒、统计功能；\n2. 位置信息仅用于获取当地天气，麦克风仅用于语音转文字录入喂养记录，保存到相册权限仅用于将导出的成长周报保存到你的手机，以上权限均需你主动授权，可随时在设置中撤回；\n3. 多人协作功能下，你邀请的家庭成员仅可见你主动共享的宝宝相关喂养数据，我们不会向任何第三方共享你的个人信息；\n4. 所有喂养数据加密存储于云端，用于多设备同步和多人协作，你可以随时导出或删除全部数据。',
+      showCancel: false,
+      confirmText: '我知道了'
+    });
+  },
+
+  /* 用户协议 */
+  showTerms() {
+    wx.showModal({
+      title: '用户协议',
+      content: '欢迎使用熊宝喂养。\n1. 本小程序为免费工具类应用，帮助你记录宝宝的喂养、睡眠、辅食、疫苗、库存等日常数据，提供提醒和统计功能；\n2. 你录入的所有数据归你本人所有，多人协作时你可自行设置家庭成员的查看和编辑权限；\n3. 本小程序提供的喂养提醒、库存提醒、疫苗提醒仅为工具提示，不构成任何医疗建议，宝宝如有健康问题请及时咨询专业医护人员；\n4. 请妥善保管你的微信账号，因个人原因泄露账号导致的数据问题由你自行承担。',
+      showCancel: false,
+      confirmText: '我知道了'
+    });
+  },
+
+  goBack() {
+    wx.navigateBack();
+  }
+});

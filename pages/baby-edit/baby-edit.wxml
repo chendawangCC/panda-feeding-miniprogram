@@ -1,0 +1,123 @@
+<wxs module="idx">
+module.exports = {
+  of: function (list, item) {
+    if (!list) return 0;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] === item) return i;
+    }
+    return 0;
+  }
+}
+</wxs>
+<wxs module="isimg">
+module.exports = function (v) {
+  return v && (v.indexOf('/') === 0 || v.indexOf('http') === 0 || v.indexOf('wxfile') === 0 || v.indexOf('data:') === 0 || v.indexOf('cloud://') === 0);
+}
+</wxs>
+
+<view class="page-no-tab">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 页头 -->
+  <view class="page-header-back">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">{{isEdit ? '完善宝宝信息' : '只需填写宝宝小名'}}</text>
+      <view class="header-title">{{isEdit ? '宝宝详情' : '添加宝宝'}}</view>
+    </view>
+  </view>
+
+  <!-- 宝宝小名 -->
+  <view class="form-group">
+    <text class="form-label">宝宝小名</text>
+    <input class="input-box" value="{{form.name}}" bindinput="onName" placeholder="请输入宝宝小名" />
+  </view>
+
+  <!-- 必填：性别 / 出生日期 / 关系；生产方式为选填，其余（出生时刻 / 血型 / 体重 / 身长）选填 -->
+  <!-- 宝宝性别 -->
+  <view class="form-group">
+    <text class="form-label">宝宝性别</text>
+    <view class="gender-row">
+      <view
+        wx:for="{{genders}}"
+        wx:key="*this"
+        class="gender-btn {{form.gender === item ? 'on' : ''}}"
+        data-value="{{item}}"
+        bindtap="onGenderBtn"
+      >{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 出生日期 -->
+  <view class="form-group">
+    <text class="form-label">宝宝出生日期</text>
+    <view class="picker-box {{form.birthday ? '' : 'placeholder'}}" bindtap="openBirthdayPicker">{{form.birthday || '请选择出生日期'}}<text class="picker-arrow">▾</text></view>
+  </view>
+
+  <!-- 出生时刻 -->
+  <view class="form-group">
+    <text class="form-label">出生时刻 <text class="optional">（选填）</text></text>
+    <view class="picker-box {{form.time ? '' : 'placeholder'}}" bindtap="openTimePicker">{{form.time || '请选择出生时刻'}}<text class="picker-arrow">▾</text></view>
+  </view>
+
+  <!-- 我是宝宝的 -->
+  <view class="form-group">
+    <text class="form-label">我是宝宝的</text>
+    <view class="relation-row">
+      <view
+        wx:for="{{relations}}"
+        wx:key="*this"
+        class="relation-chip {{form.relation === item ? 'on' : ''}}"
+        data-value="{{item}}"
+        bindtap="onRelationBtn"
+      >{{item}}</view>
+      <view class="relation-chip relation-add" bindtap="addRelation">＋ 增加角色</view>
+    </view>
+  </view>
+
+  <!-- 生产方式 -->
+  <view class="form-group">
+    <text class="form-label">生产方式</text>
+    <view class="gender-row">
+      <view
+        wx:for="{{deliveries}}"
+        wx:key="*this"
+        class="gender-btn {{form.delivery === item ? 'on' : ''}}"
+        data-value="{{item}}"
+        bindtap="onDeliveryBtn"
+      >{{item}}</view>
+    </view>
+  </view>
+
+  <!-- 血型 -->
+  <view class="form-group">
+    <text class="form-label">血型 <text class="optional">（选填）</text></text>
+    <picker mode="selector" range="{{bloodTypes}}" bindchange="onBloodChange">
+      <view class="picker-box {{form.blood ? '' : 'placeholder'}}">{{form.blood || '请选择血型'}}<text class="picker-arrow">▾</text></view>
+    </picker>
+  </view>
+
+  <!-- 出生体重（手动填写） -->
+  <view class="form-group">
+    <text class="form-label">出生体重 <text class="optional">（选填，KG）</text></text>
+    <input class="input-box" type="digit" value="{{form.weight}}" bindinput="onWeight" placeholder="KG" />
+  </view>
+
+  <!-- 出生身长（手动填写） -->
+  <view class="form-group">
+    <text class="form-label">出生身长 <text class="optional">（选填，厘米）</text></text>
+    <input class="input-box" type="digit" value="{{form.height}}" bindinput="onHeight" placeholder="厘米" />
+  </view>
+
+
+  <!-- 保存 -->
+  <view class="btn-save" hover-class="btn-press" hover-stay-time="60" bindtap="save">保存宝宝信息</view>
+
+  <!-- 移除宝宝（仅编辑模式） -->
+  <view class="remove-baby" wx:if="{{isEdit}}" bindtap="removeBaby">移除宝宝</view>
+
+  <!-- 自定义日期/时间选择器 -->
+  <picker-sheet visible="{{showBirthdayPicker}}" mode="date" value="{{form.birthday}}" bind:confirm="onBirthday" bind:close="closeBirthdayPicker" />
+  <picker-sheet visible="{{showTimePicker}}" mode="time" value="{{form.time}}" bind:confirm="onTime" bind:close="closeTimePicker" />
+</view>
+

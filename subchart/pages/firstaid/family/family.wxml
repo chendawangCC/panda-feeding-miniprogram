@@ -1,0 +1,96 @@
+<!-- pages/family/family.wxml - 家庭急救专题页 -->
+<view class="page-no-tab">
+  <!-- 顶部安全区 + 返回（自定义导航栏规范） -->
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+  <view class="fa-nav">
+    <view class="fa-back" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">紧急照护指引</text>
+      <view class="header-title header-title-sub">家庭急救</view>
+    </view>
+  </view>
+
+
+  <!-- 顶部横幅 -->
+  <view class="family-hero">
+    <view class="family-hero-icon">🏠</view>
+    <view class="family-hero-text">
+      <view class="family-hero-title">家庭急救</view>
+      <view class="family-hero-sub">成人家用急救与护理 · 跟着真人教学视频学</view>
+    </view>
+  </view>
+
+  <!-- 家庭急救技能 -->
+  <view class="section-title">家庭急救技能</view>
+  <view
+    class="skill-card"
+    wx:for="{{skills}}"
+    wx:key="id"
+    data-id="{{item.id}}"
+    bindtap="onTapSkill"
+  >
+    <image class="skill-icon" src="{{item.icon}}" mode="aspectFit" />
+    <view class="skill-info">
+      <view class="skill-name">{{item.name}}</view>
+      <view class="skill-desc">{{item.description}}</view>
+    </view>
+    <view class="skill-arrow">›</view>
+  </view>
+
+  <!-- 规范教学视频（护士/医生上传） -->
+  <view class="section-title video-title">
+    规范教学视频
+    <text class="video-title-tag">护士 · 医生上传</text>
+  </view>
+
+  <block wx:if="{{videos.length}}">
+    <view class="video-card" wx:for="{{videos}}" wx:key="id">
+      <video
+        class="video-player"
+        src="{{item.videoPath}}"
+        controls
+        object-fit="contain"
+        show-center-play-btn="{{true}}"
+      ></video>
+      <view class="video-body">
+        <view class="video-name-row">
+          <text class="video-name">{{item.title}}</text>
+          <text class="video-type {{item.typeClass}}">{{item.typeLabel}}</text>
+        </view>
+        <view class="video-meta">
+          <text class="role-badge {{item.role === '医生' ? 'role-doctor' : (item.role === '护士' ? 'role-nurse' : 'role-user')}}">{{item.role}}</text>
+          <text class="video-author">{{item.author}}</text>
+          <text class="video-time">{{item.createTime}}</text>
+        </view>
+        <view class="video-desc" wx:if="{{item.desc}}">{{item.desc}}</view>
+        <view class="video-license" wx:if="{{item.license}}">资质证号：{{item.license}}</view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 空态 -->
+  <view class="video-empty" wx:else>
+    <view class="video-empty-icon">🎬</view>
+    <view class="video-empty-title">暂无教学视频</view>
+    <view class="video-empty-desc">欢迎有经验的护士、医生上传规范急救与护理操作演示</view>
+  </view>
+
+  <!-- 录制/上传引导卡 -->
+  <view class="record-guide">
+    <view class="record-guide-icon">📹</view>
+    <view class="record-guide-info">
+      <view class="record-guide-title">自学录制 · 上传规范教学</view>
+      <view class="record-guide-desc">录制你的操作视频，或由护士/医生上传规范急救、护理演示，帮助更多家庭</view>
+    </view>
+  </view>
+
+  <!-- 免责 -->
+  <view class="disclaimer">
+    教学视频由用户上传，内容仅供参考；急救处置请以正规培训与医生指导为准。紧急情况请立即拨打 120。
+  </view>
+
+  <!-- 底部按钮 -->
+  <view class="bottom-bar">
+    <button class="btn-record" bindtap="onRecord">📹 自学录制 / 上传教学视频</button>
+  </view>
+</view>

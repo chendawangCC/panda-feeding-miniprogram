@@ -1,0 +1,1278 @@
+<wxs src="../../utils/avatar.wxs" module="av" />
+<wxs module="fmt">
+module.exports = {
+  duration: function (s) {
+    s = Math.max(0, Math.round(s || 0));
+    var h = Math.floor(s / 3600);
+    var m = Math.floor((s % 3600) / 60);
+    var sec = s % 60;
+    if (h > 0) return h + '小时' + m + '分' + sec + '秒';
+    if (m > 0) return m + '分' + sec + '秒';
+    return sec + '秒';
+  },
+  has: function (list, item) {
+    if (!list) return false;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] === item) return true;
+    }
+    return false;
+  }
+}
+</wxs>
+
+<view class="page {{quickMode ? 'page-quick' : ''}}">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+  <block wx:if="{{!quickMode}}">
+
+  <!-- 页头 -->
+  <view class="page-header">
+    <view class="page-header-left">
+      <text class="header-kicker">{{headerDate}}</text>
+      <view class="header-title">今日日程</view>
+    </view>
+    <view class="account-scan" catchtap="scan">
+      <image class="account-scan-ico" src="/images/icons/mine-scan.png" mode="aspectFit" />
+    </view>
+  </view>
+
+  <!-- 账号卡：登录 / 设置入口（我的=记录页，账号功能收在设置中） -->
+  <view class="account-card" bindtap="onAccountTap">
+    <view class="account-avatar">
+      <image wx:if="{{!user.logged}}" class="account-avatar-add" src="/images/icons/add-baby.png" mode="aspectFit" />
+      <image wx:else class="account-avatar-img" src="{{user.avatar || '/images/brand-logo.png'}}" mode="aspectFill" />
+    </view>
+    <view class="account-info">
+      <view class="account-name-row">
+        <text class="account-name">{{(user.logged && user.nickname) ? user.nickname : '账号登录'}}</text>
+        <text class="account-family-tag" wx:if="{{isFamilyMember}}">亲友</text>
+      </view>
+      <text class="account-sub">
+        {{(user.logged && user.nickname) ? (user.phone ? '已登录 · ' + user.phone : '已登录 · 微信账号') : '设置头像和昵称后完成登录'}}
+      </text>
+    </view>
+  </view>
+
+  <!-- 宝宝信息 + 天气温度 + 下一次提醒（设计稿黄色信息栏） -->
+  <view class="info-card">
+    <view class="ic-top">
+      <block wx:if="{{babyList.length > 0 && baby.name}}">
+        <view class="ic-baby-wrap">
+          <text class="ic-baby">{{baby.name}}·{{ageText || '记录每一天'}}</text>
+        </view>
+        <view class="ic-switch" bindtap="openBabySwitcher">
+          <image class="ic-switch-ico" src="/images/icons/rec-switch.png" mode="aspectFit" />
+        </view>
+      </block>
+    </view>
+    <view class="ic-weather-row">
+      <view class="ic-wcard">
+        <text class="ic-wlabel">今日天气</text>
+        <view class="ic-wline">
+          <image class="ic-wico" src="{{weather.img || '/images/icons/weather-sun.png'}}" mode="aspectFit" />
+          <text class="ic-wval">{{weather.type}}</text>
+        </view>
+      </view>
+      <view class="ic-wcard">
+        <text class="ic-wlabel">当前温度</text>
+        <view class="ic-wline">
+          <image class="ic-wico" src="/images/icons/weather-temp.png" mode="aspectFit" />
+          <text class="ic-wval">{{weather.temp}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 日期切换 -->
+  <view class="date-row no-card">
+    <view class="date-nav" data-delta="-1" bindtap="changeDate">‹</view>
+    <view class="date-selector">
+      <view
+        wx:for="{{dates}}"
+        wx:key="index"
+        class="date-item {{selectedDate === index ? 'on' : ''}}"
+        data-index="{{index}}"
+        bindtap="selectDate"
+      >
+        <text class="date-week">{{item.today ? '今日' : item.week}}</text>
+        <text class="date-num">{{item.num}}</text>
+        <view class="dv-dots" catchtap="openDayRemind" data-ymd="{{item.ymd}}">
+          <view class="dv-dot dv-vax" wx:if="{{item.hasVaccine}}"></view>
+          <view class="dv-dot dv-supp" wx:if="{{item.hasSupp}}"></view>
+          <view class="dv-dot dv-milk" wx:if="{{item.hasMilk}}"></view>
+          <view class="dv-dot dv-shelf" wx:if="{{item.hasShelf}}"></view>
+          <view class="dv-dot dv-warr" wx:if="{{item.hasWarr}}"></view>
+        </view>
+      </view>
+    </view>
+    <view class="date-nav" data-delta="1" bindtap="changeDate">›</view>
+  </view>
+
+  <!-- 日历展开条：点击展开 / 点击收回 -->
+  <view class="cal-pull {{calendarOpen ? 'open' : ''}}" bindtap="toggleCalendar">
+    <view class="cal-pull-line"></view>
+    <text class="cal-pull-text">{{calendarOpen ? '点击收回日历' : '点击展开日历'}}</text>
+  </view>
+
+  <!-- 整月日历 -->
+  <view class="month-calendar card {{calendarOpen ? 'open' : ''}}">
+    <view class="mc-head">
+      <view class="mc-nav">
+        <view class="mc-nav-btn" catchtap="calPrevYear">«</view>
+        <view class="mc-nav-btn" catchtap="calPrevMonth">‹</view>
+        <text class="mc-title">{{calYear}} 年 {{calMonth + 1}} 月</text>
+        <view class="mc-nav-btn" catchtap="calNextMonth">›</view>
+        <view class="mc-nav-btn" catchtap="calNextYear">»</view>
+      </view>
+      <text class="mc-hint">点日期查看</text>
+    </view>
+    <view class="mc-week">
+      <text>日</text><text>一</text><text>二</text><text>三</text><text>四</text><text>五</text><text>六</text>
+    </view>
+    <view class="mc-grid">
+      <view wx:for="{{monthDays}}" wx:key="index" class="mc-cell">
+        <view
+          wx:if="{{item}}"
+          class="mc-day {{item.isSelected ? 'sel' : ''}} {{item.isToday && !item.isSelected ? 'today' : ''}} {{item.isFuture ? 'future' : ''}} {{!item.hasRecord ? 'no-record' : ''}}"
+          data-index="{{index}}"
+          bindtap="selectCalendarDay"
+        >{{item.num}}<view class="mc-vax-dot" wx:if="{{item.hasVaccine}}"></view><view class="mc-supp-dot" wx:if="{{item.hasSupp}}"></view><view class="mc-milk-dot" wx:if="{{item.hasMilk}}"></view><view class="mc-shelf-dot" wx:if="{{item.hasShelf}}"></view><view class="mc-warr-dot" wx:if="{{item.hasWarr}}"></view></view>
+      </view>
+    </view>
+    <view class="mc-bottom">
+      <view class="mc-today-btn" catchtap="goToday">回到今天</view>
+    </view>
+  </view>
+
+  <!-- 红点提醒详情弹窗（日期栏 / 整月日历红点点击） -->
+  <dialog visible="{{showDayRemind}}" title="{{dayRemind.label}}" kicker="当日提醒" bind:close="closeDayRemind">
+    <view class="dr-body">
+      <view class="dr-empty" wx:if="{{!dayRemind.items.length}}">
+        <text>这一天没有待办提醒</text>
+      </view>
+      <view wx:for="{{dayRemind.items}}" wx:key="index" class="dr-item">
+        <view class="dr-tag {{item.tag === '疫苗' ? 'vax' : 'supp'}}">{{item.tag}}</view>
+        <view class="dr-info">
+          <text class="dr-name">{{item.name}}</text>
+          <text class="dr-time" wx:if="{{item.time}}">{{item.time}}</text>
+        </view>
+        <picker wx:if="{{item.editable}}" mode="date" value="{{dayRemind.date}}" end="2030-12-31" bindchange="onDrVaxDate" data-index="{{index}}">
+          <view class="dr-edit">改日期</view>
+        </picker>
+        <view wx:if="{{item.canAck}}" class="dr-edit" bindtap="onDrMilkAck" data-index="{{index}}">知道了</view>
+      </view>
+    </view>
+  </dialog>
+
+  <!-- 喂养时间线：真实记录，倒序（最新在上），点击卡片可编辑 -->
+  <view class="timeline" wx:if="{{baby.id}}">
+    <!-- 时间轴标题 + 喂养数据图表入口 -->
+    <view class="timeline-head">
+      <text class="tl-head-title">喂养记录</text>
+      <view class="tl-head-stats" bindtap="goStats">
+        <image class="tl-head-stats-ico" src="/images/icons/rec-stats.png" mode="aspectFit" />
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="tl-empty" wx:if="{{!hasRecord}}">
+      <view class="tl-empty-icon"><image class="tl-empty-img" src="/images/icons/empty-record.png" mode="aspectFit" /></view>
+      <text class="tl-empty-title">今天还没有喂养记录</text>
+      <text class="tl-empty-sub">点击下方「＋」快速记录，或长按「＋」语音记录</text>
+    </view>
+
+    <view class="tl-item {{index === timeline.length - 1 ? 'tl-last' : ''}}" wx:for="{{timeline}}" wx:key="recIdx" data-idx="{{item.recIdx}}" bindtap="openRecordEdit">
+      <view class="tl-dot" style="background: {{item.dot}}"></view>
+      <text class="tl-time">{{item.time}}</text>
+      <view class="tl-by" wx:if="{{item.by}}">
+        <text class="tl-by-name">{{item.byDisplayName}}</text>
+
+      </view>
+
+      <!-- 亲喂 -->
+      <view class="tl-card" wx:if="{{item.type === 'nursing'}}" style="background: {{item.bg}}; border-color: {{item.border}};">
+        <view class="tl-card-head">
+          <view class="tl-card-title">
+            <view class="tl-icon" style="background: #ffe994"><image wx:if="{{item.iconImg}}" class="tl-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+            <text class="tl-name">{{item.title}}</text>
+          </view>
+          <text class="tl-prev" wx:if="{{item.prevText}}">{{item.prevText}}</text>
+        </view>
+        <view class="metrics-3">
+          <view class="metric" wx:for="{{item.metrics}}" wx:for-item="m" wx:key="label">
+            <text class="metric-label">{{m.label}}</text>
+            <text class="metric-value" style="color: {{m.color}}">{{m.value}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 瓶喂/喝水/辅食（简单横条卡） -->
+      <view class="tl-card tl-card-simple" wx:if="{{item.type === 'bottle' || item.type === 'water' || item.type === 'food'}}" style="background: {{item.bg}}; border-color: {{item.border}};">
+        <view class="tl-card-title">
+          <view class="tl-icon" style="background: {{item.type === 'bottle' ? '#c6e2fb' : item.type === 'water' ? '#c6e2fb' : '#ffe4c5'}}"><image wx:if="{{item.iconImg}}" class="tl-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+          <view class="tl-name-col">
+            <text class="tl-name">{{item.title}}</text>
+            <text class="tl-sub" wx:if="{{item.note}}">{{item.note}}</text>
+          </view>
+        </view>
+        <view class="tl-simple-right">
+          <text class="tl-tag" wx:if="{{item.tag}}" style="color: {{item.tagColor}}">{{item.tag}}</text>
+          <text class="tl-prev" wx:if="{{item.prevText}}">{{item.prevText}}</text>
+        </view>
+      </view>
+
+      <!-- 语音记录 -->
+      <view class="tl-card tl-card-simple" wx:if="{{item.type === 'voice'}}" style="background: {{item.bg}}; border-color: {{item.border}};">
+        <view class="tl-card-title">
+          <view class="tl-icon" style="background: #ffe4dd"><image wx:if="{{item.iconImg}}" class="tl-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+          <view class="tl-name-col">
+            <text class="tl-name">{{item.title}}</text>
+            <text class="tl-sub">{{item.note}}</text>
+          </view>
+        </view>
+        <view class="tl-simple-right">
+          <text class="tl-tag" style="color: #c14c2e">{{item.tag}}</text>
+          <text class="tl-prev" wx:if="{{item.prevText}}">{{item.prevText}}</text>
+        </view>
+      </view>
+
+      <!-- 吸奶 -->
+      <view class="tl-card" wx:if="{{item.type === 'pump'}}" style="background: {{item.bg}}; border-color: {{item.border}};">
+        <view class="tl-card-head">
+          <view class="tl-card-title">
+            <view class="tl-icon" style="background: #ffe4c5"><image wx:if="{{item.iconImg}}" class="tl-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+            <text class="tl-name">{{item.title}}</text>
+          </view>
+          <text class="tl-prev" wx:if="{{item.prevText}}">{{item.prevText}}</text>
+        </view>
+        <view class="metrics-3">
+          <view class="metric" wx:for="{{item.metrics}}" wx:for-item="m" wx:key="label">
+            <text class="metric-label">{{m.label}}</text>
+            <text class="metric-value" style="color: {{m.color}}">{{m.value}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 换尿布 -->
+      <view class="tl-card" wx:if="{{item.type === 'diaper'}}" style="background: {{item.bg}}; border-color: {{item.border}};">
+        <view class="tl-card-head">
+          <view class="tl-card-title">
+            <view class="tl-icon" style="background: #dff3db"><image wx:if="{{item.iconImg}}" class="tl-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+            <text class="tl-name">{{item.title}}</text>
+          </view>
+          <text class="tl-prev" wx:if="{{item.prevText}}">{{item.prevText}}</text>
+        </view>
+        <view class="diaper-fields">
+          <view class="diaper-field" wx:for="{{item.fields}}" wx:for-item="f" wx:key="label">
+            <text class="df-label">{{f.label}}</text>
+            <text class="df-value">{{f.value}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 体温（温度模块，与记录页体温项同步） -->
+      <view class="tl-card tl-card-simple" wx:if="{{item.type === 'temp'}}" style="background: {{item.bg}}; border-color: {{item.border}};">
+        <view class="tl-card-title">
+          <view class="tl-icon" style="background: #ffe7e0"><image wx:if="{{item.iconImg}}" class="tl-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+          <view class="tl-name-col">
+            <text class="tl-name">{{item.title}}</text>
+            <text class="tl-sub" wx:if="{{item.note}}">{{item.note}}</text>
+          </view>
+        </view>
+        <view class="tl-simple-right">
+          <text class="tl-tag" wx:if="{{item.tag}}" style="color: {{item.tagColor}}">{{item.tag}}</text>
+          <text class="tl-prev" wx:if="{{item.prevText}}">{{item.prevText}}</text>
+        </view>
+      </view>
+
+      <!-- 洗澡（洗澡模块，与记录页洗澡项同步） -->
+      <view class="tl-card" wx:if="{{item.type === 'bath'}}" style="background: {{item.bg}}; border-color: {{item.border}};">
+        <view class="tl-card-head">
+          <view class="tl-card-title">
+            <view class="tl-icon" style="background: #d6f4f0"><image wx:if="{{item.iconImg}}" class="tl-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+            <text class="tl-name">{{item.title}}</text>
+          </view>
+          <text class="tl-prev" wx:if="{{item.prevText}}">{{item.prevText}}</text>
+        </view>
+        <view class="metrics-3">
+          <view class="metric" wx:for="{{item.metrics}}" wx:for-item="m" wx:key="label">
+            <text class="metric-label">{{m.label}}</text>
+            <text class="metric-value" style="color: {{m.color}}">{{m.value}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 营养品 -->
+      <view class="tl-card" wx:if="{{item.type === 'supplement'}}" style="background: {{item.bg}}; border-color: {{item.border}};">
+        <view class="tl-card-head">
+          <view class="tl-card-title">
+            <view class="tl-icon" style="background: #dff3db"><image wx:if="{{item.iconImg}}" class="tl-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+            <text class="tl-name">{{item.title}}</text>
+          </view>
+          <text class="tl-prev" wx:if="{{item.prevText}}">{{item.prevText}}</text>
+        </view>
+        <view class="tl-value">{{item.value}}</view>
+      </view>
+
+      <!-- 睡眠 -->
+      <view class="tl-card" wx:if="{{item.type === 'sleep'}}" style="background: {{item.bg}}; border-color: {{item.border}};">
+        <view class="tl-card-head">
+          <view class="tl-card-title">
+            <view class="tl-icon" style="background: #e9e1ff"><image wx:if="{{item.iconImg}}" class="tl-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+            <text class="tl-name">{{item.title}}</text>
+          </view>
+          <text class="tl-prev" wx:if="{{item.prevText}}">{{item.prevText}}</text>
+        </view>
+        <view class="metrics-3">
+          <view class="metric" wx:for="{{item.metrics}}" wx:for-item="m" wx:key="label">
+            <text class="metric-label">{{m.label}}</text>
+            <text class="metric-value" style="color: {{m.color}}">{{m.value}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+  </block>
+</view>
+
+<!-- 收花动画弹窗 -->
+
+
+<!-- ==================== 宝宝切换弹窗 ==================== -->
+<dialog visible="{{babySwitchVisible}}" title="选择宝宝" kicker="切换当前记录的宝宝" bind:close="closeBabySwitcher">
+  <view class="baby-switch-body">
+    <view
+      wx:for="{{babyList}}"
+      wx:key="id"
+      class="baby-switch-item {{item.id === currentBabyId ? 'on' : ''}}"
+      data-id="{{item.id}}"
+      bindtap="selectBaby"
+    >
+      <view class="baby-switch-meta">
+        <view class="baby-switch-name-row">
+          <text class="baby-switch-name">{{item.name}}</text>
+          <text class="baby-switch-tag" wx:if="{{item.isShared}}">共享</text>
+          <text class="baby-switch-tag" wx:elif="{{item.id === currentBabyId}}">当前</text>
+        </view>
+        <text class="baby-switch-age">{{item.ageText}}</text>
+      </view>
+      <view class="baby-switch-check" wx:if="{{item.id === currentBabyId}}">✓</view>
+    </view>
+  </view>
+</dialog>
+
+<!-- ==================== 快速新增弹窗 ==================== -->
+<!-- ==================== 快速新增弹窗 ==================== -->
+<dialog visible="{{showQuick}}" bg="#FFFDF7" noClose="{{true}}" noSafe="{{true}}" noHandle="{{true}}" bind:close="closeQuick">
+    <view class="quick-wrap">
+      <!-- 白色面板：全部选项平铺 -->
+      <view class="quick-panel">
+        <view class="quick-grid">
+            <view class="quick-item quick-yellow" data-type="母乳" bindtap="selectQuick">
+              <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-nursing.png" mode="aspectFit" />
+              <text class="quick-name">亲喂</text>
+              <text class="quick-sub">左右分别计时</text>
+            </view>
+            <view class="quick-item quick-blue" data-type="配方奶" bindtap="selectQuick">
+              <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-bottle.png" mode="aspectFit" />
+              <text class="quick-name">瓶喂</text>
+              <text class="quick-sub">记录喂奶量</text>
+            </view>
+            <view class="quick-item quick-orange" data-type="吸奶" bindtap="selectQuick">
+              <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-pump.png" mode="aspectFit" />
+              <text class="quick-name">吸奶</text>
+              <text class="quick-sub">左右量与计时</text>
+            </view>
+            <view class="quick-item quick-green" data-type="营养品" bindtap="selectQuick">
+              <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-supplement.png" mode="aspectFit" />
+              <text class="quick-name">营养品</text>
+              <text class="quick-sub">可多选记录</text>
+            </view>
+            <view class="quick-item quick-orange" data-type="辅食" bindtap="selectQuick">
+              <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-food.png" mode="aspectFit" />
+              <text class="quick-name">辅食</text>
+              <text class="quick-sub">记录辅食份量</text>
+            </view>
+            <view class="quick-item quick-blue" data-type="喝水" bindtap="selectQuick">
+              <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-water.png" mode="aspectFit" />
+              <text class="quick-name">喝水</text>
+              <text class="quick-sub">记录喝水量</text>
+            </view>
+            <view class="quick-item quick-green" data-type="换尿布" bindtap="selectQuick">
+              <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-diaper.png" mode="aspectFit" />
+              <text class="quick-name">换尿布</text>
+              <text class="quick-sub">选择尿便情况</text>
+            </view>
+            <view class="quick-item quick-purple" data-type="睡眠" bindtap="selectQuick">
+              <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-sleep.png" mode="aspectFit" />
+              <text class="quick-name">睡眠</text>
+              <text class="quick-sub">记录睡眠时段</text>
+            </view>
+            <view class="quick-item quick-red" data-type="体温" bindtap="selectQuick">
+              <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-temp.png" mode="aspectFit" />
+              <text class="quick-name">体温</text>
+              <text class="quick-sub">记录宝宝体温</text>
+            </view>
+            <view class="quick-item quick-cyan" data-type="洗澡" bindtap="selectQuick">
+              <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-shower.png" mode="aspectFit" />
+              <text class="quick-name">洗澡</text>
+              <text class="quick-sub">记录洗澡时长</text>
+            </view>
+        </view>
+      </view>
+
+      <!-- 底部：语音录入按钮（按住录音、松开停止；点击无效） -->
+      <view class="quick-voice {{voiceState.recording ? 'on' : ''}} {{voiceState.recognizing ? 'rec' : ''}}"
+        bindtouchstart="voiceTouchStart" bindtouchend="voiceTouchEnd" bindtouchcancel="voiceTouchEnd" catchtap="noop">
+        <view class="quick-voice-ico-row">
+          <image class="quick-voice-ico" src="/images/icons/rec-voice.png" mode="aspectFit" />
+          <text class="quick-voice-txt">{{voiceState.recognizing ? '正在识别…' : (voiceState.recording ? '正在聆听，松开结束' : '语音录入')}}</text>
+        </view>
+        <text class="quick-voice-sub" wx:if="{{voiceState.recording}}">{{voiceState.seconds}}″</text>
+      </view>
+      <view class="quick-close" bindtap="closeQuick">
+        <text class="quick-close-ico">✕</text>
+      </view>
+    </view>
+</dialog>
+
+<!-- ==================== 记录弹窗 ==================== -->
+<dialog visible="{{record.visible}}" title="{{record.editIndex >= 0 ? '编辑' + record.type : (record.type === '换尿布' ? '记录换尿布' : '记录' + record.type)}}" kicker="{{record.editIndex >= 0 ? '修改这条记录' : '填写本次详情'}}" bind:close="closeRecord">
+    <scroll-view class="sheet-body" scroll-y>
+      <!-- 摘要 -->
+      <view class="record-summary">
+        <view class="rs-icon">
+          <image wx:if="{{record.iconImg}}" class="rs-icon-img" src="{{record.iconImg}}" mode="aspectFit" />
+          <text wx:else>{{record.icon}}</text>
+        </view>
+        <view class="rs-info">
+          <text class="rs-type">{{record.type === '换尿布' ? '换尿布' + (record.diaperChoice ? ' · ' + record.diaperChoice : '') : record.type}}</text>
+          <text class="rs-hint">{{record.hint}}</text>
+        </view>
+        <!-- 记录时间（新增默认当前时间，编辑可改，用于补记/调整；亲喂在下方记录开始/结束时间） -->
+        <view class="rs-time" wx:if="{{record.type !== '母乳' && record.type !== '配方奶' && record.type !== '瓶喂母乳' && record.type !== '吸奶' && record.type !== '换尿布' && record.type !== '辅食' && record.type !== '喝水' && record.type !== '睡眠' && record.type !== '营养品' && record.type !== '体温' && record.type !== '洗澡'}}">
+          <text class="rs-time-label">时间</text>
+          <view class="rs-time-box" bindtap="openRecordTimePicker" data-field="time" data-val="{{record.time || '12:00'}}">{{record.time || '--:--'}} ▾</view>
+        </view>
+        <!-- 辅食：过敏手册 icon（黄色摘要区右侧） -->
+        <view class="rs-guide" wx:if="{{record.type === '辅食'}}" bindtap="openAllergyGuide">
+          <image class="rs-guide-img" src="/images/icons/allergy-guide.png" mode="aspectFit" />
+        </view>
+      </view>
+
+      <!-- 配方奶 / 瓶喂母乳（按设计稿：滑动选择瓶喂量 + 开始/结束时间） -->
+      <view wx:if="{{record.type === '配方奶' || record.type === '瓶喂母乳'}}" class="sec">
+        <view class="sec-head">
+          <view>
+            <text class="sec-label">瓶喂</text>
+            <text class="sec-hint-sm">补充完成后，保存本次记录</text>
+          </view>
+        </view>
+        <view class="milk-tabs">
+          <view class="milk-tab {{record.milkType === '配方奶' ? 'on' : ''}}" data-type="配方奶" bindtap="setMilkType">配方奶</view>
+          <view class="milk-tab {{record.milkType === '瓶喂母乳' ? 'on' : ''}}" data-type="瓶喂母乳" bindtap="setMilkType">瓶喂母乳</view>
+        </view>
+        <view class="milk-amount-head">
+          <text class="milk-amount-label">滑动选择瓶喂量</text>
+          <view class="milk-amount-val"><input class="milk-amount-input" type="number" value="{{record.amount}}" bindinput="onAmountInput" /><text class="milk-amount-unit">ML</text></view>
+        </view>
+        <text class="milk-amount-hint">每5ML一个档位</text>
+        <slider class="slider" min="0" max="330" step="5" value="{{record.amount}}" activeColor="#d59f11" block-size="22" bindchanging="onAmountSlider" bindchange="onAmountSlider" />
+        <view class="milk-amount-range">
+          <text>0ML</text>
+          <text>330ML</text>
+        </view>
+        <!-- 奶粉开罐（非必选）+ 到期提醒 -->
+        <view class="milk-open-sec" wx:if="{{record.milkType === '配方奶'}}">
+          <view class="milk-open-row" bindtap="toggleMilkOpen">
+            <text class="milk-open-label">本次奶粉开罐</text>
+            <view class="milk-open-toggle {{record.milkOpen ? 'on' : ''}}">{{record.milkOpen ? '已开罐' : '未开罐'}}</view>
+          </view>
+          <view class="milk-warn-check" wx:if="{{record.milkOpen}}" bindtap="toggleMilkWarn">
+            <view class="check-box {{record.milkWarn ? 'on' : ''}}">{{record.milkWarn ? '✓' : ''}}</view>
+            <text class="check-text">到期提醒 · 开罐后 {{openDays}} 天内用完（国标）</text>
+          </view>
+        </view>
+        <!-- 记录时间：开始/结束（默认空，可手动选） -->
+        <view class="record-time-block">
+          <text class="sec-label">记录时间</text>
+          <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange">
+            <view class="date-row">{{record.recordDate}}</view>
+          </picker>
+          <view class="rt-row">
+            <view class="rt-box" bindtap="openRecordTimePicker" data-field="bottleStart" data-val="{{record.bottleStart || ''}}">
+              <text class="rt-label">开始时间</text>
+              <text class="rt-value">{{record.bottleStart || '--:--'}}</text>
+            </view>
+            <view class="rt-box" bindtap="openRecordTimePicker" data-field="bottleEnd" data-val="{{record.bottleEnd || ''}}">
+              <text class="rt-label">结束时间</text>
+              <text class="rt-value">{{record.bottleEnd || '--:--'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 亲喂 -->
+      <view wx:if="{{record.type === '母乳'}}" class="sec">
+        <view class="sec-head">
+          <view>
+            <text class="sec-label">亲喂</text>
+            <text class="sec-hint-sm">轻点左右一侧开始或结束计时</text>
+          </view>
+        </view>
+        <view class="nursing-head">
+          <text class="nursing-head-label">左右点击计时</text>
+          <view class="chip">两侧喂奶总时长 <text class="chip-strong">{{fmt.duration(record.nursingL + record.nursingR)}}</text></view>
+        </view>
+        <view class="nursing-grid">
+          <view class="nursing-side nursing-left {{record.nursingActive === '左' ? 'active' : ''}}" data-side="左" bindtap="toggleNursing">
+            <text class="nursing-last" wx:if="{{record.nursingLastSide === '左'}}">上次</text>
+            <text class="nursing-title">左</text>
+            <image class="nursing-ico-img" src="{{record.nursingActive === '左' ? '/images/icons/rec-stop.png' : '/images/icons/rec-start.png'}}" mode="aspectFit" />
+            <text class="nursing-timer">{{fmt.duration(record.nursingL)}}</text>
+          </view>
+          <view class="nursing-side nursing-right {{record.nursingActive === '右' ? 'active' : ''}}" data-side="右" bindtap="toggleNursing">
+            <text class="nursing-last" wx:if="{{record.nursingLastSide === '右'}}">上次</text>
+            <text class="nursing-title">右</text>
+            <image class="nursing-ico-img" src="{{record.nursingActive === '右' ? '/images/icons/rec-stop.png' : '/images/icons/rec-start.png'}}" mode="aspectFit" />
+            <text class="nursing-timer">{{fmt.duration(record.nursingR)}}</text>
+          </view>
+        </view>
+        <!-- 记录时间：开始/结束（未计时为空，可手动填，计时自动记录） -->
+        <view class="record-time-block">
+          <text class="sec-label">记录时间</text>
+          <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange">
+            <view class="date-row">{{record.recordDate}}</view>
+          </picker>
+          <view class="rt-row">
+            <view class="rt-box" bindtap="openRecordTimePicker" data-field="nursingStart" data-val="{{record.nursingStart || ''}}">
+              <text class="rt-label">开始时间</text>
+              <text class="rt-value">{{record.nursingStart || '--:--'}}</text>
+            </view>
+            <view class="rt-box" bindtap="openRecordTimePicker" data-field="nursingEnd" data-val="{{record.nursingEnd || ''}}">
+              <text class="rt-label">结束时间</text>
+              <text class="rt-value">{{record.nursingEnd || '--:--'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 吸奶 -->
+      <view wx:if="{{record.type === '吸奶'}}" class="sec">
+        <view class="sec-head">
+          <view>
+            <text class="sec-label">吸奶</text>
+            <text class="sec-hint-sm">分别填写左右吸奶量，也可单独计时</text>
+          </view>
+        </view>
+        <view class="pump-head-row">
+          <text class="pump-head-label">左右分别记录</text>
+          <view class="chip">两侧喂奶总时长 <text class="chip-strong">{{fmt.duration(record.pumpL + record.pumpR)}}</text> · 总量 <text class="chip-strong">{{record.pumpLeftAmt + record.pumpRightAmt}} ml</text></view>
+        </view>
+        <view class="pump-grid">
+          <view class="pump-card pump-left {{record.pumpActive === '左' ? 'active' : ''}}" data-side="左" bindtap="togglePump">
+            <text class="pump-last" wx:if="{{record.pumpLastSide === '左'}}">上次</text>
+            <text class="pump-title">左</text>
+            <image class="pump-ico-img" src="{{record.pumpActive === '左' ? '/images/icons/rec-stop.png' : '/images/icons/rec-start.png'}}" mode="aspectFit" />
+            <text class="pump-timer">{{fmt.duration(record.pumpL)}}</text>
+          </view>
+          <view class="pump-card pump-right {{record.pumpActive === '右' ? 'active' : ''}}" data-side="右" bindtap="togglePump">
+            <text class="pump-last" wx:if="{{record.pumpLastSide === '右'}}">上次</text>
+            <text class="pump-title">右</text>
+            <image class="pump-ico-img" src="{{record.pumpActive === '右' ? '/images/icons/rec-stop.png' : '/images/icons/rec-start.png'}}" mode="aspectFit" />
+            <text class="pump-timer">{{fmt.duration(record.pumpR)}}</text>
+          </view>
+        </view>
+        <!-- 吸奶量：滑动选择（对齐瓶喂） -->
+        <view class="pump-amt-block">
+          <view class="pump-amt-head">
+            <text class="pump-amt-label">滑动选择吸奶量</text>
+            <text class="pump-amt-hint">每5ML一个档位</text>
+          </view>
+          <view class="pump-amt-row">
+            <text class="pump-amt-side">左</text>
+            <slider class="pump-amt-slider" min="0" max="300" step="5" value="{{record.pumpLeftAmt}}" data-side="左" bindchanging="onPumpSlider" bindchange="onPumpSlider" activeColor="#d59f11" block-size="18" />
+            <input class="pump-amt-input" type="number" value="{{record.pumpLeftAmt}}" data-side="左" bindinput="onPumpAmount" />
+          </view>
+          <view class="pump-amt-row">
+            <text class="pump-amt-side">右</text>
+            <slider class="pump-amt-slider" min="0" max="300" step="5" value="{{record.pumpRightAmt}}" data-side="右" bindchanging="onPumpSlider" bindchange="onPumpSlider" activeColor="#d59f11" block-size="18" />
+            <input class="pump-amt-input" type="number" value="{{record.pumpRightAmt}}" data-side="右" bindinput="onPumpAmount" />
+          </view>
+          <view class="milk-amount-range">
+            <text>0ML</text>
+            <text>300ML</text>
+          </view>
+        </view>
+        <!-- 记录时间：开始/结束（默认空，可手动填，计时自动记录） -->
+        <view class="record-time-block">
+          <text class="sec-label">记录时间</text>
+          <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange">
+            <view class="date-row">{{record.recordDate}}</view>
+          </picker>
+          <view class="rt-row">
+            <view class="rt-box" bindtap="openRecordTimePicker" data-field="pumpStart" data-val="{{record.pumpStart || ''}}">
+              <text class="rt-label">开始时间</text>
+              <text class="rt-value">{{record.pumpStart || '--:--'}}</text>
+            </view>
+            <view class="rt-box" bindtap="openRecordTimePicker" data-field="pumpEnd" data-val="{{record.pumpEnd || ''}}">
+              <text class="rt-label">结束时间</text>
+              <text class="rt-value">{{record.pumpEnd || '--:--'}}</text>
+            </view>
+          </view>
+        </view>
+        <!-- 母乳储存方式（国标） -->
+        <view class="milk-store-sec">
+          <text class="milk-store-label">本次母乳储存</text>
+          <view class="milk-store-row">
+            <view class="store-chip {{record.storage === 'room' ? 'on' : ''}}" data-st="room" bindtap="onStorage">室温 4h</view>
+            <view class="store-chip {{record.storage === 'fridge' ? 'on' : ''}}" data-st="fridge" bindtap="onStorage">冷藏 48h</view>
+            <view class="store-chip {{record.storage === 'freezer' ? 'on' : ''}}" data-st="freezer" bindtap="onStorage">冷冻 3个月</view>
+          </view>
+          <text class="milk-store-hint">按国标：室温≤25℃ 4小时 / 冷藏4℃ 48小时 / 冷冻-18℃ 3个月</text>
+        </view>
+      </view>
+
+      <!-- 营养品 -->
+      <view wx:if="{{record.type === '营养品'}}" class="sec">
+        <view class="sec-head">
+          <view>
+            <text class="sec-label">营养品</text>
+            <text class="sec-hint-sm">可同时选择多种营养品</text>
+          </view>
+        </view>
+        <view class="supp-head">
+          <text class="supp-head-label">选择本次营养品 可多选</text>
+          <view class="supp-more" bindtap="addSupp">添加更多</view>
+        </view>
+        <view class="supp-grid">
+          <view
+            wx:for="{{record.supps}}"
+            wx:key="*this"
+            class="supp-item {{fmt.has(record.selectedSupps, item) ? 'on' : ''}}"
+            data-name="{{item}}"
+            bindtap="toggleSupp"
+            bindlongpress="removeSupp"
+          >{{item}}</view>
+        </view>
+        <!-- 记录时间：服用时间 + 下次补充提醒设置（点击按钮后设置，可不填） -->
+        <view class="record-time-block">
+          <text class="sec-label">记录时间</text>
+          <view class="rt-row">
+            <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange" class="rt-box">
+              <view class="date-row" style="margin-top:0;border:none;padding:0;height:100%;display:flex;align-items:center;justify-content:center;">{{record.recordDate}}</view>
+            </picker>
+            <view class="rt-box" bindtap="openRecordTimePicker" data-field="suppTime" data-val="{{record.suppTime || ''}}">
+              <text class="rt-value">{{record.suppTime || '--:--'}}</text>
+            </view>
+          </view>
+          <view class="rt-box rt-set" bindtap="openSuppRemind" style="margin-top:16rpx;width:100%;box-sizing:border-box;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:16rpx;">
+            <image class="rt-set-ico" src="/images/icons/supp-remind.png" mode="aspectFit" style="margin-top:0;" />
+            <view style="display:flex;flex-direction:column;">
+              <text class="rt-label" style="margin-top:0;text-align:center;">下次补充提醒设置</text>
+              <text class="rt-value {{record.suppRemindFreq ? 'rt-set-val' : 'rt-placeholder'}}" style="text-align:center;">{{record.suppRemindFreq ? record.suppRemindFreq + ' ' + (record.suppRemindTime || '') : '去设置（可不填）'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 换尿布 -->
+      <view wx:if="{{record.type === '换尿布'}}" class="sec">
+        <view class="sec-block">
+          <text class="sec-label">状态</text>
+          <view class="diaper-choice-grid">
+            <view class="diaper-choice {{record.diaperChoice === '嘘嘘' ? 'on' : ''}}" data-choice="嘘嘘" bindtap="selectDiaper">💧<text>嘘嘘</text></view>
+            <view class="diaper-choice {{record.diaperChoice === '臭臭' ? 'on' : ''}}" data-choice="臭臭" bindtap="selectDiaper">💩<text>臭臭</text></view>
+            <view class="diaper-choice {{record.diaperChoice === '嘘嘘+臭臭' ? 'on' : ''}}" data-choice="嘘嘘+臭臭" bindtap="selectDiaper">💧💩<text>都有</text></view>
+          </view>
+        </view>
+        <view class="sec-block" wx:if="{{record.diaperChoice === '嘘嘘' || record.diaperChoice === '嘘嘘+臭臭'}}">
+          <text class="sec-label">嘘嘘颜色</text>
+          <view class="sample-row">
+            <view class="sample {{record.peeColor === '透明' ? 'on' : ''}}" data-field="peeColor" data-val="透明" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#f5f5f5;border:2rpx solid #ddd"></view><text>透明</text>
+            </view>
+            <view class="sample {{record.peeColor === '淡黄' ? 'on' : ''}}" data-field="peeColor" data-val="淡黄" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#fff3b0"></view><text>淡黄</text>
+            </view>
+            <view class="sample {{record.peeColor === '深黄' ? 'on' : ''}}" data-field="peeColor" data-val="深黄" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#f0d060"></view><text>深黄</text>
+            </view>
+            <view class="sample {{record.peeColor === '橙黄' ? 'on' : ''}}" data-field="peeColor" data-val="橙黄" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#f5a623"></view><text>橙黄</text>
+            </view>
+            <view class="sample {{record.peeColor === '粉色' ? 'on' : ''}}" data-field="peeColor" data-val="粉色" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#f8b6c8"></view><text>粉色</text>
+            </view>
+            <view class="sample {{record.peeColor === '绿色' ? 'on' : ''}}" data-field="peeColor" data-val="绿色" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#a8d08d"></view><text>绿色</text>
+            </view>
+          </view>
+        </view>
+        <view class="sec-block" wx:if="{{record.diaperChoice === '臭臭' || record.diaperChoice === '嘘嘘+臭臭'}}">
+          <text class="sec-label">便便颜色</text>
+          <view class="sample-row">
+            <view class="sample {{record.stoolColor === '金黄' ? 'on' : ''}}" data-field="stoolColor" data-val="金黄" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#f5c542"></view><text>金黄</text>
+            </view>
+            <view class="sample {{record.stoolColor === '黄色' ? 'on' : ''}}" data-field="stoolColor" data-val="黄色" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#f0d060"></view><text>黄色</text>
+            </view>
+            <view class="sample {{record.stoolColor === '棕色' ? 'on' : ''}}" data-field="stoolColor" data-val="棕色" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#8b5a2b"></view><text>棕色</text>
+            </view>
+            <view class="sample {{record.stoolColor === '绿色' ? 'on' : ''}}" data-field="stoolColor" data-val="绿色" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#7cb342"></view><text>绿色</text>
+            </view>
+            <view class="sample {{record.stoolColor === '黄绿色' ? 'on' : ''}}" data-field="stoolColor" data-val="黄绿色" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#cddc39"></view><text>黄绿色</text>
+            </view>
+            <view class="sample {{record.stoolColor === '墨绿色' ? 'on' : ''}}" data-field="stoolColor" data-val="墨绿色" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#2e5d3a"></view><text>墨绿色</text>
+            </view>
+            <view class="sample {{record.stoolColor === '灰白色' ? 'on' : ''}}" data-field="stoolColor" data-val="灰白色" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#e8e4d9"></view><text>灰白色</text>
+            </view>
+            <view class="sample {{record.stoolColor === '黑色' ? 'on' : ''}}" data-field="stoolColor" data-val="黑色" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#2c2c2c"></view><text>黑色</text>
+            </view>
+            <view class="sample {{record.stoolColor === '红色' ? 'on' : ''}}" data-field="stoolColor" data-val="红色" bindtap="selectDiaperSample">
+              <view class="sample-img-color" style="background:#e5484d"></view><text>红色</text>
+            </view>
+          </view>
+        </view>
+        <view class="sec-block" wx:if="{{record.diaperChoice === '臭臭' || record.diaperChoice === '嘘嘘+臭臭'}}">
+          <text class="sec-label">便便性状</text>
+          <view class="sample-row">
+            <view class="sample {{record.stoolTexture === '水样便' ? 'on' : ''}}" data-field="stoolTexture" data-val="水样便" bindtap="selectDiaperSample">
+              <image class="sample-img" src="/images/diaper/water.jpg" mode="aspectFill" /><text>水样便</text>
+            </view>
+            <view class="sample {{record.stoolTexture === '糊状便' ? 'on' : ''}}" data-field="stoolTexture" data-val="糊状便" bindtap="selectDiaperSample">
+              <image class="sample-img" src="/images/diaper/paste.jpg" mode="aspectFill" /><text>糊状便</text>
+            </view>
+            <view class="sample {{record.stoolTexture === '软便' ? 'on' : ''}}" data-field="stoolTexture" data-val="软便" bindtap="selectDiaperSample">
+              <image class="sample-img" src="/images/diaper/soft.jpg" mode="aspectFill" /><text>软便</text>
+            </view>
+            <view class="sample {{record.stoolTexture === '奶瓣便' ? 'on' : ''}}" data-field="stoolTexture" data-val="奶瓣便" bindtap="selectDiaperSample">
+              <image class="sample-img" src="/images/diaper/paste.jpg" mode="aspectFill" /><text>奶瓣便</text>
+            </view>
+            <view class="sample {{record.stoolTexture === '成形便' ? 'on' : ''}}" data-field="stoolTexture" data-val="成形便" bindtap="selectDiaperSample">
+              <image class="sample-img" src="/images/diaper/solid.jpg" mode="aspectFill" /><text>成形便</text>
+            </view>
+            <view class="sample {{record.stoolTexture === '黏液便' ? 'on' : ''}}" data-field="stoolTexture" data-val="黏液便" bindtap="selectDiaperSample">
+              <image class="sample-img" src="/images/diaper/mucus.jpg" mode="aspectFill" /><text>黏液便</text>
+            </view>
+            <view class="sample {{record.stoolTexture === '硬便' ? 'on' : ''}}" data-field="stoolTexture" data-val="硬便" bindtap="selectDiaperSample">
+              <image class="sample-img" src="/images/diaper/hard.jpg" mode="aspectFill" /><text>硬便</text>
+            </view>
+            <view class="sample {{record.stoolTexture === '泡沫便' ? 'on' : ''}}" data-field="stoolTexture" data-val="泡沫便" bindtap="selectDiaperSample">
+              <image class="sample-img" src="/images/diaper/water.jpg" mode="aspectFill" /><text>泡沫便</text>
+            </view>
+            <view class="sample {{record.stoolTexture === '干结便' ? 'on' : ''}}" data-field="stoolTexture" data-val="干结便" bindtap="selectDiaperSample">
+              <image class="sample-img" src="/images/diaper/hard.jpg" mode="aspectFill" /><text>干结便</text>
+            </view>
+          </view>
+        </view>
+        <!-- 纸尿裤尺码选择（可选填，放在扣除数量上方） -->
+        <view class="sec-block">
+          <text class="sec-label">纸尿裤尺码</text>
+          <view class="diaper-size-row">
+            <view
+              wx:for="{{diaperSizes}}"
+              wx:key="*this"
+              class="diaper-size-chip {{record.diaperSize === item ? 'on' : ''}}"
+              data-size="{{item}}"
+              bindtap="selectDiaperSize"
+            >{{item}}</view>
+          </view>
+          <text class="sec-hint">选填 · 选择尺码后换尿布将自动扣除对应库存</text>
+        </view>
+        <view class="diaper-count" wx:if="{{record.diaperStock > 0}}">
+          <view class="dc-info">
+            <text class="dc-title">尿布扣除数量</text>
+            <text class="dc-sub">库存剩余 <text class="dc-strong">{{record.diaperStock}}</text> 片</text>
+          </view>
+          <view class="dc-stepper">
+            <view class="dc-btn" data-delta="-1" bindtap="adjustDiaperAmount">−</view>
+            <text class="dc-num">{{record.diaperAmount}}</text>
+            <view class="dc-btn dc-btn-on" data-delta="1" bindtap="adjustDiaperAmount">+</view>
+          </view>
+        </view>
+        <!-- 记录时间：更换时间（按设计稿：记录时间 + 更换时间 标签） -->
+        <view class="record-time-block">
+          <text class="sec-label">记录时间</text>
+          <view class="rt-row">
+            <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange" class="rt-box">
+              <view class="date-row" style="margin-top:0;border:none;padding:0;height:100%;display:flex;align-items:center;justify-content:center;">{{record.recordDate}}</view>
+            </picker>
+            <view class="rt-box" bindtap="openRecordTimePicker" data-field="time" data-val="{{record.time || ''}}">
+              <text class="rt-value">{{record.time || '--:--'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 睡眠 -->
+      <view wx:if="{{record.type === '睡眠'}}" class="sec">
+        <view class="sec-head">
+          <view>
+            <text class="sec-label">睡眠</text>
+            <text class="sec-hint-sm">可计时或手动填写起止时间，自动统计时长</text>
+          </view>
+          <view class="chip chip-purple">本次 <text class="chip-strong">{{fmt.duration(record.sleepSeconds)}}</text></view>
+        </view>
+        <view class="sleep-tip">点击「睡了」后点保存可持续计时；睡醒后点击时间轴上的这条记录，继续编辑「醒了」并保存，即可完成本次睡眠统计</view>
+        <view class="sleep-big-btn {{record.sleepRunning ? 'on' : ''}}" bindtap="toggleSleep">
+          <text class="sleep-big-txt">{{record.sleepRunning ? '正在睡眠 · 点击记录「醒了」' : '睡着了'}}</text>
+          <text class="sleep-big-sub">{{record.sleepRunning ? '点击「醒了」自动记录结束时间' : '点击自动记录开始时间'}}</text>
+        </view>
+        <view class="sec-block">
+          <text class="sec-label">记录时间</text>
+          <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange">
+            <view class="date-row">{{record.recordDate}}</view>
+          </picker>
+          <view class="time-row">
+            <view class="time-box" bindtap="openRecordTimePicker" data-field="sleepStart" data-val="{{record.sleepStart}}">
+              <text class="time-label">睡了</text>
+              <text class="time-value">{{record.sleepStart || '--:--'}}</text>
+            </view>
+            <view class="time-box" bindtap="openRecordTimePicker" data-field="sleepEnd" data-val="{{record.sleepEnd}}">
+              <text class="time-label">醒了</text>
+              <text class="time-value">{{record.sleepEnd || '--:--'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 辅食 -->
+      <view wx:if="{{record.type === '辅食'}}" class="sec">
+        <view class="food-block">
+          <text class="sec-label">宝宝吃了什么</text>
+          <view class="food-form">
+            <view class="food-form-item">
+              <text class="ff-label">辅食名称</text>
+              <view class="ff-input ff-pick" bindtap="openFoodPicker">
+                <text class="ff-input-txt {{record.selectedFoods.length ? '' : 'ff-ph'}}">{{record.selectedFoodsText || '点击选择（可多选）'}}</text>
+                <text class="ff-arrow">▾</text>
+              </view>
+            </view>
+            <view class="food-form-item">
+              <text class="ff-label">重量</text>
+              <view class="ff-weight-row">
+                <input class="ff-input ff-num" type="number" value="{{record.foodWeight}}" bindinput="onFoodWeightInput" placeholder="0" />
+                <picker class="ff-picker" mode="selector" range="{{foodUnits}}" value="{{foodUnitIdx}}" bindchange="onFoodUnitChange">
+                  <view class="ff-input ff-unit">{{record.foodUnit}} ▾</view>
+                </picker>
+              </view>
+            </view>
+          </view>
+        </view>
+        <!-- 记录时间 -->
+        <view class="record-time-block" style="margin-top:20rpx;">
+          <text class="sec-label">记录时间</text>
+          <view class="rt-row">
+            <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange" class="rt-box">
+              <view class="date-row" style="margin-top:0;border:none;padding:0;height:100%;display:flex;align-items:center;justify-content:center;">{{record.recordDate}}</view>
+            </picker>
+            <view class="rt-box" bindtap="openRecordTimePicker" data-field="time" data-val="{{record.time || ''}}">
+              <text class="rt-value">{{record.time || '--:--'}}</text>
+            </view>
+          </view>
+        </view>
+        <!-- 是否过敏：标题在食物过敏选择左上方 -->
+        <view class="af-head">
+          <text class="sec-label">是否过敏</text>
+        </view>
+        <!-- 过敏判断：根据已选食材动态增减（已判断过的食材不再出现） -->
+        <view class="af-list" wx:if="{{record.pendingAllergyFoods.length}}">
+          <view class="af-item" wx:for="{{record.pendingAllergyFoods}}" wx:key="*this">
+            <text class="af-name">{{item}}</text>
+            <view class="af-btns">
+              <view class="af-btn {{record.foodAllergy[item] === true ? 'on' : ''}}" bindtap="setFoodAllergy" data-food="{{item}}" data-val="1">过敏</view>
+              <view class="af-btn {{record.foodAllergy[item] === false ? 'on' : ''}}" bindtap="setFoodAllergy" data-food="{{item}}" data-val="0">不过敏</view>
+            </view>
+          </view>
+        </view>
+        <view class="af-done" wx:elif="{{record.selectedFoods.length}}">所选食物此前均已判断过过敏情况</view>
+      </view>
+
+      <!-- 喝水 -->
+      <view wx:if="{{record.type === '喝水'}}" class="sec">
+        <view class="sec-head">
+          <view>
+            <text class="sec-label">喝水</text>
+            <text class="sec-hint-sm">填写饮水量ml</text>
+          </view>
+        </view>
+        <view class="temp-head">
+          <text class="sec-label">喝水量</text>
+          <view class="temp-num">
+            <text wx:if="{{!waterEditing}}" class="temp-num-val" bindtap="onWaterNumTap">{{record.water}}</text>
+            <input wx:else class="temp-input" type="number" focus="{{waterEditing}}" value="{{record.water}}" bindinput="onWaterInput" bindblur="onWaterBlur" placeholder="0" />
+            <text class="temp-unit">ML</text>
+          </view>
+        </view>
+        <slider class="slider slider-blue" min="0" max="330" step="5" value="{{record.water}}" activeColor="#6f8ee0" block-size="22" bindchanging="onWater" bindchange="onWater" />
+        <view class="water-range"><text>0ML</text><text>330ML</text></view>
+        <!-- 记录时间：饮水时间 -->
+        <view class="record-time-block">
+          <text class="sec-label">记录时间</text>
+          <view class="rt-row">
+            <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange" class="rt-box">
+              <view class="date-row" style="margin-top:0;border:none;padding:0;height:100%;display:flex;align-items:center;justify-content:center;">{{record.recordDate}}</view>
+            </picker>
+            <view class="rt-box" bindtap="openRecordTimePicker" data-field="time" data-val="{{record.time || ''}}">
+              <text class="rt-value">{{record.time || '--:--'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 体温：滑动选择温度，无右上角时间 -->
+      <view wx:if="{{record.type === '体温'}}" class="sec">
+        <view class="temp-head">
+          <text class="sec-label">宝宝体温</text>
+          <view class="temp-num">
+            <text wx:if="{{!tempEditing}}" class="temp-num-val" bindtap="onTempNumTap">{{record.temperature || '36.5'}}</text>
+            <input wx:else class="temp-input" type="digit" focus="{{tempEditing}}" value="{{record.temperature}}" bindinput="onTemperature" bindblur="onTempBlur" placeholder="36.5" />
+            <text class="temp-unit">℃</text>
+          </view>
+        </view>
+        <slider class="temp-slider" min="35" max="41" step="0.1" value="{{tempSliderVal}}" bindchanging="onTempSlider" bindchange="onTempSlider" activeColor="#e07b45" block-size="18" />
+        <view class="temp-scale"><text>35℃</text><text>38℃</text><text>41℃</text></view>
+        <text class="sec-hint">滑动选择体温 · 正常范围 36.0 ~ 37.5 ℃</text>
+        <view class="record-time-block" style="margin-top:20rpx;">
+          <text class="sec-label">记录时间</text>
+          <view class="rt-row">
+            <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange" class="rt-box">
+              <view class="date-row" style="margin-top:0;border:none;padding:0;height:100%;display:flex;align-items:center;justify-content:center;">{{record.recordDate}}</view>
+            </picker>
+            <view class="rt-box" bindtap="openRecordTimePicker" data-field="time" data-val="{{record.time || ''}}">
+              <text class="rt-value">{{record.time || '--:--'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 洗澡 -->
+      <view wx:if="{{record.type === '洗澡'}}" class="sec">
+        <text class="sec-label">洗澡时间</text>
+        <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange">
+          <view class="date-row">{{record.recordDate}}</view>
+        </picker>
+        <view class="rt-row" style="margin-top:16rpx;">
+          <view class="rt-box" bindtap="openRecordTimePicker" data-field="bathStart" data-val="{{record.bathStart || ''}}">
+            <text class="rt-label">开始时间</text>
+            <text class="rt-value">{{record.bathStart || '--:--'}}</text>
+          </view>
+          <view class="rt-box" bindtap="openRecordTimePicker" data-field="bathEnd" data-val="{{record.bathEnd || ''}}">
+            <text class="rt-label">结束时间</text>
+            <text class="rt-value">{{record.bathEnd || '--:--'}}</text>
+          </view>
+        </view>
+        <text class="sec-hint-sm">时长按开始/结束时间自动计算</text>
+      </view>
+
+      <view class="save-btn {{record.editIndex >= 0 ? 'save-btn-edit' : ''}}" hover-class="btn-press" hover-stay-time="60" bindtap="saveRecord">{{record.editIndex >= 0 ? '保存修改' : '保存记录'}}</view>
+      <view class="delete-btn" wx:if="{{record.editIndex >= 0}}" hover-class="btn-press" hover-stay-time="60" bindtap="deleteRecord">删除此记录</view>
+    </scroll-view>
+</dialog>
+
+<!-- ==================== 过敏统计手册（辅食过敏，右上角图标触发） ==================== -->
+<!-- 营养品补充提醒设置 -->
+<dialog visible="{{showSuppRemind}}" title="补充提醒设置" kicker="设置下次补充营养品的提醒（可不填）" bind:close="closeSuppRemind">
+  <view class="sr-body">
+    <text class="sr-label">提醒频率</text>
+    <view class="sr-freq-grid">
+      <view
+        wx:for="{{suppFreqOptions}}"
+        wx:key="*this"
+        class="sr-freq {{record.suppRemindFreq === item ? 'on' : ''}}"
+        data-freq="{{item}}"
+        bindtap="setSuppFreq"
+      >{{item}}</view>
+    </view>
+    <view class="sr-time-row">
+      <text class="sr-label">提醒时间</text>
+      <view class="rt-box sr-time-box" bindtap="openRecordTimePicker" data-field="suppRemindTime" data-val="{{record.suppRemindTime || ''}}">
+        <text class="rt-label">时间</text>
+        <text class="rt-value">{{record.suppRemindTime || '--:--'}}</text>
+      </view>
+    </view>
+    <text class="sr-hint">不选择频率即不设置提醒；设置后同步首页今日提醒与日历红点</text>
+    <view class="sr-confirm" bindtap="confirmSuppRemind">确定</view>
+  </view>
+</dialog>
+
+<!-- 辅食名称多选下拉 -->
+<dialog visible="{{showFoodPicker}}" title="选择辅食" kicker="可多选" bind:close="closeFoodPicker">
+  <view class="fp-body">
+    <view class="fp-add-row">
+      <input class="fp-add-input" value="{{foodNewName}}" bindinput="onFoodNewInput" placeholder="输入新辅食名称，如：玉米糊" confirm-type="done" bindconfirm="addFoodCustom" />
+      <view class="fp-add-btn" bindtap="addFoodCustom">添加</view>
+    </view>
+    <scroll-view class="fp-scroll" scroll-y>
+      <view
+        wx:for="{{foodOptions}}"
+        wx:key="*this"
+        class="fp-item {{fmt.has(record.selectedFoods, item) ? 'on' : ''}}"
+        data-name="{{item}}"
+        bindtap="toggleFood"
+        bindlongpress="removeFoodOption"
+      >
+        <text class="fp-name">{{item}}</text>
+        <view class="fp-check {{fmt.has(record.selectedFoods, item) ? 'on' : ''}}">{{fmt.has(record.selectedFoods, item) ? '✓' : ''}}</view>
+      </view>
+    </scroll-view>
+    <view class="fp-confirm" bindtap="closeFoodPicker">确定</view>
+  </view>
+</dialog>
+
+<dialog visible="{{showAllergyGuide}}" position="center" bind:close="closeAllergyGuide">
+  <view class="allergy-guide-body">
+    <text class="ag-title">过敏统计手册</text>
+    <view class="ag-stats">
+      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.allergyCount}}</text><text class="ag-stat-label">过敏次数</text></view>
+      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.allergyFoods.length}}</text><text class="ag-stat-label">过敏食物</text></view>
+      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.safeCount}}</text><text class="ag-stat-label">不过敏次数</text></view>
+      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.safeFoods.length}}</text><text class="ag-stat-label">不过敏食物</text></view>
+    </view>
+    <view class="ag-sec" wx:if="{{allergyStats.allergyFoods.length}}">
+      <text class="ag-sec-title">已记录的过敏食物</text>
+      <view class="ag-food-row">
+        <text wx:for="{{allergyStats.allergyFoods}}" wx:key="*this" class="ag-food-chip">{{item}}</text>
+      </view>
+    </view>
+    <view class="ag-sec" wx:if="{{allergyStats.safeFoods.length}}">
+      <text class="ag-sec-title">已记录的不过敏食物</text>
+      <view class="ag-food-row">
+        <text wx:for="{{allergyStats.safeFoods}}" wx:key="*this" class="ag-food-chip ag-safe">{{item}}</text>
+      </view>
+    </view>
+    <view class="ag-sec">
+      <text class="ag-sec-title">常见易过敏食物</text>
+      <text class="ag-text">牛奶、鸡蛋、花生、大豆、小麦、鱼虾蟹贝、坚果等，首次添加建议单一少量，观察 3–5 天。</text>
+    </view>
+    <view class="ag-sec">
+      <text class="ag-sec-title">过敏常见表现</text>
+      <text class="ag-text">皮疹/荨麻疹、口周红肿、腹泻呕吐、呼吸异常。出现严重过敏（呼吸困难、面色发紫、意识异常）请立即就医。</text>
+    </view>
+    <view class="ag-sec">
+      <text class="ag-sec-title">温馨提示</text>
+      <text class="ag-text">辅食过敏与剂量、烹饪方式、是否空腹等有关，已过敏食物建议回避并咨询儿科医生后再尝试。</text>
+    </view>
+  </view>
+</dialog>
+
+<!-- ==================== 语音录入浮层（设计稿：白卡片+黄麦+声波） ==================== -->
+<view class="voice-overlay" wx:if="{{showVoice}}">
+  <view class="voice-card">
+    <view class="voice-mic-circle">
+      <image class="voice-mic-img" src="/images/icons/rec-voice.png" mode="aspectFit" />
+    </view>
+    <view class="voice-waves" wx:if="{{voiceState.recording}}">
+      <view class="wave-bar"></view>
+      <view class="wave-bar"></view>
+      <view class="wave-bar"></view>
+      <view class="wave-bar"></view>
+      <view class="wave-bar"></view>
+    </view>
+    <text class="voice-title">{{voiceState.recognizing ? '正在识别…' : (voiceState.recording ? '正在聆听' : '长按开始说话')}}</text>
+    <text class="voice-sub">{{voiceState.recognizing ? '正在解析语音内容' : (voiceState.recording ? '松开即可完成语音输入' : '长按麦克风开始说话')}}</text>
+    <view class="voice-timer" wx:if="{{voiceState.recording}}">{{voiceState.seconds}}″</view>
+
+    <!-- 提示词 -->
+    <view class="voice-tips" wx:if="{{voiceState.recording}}">
+      <text class="voice-tips-title">可以这样说：</text>
+      <text class="voice-tips-line">· 亲喂 15 分钟</text>
+      <text class="voice-tips-line">· 喝了 120 毫升奶粉</text>
+      <text class="voice-tips-line">· 换尿布 嘘嘘+臭臭</text>
+      <text class="voice-tips-line">· 睡了 40 分钟</text>
+      <text class="voice-tips-line">· 量体温 37.5 度</text>
+      <text class="voice-tips-line">· 洗澡 / 喝了 60 毫升水</text>
+    </view>
+
+    <view class="voice-fallback" wx:if="{{voiceState.authDenied}}">
+      ⚠️ 未获得麦克风权限，请在设置中开启后重新长按。
+      <button class="va-btn va-btn-ghost auth-btn" bindtap="openVoiceSetting">去授权</button>
+    </view>
+    <view class="voice-fallback" wx:if="{{voiceState.fallback}}">
+      ⚠️ 语音识别暂不可用，请检查云函数 voiceAsr 部署。
+    </view>
+
+    <view class="voice-result" wx:if="{{voiceState.result}}">
+      <textarea class="voice-result-input" value="{{voiceState.result}}" bindinput="onVoiceResult" maxlength="200" auto-height placeholder="识别结果" />
+      <view class="voice-actions">
+        <button class="va-btn va-btn-primary" bindtap="smartRecord">智能识别并记录</button>
+        <button class="va-btn va-btn-ghost" bindtap="saveVoice">存为语音卡片</button>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 自定义时间选择器 -->
+<picker-sheet visible="{{showRecordTimePicker}}" mode="time" value="{{recordTimeTarget ? recordTimeTarget.val : ''}}" minTime="{{recordTimeTarget ? recordTimeTarget.minTime : ''}}" maxTime="{{recordTimeTarget ? recordTimeTarget.maxTime : ''}}" bind:confirm="onRecordTime" bind:close="closeRecordTimePicker" />
+
+<!-- ==================== 登录弹窗（合并自我的页） ==================== -->
+<dialog visible="{{loginVisible}}" title="登录" kicker="登录后设置头像昵称，管理你的宝宝" bind:close="closeLogin">
+  <view class="lg-body">
+    <image class="lg-wechat-icon" src="/images/icons/wechat.png" mode="aspectFit" />
+    <text class="lg-desc">使用微信账号一键登录，自动获取登录标识。登录后可设置头像昵称并添加宝宝。</text>
+    <view class="agreement-row" bindtap="toggleAgree">
+      <view class="checkbox {{agreePolicy ? 'checked' : ''}}">{{agreePolicy ? '✓' : ''}}</view>
+      <text class="agreement-text">我已阅读并同意<text class="link" catchtap="openPrivacy">《隐私政策》</text>和<text class="link" catchtap="openTerms">《用户协议》</text></text>
+    </view>
+    <view class="lg-btn primary lg-btn-view {{agreePolicy ? '' : 'btn-disabled'}}" hover-class="btn-press" hover-stay-time="60" bindtap="wechatLogin">微信一键登录</view>
+  </view>
+</dialog>
+
+<!-- ==================== 设置资料弹窗 ==================== -->
+<dialog visible="{{profileVisible}}" title="设置头像和用户名" bind:close="closeProfile">
+  <view class="pf-body">
+    <button class="pf-avatar-btn" open-type="chooseAvatar" bindchooseavatar="onAvatarChoose">
+      <image wx:if="{{avatarUrl}}" class="pf-avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
+      <image wx:else class="pf-avatar-plus" src="/images/icons/add-avatar-plus.png" mode="aspectFit" />
+
+    </button>
+    <view class="pf-field">
+      <text class="pf-label">用户名</text>
+      <input class="pf-input" type="nickname" placeholder="请输入用户名" value="{{nickname}}" bindinput="onNickInput" />
+    </view>
+    <view class="pf-actions">
+      <view class="lg-btn primary lg-btn-view" hover-class="btn-press" hover-stay-time="60" bindtap="saveProfile">保存</view>
+    </view>
+    <view class="pf-add" bindtap="goAddBaby">登录后添加宝宝 ›</view>
+  </view>
+</dialog>
+
+<!-- ==================== 数据导出面板 ==================== -->
+<dialog visible="{{exportVisible}}" title="数据导出" kicker="选择要导出的数据与日期范围" bind:close="closeExport">
+  <view class="exp-range">
+    <view class="exp-range-item">
+      <text class="exp-range-label">开始日期</text>
+      <picker mode="date" value="{{exportStart}}" end="{{exportEnd}}" bindchange="onExportStart">
+        <view class="exp-range-pick">{{exportStart || '选择日期'}}</view>
+      </picker>
+    </view>
+    <text class="exp-range-arrow">至</text>
+    <view class="exp-range-item">
+      <text class="exp-range-label">结束日期</text>
+      <picker mode="date" value="{{exportEnd}}" start="{{exportStart}}" bindchange="onExportEnd">
+        <view class="exp-range-pick">{{exportEnd || '选择日期'}}</view>
+      </picker>
+    </view>
+  </view>
+  <view class="exp-list">
+    <view
+      wx:for="{{exportItems}}"
+      wx:key="key"
+      class="exp-item {{item.checked ? 'on' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="toggleExportItem"
+    >
+      <view class="exp-check">{{item.checked ? '✓' : ''}}</view>
+      <view class="exp-info">
+        <text class="exp-name">{{item.label}}</text>
+        <text class="exp-desc">{{item.desc}}</text>
+      </view>
+      <text class="exp-count">{{item.count}} 条</text>
+    </view>
+  </view>
+  <view class="exp-actions">
+    <view class="exp-btn ghost exp-btn-view" hover-class="btn-press" hover-stay-time="60" bindtap="previewExport">预览</view>
+    <view class="exp-btn solid exp-btn-view" hover-class="btn-press" hover-stay-time="60" bindtap="doExport">导出</view>
+  </view>
+  <view class="exp-tip">导出支持图片（PNG）与 PDF 两种格式 · 喂养记录按每日统计展示</view>
+</dialog>
+
+<!-- 导出预览弹窗 -->
+<dialog visible="{{exportPreviewVisible}}" position="center" title="导出预览" kicker="长按图片保存或点击导出" bind:close="closePreview">
+  <view class="preview-box">
+    <scroll-view scroll-y class="preview-scroll">
+      <image class="preview-img" src="{{previewImg}}" mode="widthFix" show-menu-by-longpress />
+    </scroll-view>
+    <view class="preview-actions">
+      <view class="exp-btn ghost exp-btn-view" catchtap="closePreview">返回</view>
+      <view class="exp-btn solid exp-btn-view" catchtap="doExport">导出</view>
+    </view>
+  </view>
+</dialog>
+
+<!-- 扫码加入家庭弹窗（主账户审核制） -->
+<dialog visible="{{showScan}}" position="center" bind:close="closeScan">
+  <view class="scan-pop">
+    <block wx:if="{{scanState === 'fail'}}">
+      <text class="sp-title">扫描失败</text>
+      <text class="sp-sub">未识别到有效的加入二维码</text>
+      <view class="sp-frame">
+        <view class="sp-corner sp-tl"></view>
+        <view class="sp-corner sp-tr"></view>
+        <view class="sp-corner sp-bl"></view>
+        <view class="sp-corner sp-br"></view>
+        <view class="sp-line"></view>
+        <text class="sp-frame-tip">⚠️</text>
+      </view>
+      <text class="sp-hint">请将「分享加入二维码」放入取景框，10 秒内未能识别将再次提示。</text>
+      <view class="sp-btn" bindtap="retryScan">重新识别</view>
+    </block>
+
+    <block wx:if="{{scanState === 'confirm'}}">
+      <text class="sp-title">加入亲友的家庭</text>
+      <text class="sp-sub">已识别到加入二维码</text>
+      <view class="sp-family">{{scanCode}}</view>
+      <view class="sp-hint">
+        <text>确认加入该家庭？</text>
+        <text>加入后你将作为「亲友」身份使用：</text>
+        <text>• 不能新建自己的宝宝</text>
+        <text>• 不能创建自己的家庭</text>
+        <text>• 可查看和记录家庭共享宝宝</text>
+      </view>
+      <view class="sp-btn" bindtap="confirmJoin">确认申请加入</view>
+    </block>
+
+    <block wx:if="{{scanState === 'joining'}}">
+      <text class="sp-title">正在提交申请…</text>
+      <text class="sp-sub">请稍候</text>
+      <view class="sp-btn disabled">提交中</view>
+    </block>
+
+    <block wx:if="{{scanState === 'applying'}}">
+      <text class="sp-title">申请已提交</text>
+      <text class="sp-sub">已申请加入「{{scanResult}}」</text>
+      <view class="sp-hint">等待主账户审核同意，审核通过后数据自动同步。</view>
+      <view class="sp-btn" bindtap="closeScan">知道了</view>
+    </block>
+
+    <block wx:if="{{scanState === 'done'}}">
+      <text class="sp-title">加入成功</text>
+      <text class="sp-sub">已加入「{{scanResult}}」</text>
+      <view class="sp-hint">喂养记录与提醒已开始云端同步。</view>
+      <view class="sp-btn" bindtap="closeScan">知道了</view>
+    </block>
+  </view>
+</dialog>
+
+<!-- 全局提醒弹窗（加入申请/结果通知） -->
+<dialog visible="{{showGlobalAlert}}" position="center" title="{{globalAlert.title}}" bind:close="closeGlobalAlert">
+  <view class="ga-content">
+    <text class="ga-message">{{globalAlert.message}}</text>
+    <view class="ga-btns" wx:if="{{globalAlert.type === 'confirm'}}">
+      <view class="ga-btn ga-cancel" bindtap="onGlobalAlertCancel">{{globalAlert.cancelText || '取消'}}</view>
+      <view class="ga-btn ga-confirm" bindtap="onGlobalAlertConfirm">{{globalAlert.confirmText || '确定'}}</view>
+    </view>
+    <view class="ga-btns" wx:else>
+      <view class="ga-btn ga-confirm" bindtap="closeGlobalAlert">{{globalAlert.confirmText || '知道了'}}</view>
+    </view>
+  </view>
+</dialog>
+
+<!-- 离屏 canvas：导出长图 -->
+<canvas
+  canvas-id="exportCanvas"
+  class="export-canvas"
+  style="width:750px;height:{{exportCanvasH}}px;position:fixed;left:-2000px;top:0;"
+></canvas>
+<canvas
+  canvas-id="pdfCanvas"
+  class="export-canvas"
+  style="width:750px;height:{{exportCanvasH}}px;position:fixed;left:-2000px;top:0;"
+></canvas>

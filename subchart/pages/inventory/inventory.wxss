@@ -1,0 +1,882 @@
+page {
+  background: #f6f1e5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', sans-serif;
+  color: #29281f;
+}
+.page {
+  min-height: 100vh;
+  padding: 0 32rpx calc(160rpx + env(safe-area-inset-bottom)); /* 左右16pt + 底部tabBar预留 */
+  box-sizing: border-box;
+}
+.status-bar {
+  height: 176rpx; /* 导航禁止进入区 */
+}
+
+/* ==================== 顶部导航 ==================== */
+
+/* ==================== 页头 ==================== */
+
+/* ==================== 区块通用 ==================== */
+.section {
+  margin-top: 36rpx;
+}
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.section-title {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.section-sub {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+}
+/* 标题行含 + 号按钮时，按钮撑高标题行，小字需上收 10rpx 保持与其他模块一致 */
+.sub-tight {
+  margin-top: -6rpx;
+}
+.section-more {
+  font-size: 24rpx;
+  color: #8f896d;
+  padding: 12rpx 8rpx;
+}
+
+/* ==================== 耗材库存 ==================== */
+.add-btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 20rpx;
+  background: #ffd95a;
+  color: #5c4a10;
+  font-size: 44rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stock-list {
+  margin-top: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+/* ==================== 耗材库存表格 ==================== */
+.stock-table-wrap {
+  margin-top: 24rpx;
+  background: #fffdf7;
+  border: 2rpx solid #f0e9d8;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+.stock-th-fixed {
+  border-bottom: 2rpx solid #f0e9d8;
+}
+.stock-table-scroll {
+  max-height: 440rpx; /* 5 行数据，超出滑动查看（表头已固定在上方） */
+}
+.stock-table {
+  width: 100%;
+}
+.stock-tr {
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+  height: 88rpx;
+  border-bottom: 2rpx solid #f6f1e3;
+}
+.stock-tr:last-child {
+  border-bottom: none;
+}
+.stock-th {
+  height: 80rpx;
+  background: #fff1df;
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #765d18;
+}
+.th-name {
+  flex: 1.6;
+}
+.th-expire {
+  flex: 1.4;
+  text-align: center;
+}
+.th-count {
+  flex: 0.8;
+  text-align: center;
+}
+.td-name {
+  flex: 1.6;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+.td-name-text {
+  font-size: 27rpx;
+  font-weight: 700;
+  color: #29281f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.td-size {
+  flex-shrink: 0;
+  margin-left: 10rpx;
+  font-size: 20rpx;
+  color: #a0812f;
+  background: #fff2b9;
+  padding: 2rpx 10rpx;
+  border-radius: 12rpx;
+}
+.td-expire {
+  flex: 1.4;
+  text-align: center;
+  font-size: 23rpx;
+  color: #8f896d;
+}
+.td-expire.urgent {
+  color: #d9534f;
+  font-weight: 700;
+}
+.td-expire.over {
+  color: #fff;
+  background: #d9534f;
+  font-weight: 700;
+  border-radius: 12rpx;
+  padding: 4rpx 12rpx;
+  align-self: center;
+}
+.td-count {
+  flex: 0.8;
+  text-align: center;
+}
+.td-num {
+  font-size: 30rpx;
+  font-weight: 900;
+  color: #29281f;
+}
+.td-unit {
+  font-size: 20rpx;
+  color: #a49d86;
+  margin-left: 6rpx;
+}
+.table-tip {
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  color: #a49d86;
+  text-align: center;
+}
+.stock-card {
+  background: #fffdf7;
+  border: 2rpx solid #f0e9d8;
+  border-radius: 28rpx;
+  padding: 24rpx 24rpx 20rpx;
+  box-sizing: border-box;
+}
+.stock-card-head {
+  display: flex;
+  align-items: center;
+}
+.stock-ico {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #4a4636;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.stock-head-info {
+  flex: 1;
+  min-width: 0;
+}
+.stock-name {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.stock-expire {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 20rpx;
+  color: #8f896d;
+}
+.stock-expire.urgent {
+  color: #c07b10;
+}
+.stock-expire.over {
+  color: #e25b4a;
+}
+.stock-badge {
+  display: flex;
+  align-items: baseline;
+  background: #fff2b9;
+  border-radius: 18rpx;
+  padding: 10rpx 20rpx;
+  flex-shrink: 0;
+}
+.stock-num {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #5c4a10;
+}
+.stock-unit {
+  margin-left: 4rpx;
+  font-size: 22rpx;
+  color: #806c2e;
+}
+.stock-card-info {
+  margin-top: 18rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  padding-top: 16rpx;
+  border-top: 2rpx dashed #eee7d6;
+}
+.info-item {
+  font-size: 20rpx;
+  color: #8f896d;
+  background: #f6f1e5;
+  border-radius: 10rpx;
+  padding: 6rpx 14rpx;
+}
+.info-price {
+  color: #b97b05;
+  font-weight: 700;
+}
+.stock-ops {
+  margin-top: 16rpx;
+  display: flex;
+  gap: 16rpx;
+}
+.stock-op {
+  flex: 1;
+  height: 60rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #4a4636;
+  background: #f3efe4;
+}
+.stock-op.plus {
+  color: #5c4a10;
+  background: #fff2b9;
+}
+
+/* ==================== 保质期提醒 ==================== */
+.add-warn-btn {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #806c2e;
+  background: #fff2b9;
+  border-radius: 16rpx;
+  padding: 12rpx 24rpx;
+}
+.warn-list {
+  margin-top: 20rpx;
+}
+.warn-item {
+  display: flex;
+  align-items: center;
+  background: #fffdf7;
+  border-radius: 24rpx;
+  padding: 26rpx 28rpx;
+  margin-bottom: 20rpx;
+}
+.warn-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: #a0812f;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.warn-dot.urgent {
+  background: #e2a93a;
+}
+.warn-dot.over {
+  background: #e25b4a;
+}
+.warn-info {
+  flex: 1;
+  min-width: 0;
+}
+.warn-name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #29281f;
+}
+.warn-tip {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+}
+.warn-days {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #a0812f;
+  flex-shrink: 0;
+  margin-left: 0;
+}
+.warn-days.urgent {
+  color: #e2a93a;
+}
+.warn-days.over {
+  color: #e25b4a;
+}
+.warn-ok-btn {
+  font-size: 24rpx;
+  color: #a0812f;
+  background: #fff8e6;
+  border: 1rpx solid #d4b86a;
+  border-radius: 28rpx;
+  padding: 8rpx 24rpx;
+  flex-shrink: 0;
+  margin-left: 20rpx;
+}
+.warn-empty {
+  margin-top: 20rpx;
+  background: #fffdf7;
+  border-radius: 24rpx;
+  padding: 48rpx 32rpx;
+  display: flex;
+  justify-content: center;
+}
+.warn-empty-text {
+  font-size: 24rpx;
+  color: #a49d86;
+}
+
+/* ==================== 好物种草 ==================== */
+.goods-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+.goods-card {
+  width: 100%;
+  padding: 24rpx 28rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  border: 2rpx solid #eee7d6;
+  background: #fff;
+}
+.goods-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 28rpx;
+  flex-shrink: 0;
+}
+.goods-age {
+  display: inline-block;
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #806c2e;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12rpx;
+  padding: 6rpx 14rpx;
+}
+.goods-icon {
+  width: 72rpx;
+  height: 72rpx;
+  margin-top: 12rpx;
+}
+.goods-right {
+  flex: 1;
+  min-width: 0;
+}
+.goods-name {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.goods-desc {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+}
+
+.bottom-space {
+  height: 60rpx;
+}
+
+/* ==================== 弹窗表单 ==================== */
+.form-body {
+  padding-top: 8rpx;
+}
+.form-row {
+  margin-bottom: 24rpx;
+}
+.form-label {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #8f896d;
+  margin-bottom: 10rpx;
+}
+.form-input {
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+  background: #f7f2e4;
+  border-radius: 20rpx;
+  font-size: 30rpx;
+  color: #29281f;
+}
+.form-input.picker {
+  display: flex;
+  align-items: center;
+  color: #4a4636;
+}
+.form-input-wrap {
+  display: flex;
+  align-items: center;
+  background: #f7f2e4;
+  border-radius: 20rpx;
+  padding: 0 28rpx;
+}
+.form-input-wrap .form-input {
+  background: transparent;
+  padding: 0;
+  flex: 1;
+}
+.form-unit {
+  font-size: 26rpx;
+  color: #8f896d;
+  margin: 0 8rpx;
+}
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+  margin-top: 32rpx;
+}
+.form-btn {
+  flex: 1;
+  border-radius: 16rpx; /* 圆角8pt */
+  font-size: 28rpx;
+  font-weight: 700;
+  padding: 0 32rpx; /* 左右内边距16pt */
+  line-height: 96rpx; /* 高48pt */
+}
+.form-btn.ghost {
+  width: 602rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0;
+  flex: none;
+  text-align: center;
+  background: #fffdf7;
+  color: #c14c2e;
+  border-radius: 32rpx;
+}
+.form-btn.solid {
+  width: 602rpx;
+  height: 104rpx;
+  line-height: 104rpx;
+  padding: 0;
+  flex: none;
+  text-align: center;
+  background: #ffd95a;
+  color: #5c4a10;
+  border-radius: 32rpx;
+}
+
+/* 母乳储存提醒（关联吸奶记录） */
+.milk-warn-block {
+  margin-top: 24rpx;
+  background: #fff2b9;
+  border-radius: 28rpx;
+  padding: 24rpx;
+}
+.milk-warn-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.milk-warn-title {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #5c4a10;
+}
+.milk-warn-sub {
+  font-size: 18rpx;
+  color: #a0812f;
+}
+.milk-warn-item {
+  margin-top: 24rpx;
+  background: #fffdf7;
+  border-radius: 20rpx;
+  padding: 28rpx 24rpx;
+}
+.milk-warn-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.milk-warn-name {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #29281f;
+}
+.milk-warn-amt {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #b97b05;
+}
+.milk-store-row {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+.milk-store-chip {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx 0;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #8f896d;
+  background: #f6f1e5;
+  border-radius: 14rpx;
+  border: 2rpx solid transparent;
+}
+.milk-store-chip.on {
+  color: #6b4e0a;
+  background: #fff2b9;
+  border-color: #e4bd39;
+}
+.milk-warn-bottom {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.milk-warn-right {
+  display: flex;
+  align-items: center;
+}
+.milk-warn-storage {
+  font-size: 20rpx;
+  color: #8f896d;
+}
+.milk-warn-days {
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #b97b05;
+}
+.milk-warn-days.over {
+  color: #e25b4a;
+}
+
+/* 尺码徽标 */
+.stock-size {
+  margin-left: 10rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #b97b05;
+  background: #fff2b9;
+  border-radius: 10rpx;
+  padding: 4rpx 12rpx;
+}
+
+/* 价格列 */
+.th-price {
+  flex: 0.9;
+  text-align: center;
+}
+.td-price {
+  flex: 0.9;
+  text-align: center;
+  font-size: 23rpx;
+  font-weight: 700;
+  color: #b97b05;
+}
+.td-price.muted {
+  color: #c9c2ae;
+  font-weight: 400;
+}
+
+/* 动态字段：克数滑动 / 保修期 */
+.form-slider-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.form-slider {
+  flex: 1;
+  margin: 0 8rpx 0 0;
+}
+.form-slider-val {
+  min-width: 96rpx;
+  text-align: right;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #b97b05;
+}
+
+/* ==================== 智能好物种草 ==================== */
+.goods-reason {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: #b97b05;
+  line-height: 1.4;
+}
+.goods-card {
+  position: relative;
+}
+.goods-fav {
+  position: absolute;
+  top: 8rpx;
+  right: 12rpx;
+  font-size: 28rpx;
+  color: #ffd95a;
+}
+/* 更多列表 */
+.goods-all {
+  max-height: 60vh;
+}
+.goods-all-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 8rpx;
+  border-bottom: 2rpx solid #f0ead8;
+}
+.goods-all-icon {
+  width: 88rpx;
+  height: 88rpx;
+  flex: none;
+  margin-right: 20rpx;
+}
+.goods-all-meta {
+  flex: 1;
+  min-width: 0;
+}
+.goods-all-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #4a432b;
+}
+.goods-all-age {
+  font-size: 20rpx;
+  color: #b97b05;
+  font-weight: 600;
+}
+.goods-all-desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+}
+.goods-all-fav {
+  flex: none;
+  font-size: 24rpx;
+  color: #b97b05;
+}
+/* 详情 */
+.gd-body {
+  padding: 8rpx 0 16rpx;
+}
+.gd-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 20rpx 0 8rpx;
+}
+.gd-icon {
+  width: 160rpx;
+  height: 160rpx;
+}
+.gd-cat {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+}
+.gd-desc {
+  display: block;
+  text-align: center;
+  font-size: 28rpx;
+  color: #4a432b;
+  font-weight: 600;
+}
+.gd-reason {
+  margin-top: 20rpx;
+  background: #fff8e1;
+  border: 2rpx solid #f0e2b0;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  font-size: 24rpx;
+  color: #b97b05;
+  line-height: 1.5;
+}
+.gd-price {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8rpx;
+}
+.gd-price-label {
+  font-size: 24rpx;
+  color: #8f896d;
+}
+.gd-price-val {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #b97b05;
+}
+.gd-actions {
+  margin-top: 28rpx;
+  display: flex;
+  justify-content: space-between;
+}
+.gd-btn {
+  flex: 1;
+  text-align: center;
+  padding: 22rpx 0;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+.gd-btn + .gd-btn {
+  margin-left: 20rpx;
+}
+.gd-btn.ghost {
+  background: #fffdf7;
+  border: 2rpx solid #e0d8c0;
+  color: #4a432b;
+}
+.gd-btn.ghost.on {
+  background: #fff2b9;
+  border-color: #ffd95a;
+  color: #b97b05;
+}
+.gd-btn.solid {
+  background: #ffd95a;
+  color: #29281f;
+}
+.gd-tip {
+  display: block;
+  margin-top: 20rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #b5ad93;
+}
+
+/* 语音录入遮罩 */
+/* 语音录入浮层（白卡片+黄麦+声波） */
+.voice-overlay {
+  position: fixed; left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0,0,0,0.35); z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+.voice-card {
+  width: 560rpx; background: #fff; border-radius: 32rpx;
+  padding: 48rpx 40rpx 40rpx;
+  display: flex; flex-direction: column; align-items: center;
+  box-shadow: 0 12rpx 48rpx rgba(0,0,0,0.15);
+}
+.voice-mic-circle {
+  width: 128rpx; height: 128rpx; border-radius: 50%;
+  background: #fff2b9;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 24rpx; position: relative;
+}
+.voice-mic-emoji { font-size: 56rpx; }
+.voice-mic-img { width: 64rpx; height: 64rpx; }
+.voice-waves {
+  display: flex;
+  align-items: flex-end;
+  gap: 6rpx;
+  height: 40rpx;
+  margin-top: -4rpx;
+  margin-bottom: 12rpx;
+}
+.wave-bar {
+  width: 8rpx;
+  height: 14rpx;
+  border-radius: 6rpx;
+  background: #ffd95a;
+  animation: wave-bounce 0.9s ease-in-out infinite;
+}
+.wave-bar:nth-child(1) { animation-delay: 0s; }
+.wave-bar:nth-child(2) { animation-delay: 0.12s; }
+.wave-bar:nth-child(3) { animation-delay: 0.24s; }
+.wave-bar:nth-child(4) { animation-delay: 0.36s; }
+.wave-bar:nth-child(5) { animation-delay: 0.48s; }
+@keyframes wave-bounce {
+  0%, 100% { height: 14rpx; }
+  50% { height: 40rpx; }
+}
+.voice-title { font-size: 36rpx; font-weight: 700; color: #2c2c2c; margin-bottom: 8rpx; }
+.voice-sub { font-size: 26rpx; color: #8f896d; margin-bottom: 16rpx; }
+.voice-tips {
+  margin-top: 24rpx; padding: 20rpx 24rpx;
+  background: #fffbf0; border-radius: 16rpx; width: 100%;
+  display: flex; flex-direction: column; gap: 4rpx;
+}
+.voice-tips-title { font-size: 22rpx; color: #b97b05; font-weight: 600; margin-bottom: 4rpx; }
+.voice-tips-line { font-size: 22rpx; color: #8f896d; line-height: 1.5; }
+
+.voice-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(41, 40, 31, 0.55);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.voice-mask-inner {
+  width: 320rpx;
+  height: 320rpx;
+  border-radius: 32rpx;
+  background: #FFFDF7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+}
+.voice-mic { font-size: 88rpx; }
+.voice-txt { font-size: 32rpx; font-weight: 800; color: #29281F; }
+.voice-sub { font-size: 24rpx; color: #8f896d; }
+.voice-tips {
+  margin-top: 24rpx;
+  padding: 16rpx 24rpx;
+  background: rgba(255,255,255,0.85);
+  border-radius: 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6rpx;
+}
+.voice-tips-title { font-size: 22rpx; color: #6b5a2b; font-weight: 600; }
+.voice-tips-line { font-size: 22rpx; color: #8f896d; line-height: 1.4; }

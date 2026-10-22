@@ -1,0 +1,454 @@
+/* ==================== 疫苗记录页 ==================== */
+.page-no-tab {
+  min-height: 100vh;
+  background: #fffdf7;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 128rpx; /* 底部手势安全区34pt */
+}
+.status-bar {
+  height: 176rpx; /* 导航禁止进入区 */
+}
+
+/* 宝宝信息 + 进度 */
+.vc-hero {
+  margin: 8rpx 32rpx 24rpx;
+  background: #fff;
+  border: 2rpx solid #eee7d6;
+  border-radius: 32rpx;
+  padding: 28rpx 32rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.vc-baby {
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #29281f;
+}
+.vc-age {
+  font-size: 24rpx;
+  color: #a9905f;
+  font-weight: 500;
+  margin-left: 12rpx;
+}
+.vc-birth {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+}
+.vc-progress {
+  text-align: right;
+}
+.vc-progress-num {
+  font-size: 44rpx;
+  font-weight: 900;
+  color: #b97b05;
+}
+.vc-progress-total {
+  font-size: 24rpx;
+  color: #8f896d;
+  font-weight: 600;
+}
+.vc-progress-label {
+  display: block;
+  font-size: 20rpx;
+  color: #8f896d;
+  margin-top: 2rpx;
+}
+.vc-progress-bar {
+  width: 160rpx;
+  height: 12rpx;
+  border-radius: 8rpx;
+  background: #f0ead9;
+  margin-top: 8rpx;
+  overflow: hidden;
+}
+.vc-progress-fill {
+  height: 100%;
+  border-radius: 8rpx;
+  background: linear-gradient(90deg, #ffd95a, #f6b94e);
+  transition: width 0.3s;
+}
+.vc-progress-overdue {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: #d94f3d;
+  font-weight: 700;
+}
+
+/* 筛选 */
+.vc-tab {
+  margin: 0 32rpx 20rpx;
+}
+.tab-switch {
+  display: flex;
+  background: #f0ead9;
+  border-radius: 24rpx;
+  padding: 8rpx;
+}
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 0;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #8f896d;
+  border-radius: 20rpx;
+}
+.tab-item.active {
+  background: #fff;
+  color: #b97b05;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 列表 */
+.vc-list {
+  flex: 1;
+  padding: 0 32rpx 60rpx;
+  box-sizing: border-box;
+}
+.vc-card {
+  background: #fff;
+  border: 2rpx solid #eee7d6;
+  border-radius: 28rpx;
+  padding: 24rpx 28rpx;
+  margin-bottom: 20rpx;
+}
+.vc-card-head {
+  display: flex;
+  align-items: center;
+}
+.vc-icon {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  font-weight: 900;
+  color: #5b5540;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.vc-info {
+  flex: 1;
+  min-width: 0;
+}
+.vc-name {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #29281f;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.vc-type {
+  font-size: 18rpx;
+  font-weight: 700;
+  padding: 2rpx 12rpx;
+  border-radius: 10rpx;
+  margin-left: 12rpx;
+}
+.vc-type-free {
+  background: #fff2b9;
+  color: #765d18;
+}
+.vc-type-paid {
+  background: #ffe9d9;
+  color: #b9622a;
+}
+.vc-desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: #8f896d;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vc-dose {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #a9905f;
+  background: #faf5e8;
+  border-radius: 14rpx;
+  padding: 6rpx 16rpx;
+  flex-shrink: 0;
+}
+.vc-card-body {
+  margin-top: 18rpx;
+  padding-top: 18rpx;
+  border-top: 2rpx dashed #f0ead9;
+}
+.vc-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+.vc-row-label {
+  width: 150rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+  flex-shrink: 0;
+}
+.vc-row-value {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #29281f;
+}
+.vc-note {
+  font-size: 20rpx;
+  color: #a9905f;
+  font-weight: 400;
+}
+.vc-link {
+  color: #b97b05;
+}
+.vc-card-foot {
+  margin-top: 16rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.vc-state {
+  font-size: 22rpx;
+  font-weight: 800;
+  padding: 6rpx 18rpx;
+  border-radius: 14rpx;
+}
+.state-overdue { background: #fde8e4; color: #d94f3d; }
+.state-today   { background: #fff2b9; color: #b97b05; }
+.state-soon    { background: #fff7e6; color: #c08a1e; }
+.state-future  { background: #f0ead9; color: #8f896d; }
+.state-done    { background: #fff2b9; color: #765d18; }
+.state-skip    { background: #efece3; color: #8f896d; }
+.vc-actions {
+  display: flex;
+  gap: 14rpx;
+}
+.vc-btn {
+  font-size: 22rpx;
+  font-weight: 700;
+  border-radius: 18rpx;
+  padding: 0 22rpx;
+  line-height: 60rpx;
+  text-align: center;
+  margin: 0;
+}
+.vc-btn::after {
+  border: none;
+}
+.vc-btn-done {
+  background: #fff2b9;
+  color: #765d18;
+}
+.vc-btn-skip {
+  background: #f0ead9;
+  color: #8f896d;
+}
+.vc-btn-ghost {
+  background: #fff;
+  border: 2rpx solid #e4ddd0;
+  color: #8f896d;
+}
+
+/* 空态 */
+.vc-empty {
+  margin: 80rpx 48rpx;
+  background: #fff;
+  border: 2rpx dashed #e4ddd0;
+  border-radius: 32rpx;
+  padding: 80rpx 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.vc-empty-icon {
+  width: 160rpx;
+  height: 160rpx;
+}
+.vc-empty-title {
+  margin-top: 24rpx;
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #29281f;
+}
+.vc-empty-desc {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+  line-height: 1.6;
+}
+.vc-empty-btn {
+  margin-top: 32rpx;
+  background: #ffd95a;
+  color: #29281f;
+  font-size: 26rpx;
+  font-weight: 800;
+  border-radius: 28rpx;
+  padding: 0 48rpx;
+  line-height: 84rpx;
+}
+.vc-empty-btn::after {
+  border: none;
+}
+
+.vc-tip {
+  margin-top: 12rpx;
+  font-size: 20rpx;
+  color: #a9905f;
+  line-height: 1.7;
+  text-align: center;
+  padding: 0 20rpx;
+}
+
+/* ==================== 下次接种提醒 ==================== */
+.vc-next {
+  margin: 24rpx 32rpx 0;
+  background: #fff2b9;
+  border-radius: 28rpx;
+  padding: 28rpx 32rpx;
+  box-shadow: 0 6rpx 20rpx rgba(150, 122, 20, 0.12);
+}
+.vc-next-label {
+  font-size: 22rpx;
+  color: #a0812f;
+  font-weight: 700;
+}
+.vc-next-body {
+  margin-top: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.vc-next-info {
+  min-width: 0;
+}
+.vc-next-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 900;
+  color: #29281f;
+}
+.vc-next-date {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #8f7a3e;
+}
+.vc-next-days {
+  flex-shrink: 0;
+  font-size: 28rpx;
+  font-weight: 900;
+  color: #c14c2e;
+}
+.vc-next-days.over {
+  color: #fff;
+  background: #d9534f;
+  border-radius: 16rpx;
+  padding: 6rpx 16rpx;
+}
+.vc-next-done .vc-next-title {
+  font-size: 26rpx;
+}
+
+/* ==================== 疫苗表格（类似库存） ==================== */
+.vax-timeline {
+  margin-top: 24rpx;
+  margin-left: 32rpx;
+  margin-right: 32rpx;
+  width: calc(100% - 64rpx);
+  box-sizing: border-box;
+  max-height: 960rpx;
+}
+/* 无轴卡片列表 */
+.tl-item {
+  position: relative;
+  margin-bottom: 32rpx;
+}
+/* 时间：卡片左上方，点击可修改应种日期 */
+.tl-time {
+  display: inline-block;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #b97b05;
+  padding: 4rpx 16rpx;
+  border-radius: 12rpx;
+  background: #fff6d9;
+}
+.tl-card {
+  margin-top: 16rpx;
+  width: 100%;
+  box-sizing: border-box;
+  border: 2rpx solid #eee7d6;
+  border-radius: 32rpx;
+  padding: 28rpx 32rpx;
+  background: #fff;
+}
+.tl-card.done {
+  background: #fff;
+  border-color: #eee7d6;
+}
+.tl-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tl-card-title {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.tl-type {
+  flex-shrink: 0;
+  font-size: 18rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 10rpx;
+  margin-right: 12rpx;
+}
+.tl-type.free { color: #806c2e; background: #fff7e6; }
+.tl-type.paid { color: #a0812f; background: #fff2b9; }
+.tl-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #29281f;
+  min-width: 0;
+  word-break: break-all;
+}
+.tl-check {
+  flex-shrink: 0;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 12rpx;
+  border: 4rpx solid #e0d6b8;
+  background: #fff;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 16rpx;
+}
+.tl-check.checked {
+  background: #FFD95A;
+  border-color: #FFD95A;
+}
+.tl-check-mark {
+  font-size: 26rpx;
+  color: #7a5b00;
+  font-weight: 800;
+  line-height: 1;
+}
+.tl-sub {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #8f896d;
+}
+.tl-tip {
+  margin-top: 10rpx;
+  font-size: 18rpx;
+  color: #c9c2ae;
+}

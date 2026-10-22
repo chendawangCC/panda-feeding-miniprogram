@@ -1,0 +1,64 @@
+<view class="page-no-tab">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 页头 -->
+  <view class="page-header-back">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">近 7 天喂养总结</text>
+      <view class="header-title">喂养周报</view>
+    </view>
+  </view>
+
+  <block wx:if="{{!empty}}">
+    <!-- 周报卡片 -->
+    <view class="weekly-card">
+      <view class="wc-head">
+        <view class="wc-title-wrap"><image class="wc-logo" src="/images/brand-logo.png" mode="aspectFit" /><text class="wc-title">{{babyName || '宝宝'}} · 喂养周报</text></view>
+        <text class="wc-range">{{rangeText}}</text>
+      </view>
+
+      <view class="wc-metrics">
+        <view class="wc-metric" wx:for="{{summary}}" wx:key="label">
+          <text class="wc-m-value">{{item.value}}</text>
+          <text class="wc-m-label">{{item.label}}</text>
+        </view>
+      </view>
+
+      <view class="wc-daily-title">每日明细</view>
+      <view class="wc-daily-head">
+        <text>日期</text><text>次数</text><text>奶量</text><text>亲喂时长</text><text>嘘嘘</text><text>臭臭</text>
+      </view>
+      <view class="wc-daily" wx:for="{{days}}" wx:key="key">
+        <text class="wd-date">{{item.date}}</text>
+        <text class="wd-feeds">{{item.feeds}}</text>
+        <text class="wd-milk">{{item.milk}} ml</text>
+        <text class="wd-min">{{item.min}} 分</text>
+        <text class="wd-pee">{{item.pee}} 次</text>
+        <text class="wd-poop">{{item.poop}} 次</text>
+      </view>
+    </view>
+
+    <view class="wc-actions">
+      <button class="wc-share" open-type="share">分享给家人</button>
+      <button class="wc-save" bindtap="saveImage">{{saving ? '生成中…' : '保存周报图片'}}</button>
+    </view>
+    <view class="wc-tip">保存周报图片后，可直接在微信发送给家人查看</view>
+  </block>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:else>
+    <text class="empty-icon">📊</text>
+    <text class="empty-title">还没有喂养记录</text>
+    <text class="empty-desc">去计划页记录喂养后，这里会自动生成周报</text>
+    <view class="empty-btn" bindtap="goPlan">去记录</view>
+  </view>
+</view>
+
+<!-- 离屏 canvas：用于生成周报图片 -->
+<canvas
+  canvas-id="weeklyCanvas"
+  class="weekly-canvas"
+  style="width:750px;height:1350px;position:fixed;left:-2000px;top:0;"
+></canvas>
+

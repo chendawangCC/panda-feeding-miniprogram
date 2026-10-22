@@ -1,0 +1,10 @@
+{
+  "name": "voiceAsr",
+  "version": "1.0.0",
+  "description": "语音识别云函数：下载录音并调用腾讯云一句话识别返回文本",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "tencentcloud-sdk-nodejs-asr": "^4.0.0"
+  }
+}

@@ -1,0 +1,220 @@
+<view class="page">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 页头：问候 + 熊猫头像标题 + 铃铛 -->
+  <view class="page-header" style="margin-top:-{{safeTop}}px; padding-top:{{navTop}}px">
+    <view class="home-head-left">
+      <text class="header-kicker">{{greeting}}</text>
+      <view class="home-head-title-row">
+        <image class="home-avatar" src="/images/brand-logo.png" mode="aspectFit" />
+        <view class="header-title">熊宝喂养</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 喂养提醒卡片（最后一条喂养记录详情，点击打开今日提醒弹窗） -->
+  <view class="reminder-card" bindtap="openReminder">
+    <view class="reminder-ghost"></view>
+    <block wx:if="{{reminder.hasRecord}}">
+      <view class="reminder-bottle">
+        <image wx:if="{{reminder.iconImg}}" class="reminder-bottle-img reminder-fit" src="{{reminder.iconImg}}" mode="aspectFit" />
+        <text wx:else>{{reminder.icon}}</text>
+      </view>
+    </block>
+    <view class="reminder-flower" wx:else>
+      <image class="reminder-flower-img" src="{{reminder.iconImg}}" mode="aspectFit" />
+    </view>
+    <block wx:if="{{reminder.hasRecord}}">
+      <text class="reminder-kicker">最后一次喂养</text>
+      <view class="reminder-main">{{reminder.lastDetail}}</view>
+      <text class="reminder-sub" user-select>{{reminder.lastTime}} · {{reminder.agoText}}</text>
+    </block>
+    <block wx:else>
+      <view class="reminder-bless-wrap">
+        <text class="reminder-bless" user-select>{{reminder.blessing}}</text>
+      </view>
+      <text class="reminder-sub">今天还没有喂养记录，记录后展示喂养详情</text>
+    </block>
+    <view class="reminder-btn" catchtap="openReminder">查看今日提醒</view>
+  </view>
+
+  <!-- 工具 -->
+  <view class="section-head">
+    <view>
+      <view class="section-title">工具</view>
+      <view class="section-desc">育儿日常，一处轻松管理</view>
+    </view>
+  </view>
+  <view class="tools-grid">
+    <view
+      wx:for="{{tools}}"
+      wx:key="action"
+      class="tool-card"
+      data-action="{{item.action}}"
+      bindtap="onTool"
+    >
+      <view class="tool-icon" style="background: {{item.bg}}">
+        <image class="tool-ico" src="{{item.iconImg}}" mode="aspectFit" />
+      </view>
+      <text class="tool-title">{{item.title}}</text>
+      <text class="tool-desc">{{item.desc}}</text>
+    </view>
+  </view>
+
+  <!-- 每日早教 -->
+  <view class="section-head">
+    <view>
+      <view class="section-title">每日早教</view>
+      <view class="section-desc">{{eduRec.ageText}} · 今日推荐</view>
+    </view>
+  </view>
+  <view class="edu-card">
+    <view class="edu-type">{{eduRec.type}}</view>
+    <view class="edu-title">{{eduRec.title}}</view>
+    <view class="edu-content">{{eduRec.content}}</view>
+    <view class="edu-tip">{{eduRec.tip}}</view>
+  </view>
+
+</view>
+<dialog visible="{{showReminder}}" position="center" bind:close="confirmReminder">
+
+    <!-- ===== 列表：2 小时内临近提醒（库存预警 / 保质期 / 疫苗待接种 / 喂养） ===== -->
+    <block wx:if="{{rmode === 'list'}}">
+      <view class="rm-header">
+        <view class="rm-title">每日提醒</view>
+        <view class="rm-close" catchtap="confirmReminder">✕</view>
+      </view>
+      <view class="rm-subtitle">仅显示 2 小时内到期的临近提醒</view>
+
+      <view class="rm-none rm-none-big" wx:if="{{remindEmpty}}">
+        <view>暂无临近提醒</view>
+        <view>2 小时内没有到期的提醒 🎉</view>
+      </view>
+
+      <block wx:else>
+        <view class="rm-section" wx:if="{{reminders.items.length}}">
+          <view class="rm-sec-title">库存与到期</view>
+          <view class="rm-item" wx:for="{{reminders.items}}" wx:key="key">
+            <view class="rm-item-icon"><image wx:if="{{item.iconImg}}" class="rm-item-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+            <view class="rm-item-info">
+              <text class="rm-item-title">{{item.title}}</text>
+              <text class="rm-item-desc">{{item.desc}}</text>
+            </view>
+            <view class="rm-item-right">
+              <view class="rm-item-btn" wx:if="{{item.actionKey}}" data-key="{{item.actionKey}}" data-itemkey="{{item.key}}" data-itemname="{{item.rawName}}" catchtap="onReminderAction">{{item.actionLabel}}</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="rm-section" wx:if="{{reminders.feedTodos.length}}">
+          <view class="rm-sec-title">喂养提醒</view>
+          <view class="rm-item" wx:for="{{reminders.feedTodos}}" wx:key="key">
+            <view class="rm-item-icon"><image wx:if="{{item.iconImg}}" class="rm-item-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+            <view class="rm-item-info">
+              <text class="rm-item-title">{{item.title}}</text>
+              <text class="rm-item-desc">{{item.desc}}</text>
+            </view>
+            <view class="rm-item-right">
+              <view class="rm-item-btn" wx:if="{{item.actionKey}}" data-key="{{item.actionKey}}" data-itemkey="{{item.key}}" data-itemname="{{item.rawName}}" catchtap="onReminderAction">{{item.actionLabel}}</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="rm-section" wx:if="{{reminders.suppTodos.length}}">
+          <view class="rm-sec-title">营养品提醒</view>
+          <view class="rm-item" wx:for="{{reminders.suppTodos}}" wx:key="key">
+            <view class="rm-item-icon"><image wx:if="{{item.iconImg}}" class="rm-item-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+            <view class="rm-item-info">
+              <text class="rm-item-title">{{item.title}}</text>
+              <text class="rm-item-desc">{{item.desc}}</text>
+            </view>
+            <view class="rm-item-right">
+              <view class="rm-item-btn" wx:if="{{item.actionKey}}" data-key="{{item.actionKey}}" data-itemkey="{{item.key}}" data-itemname="{{item.rawName}}" catchtap="onReminderAction">{{item.actionLabel}}</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="rm-section" wx:if="{{reminders.vaccineTodos.length}}">
+          <view class="rm-sec-title">疫苗提醒</view>
+          <view class="rm-item" wx:for="{{reminders.vaccineTodos}}" wx:key="key">
+            <view class="rm-item-icon"><image wx:if="{{item.iconImg}}" class="rm-item-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+            <view class="rm-item-info">
+              <text class="rm-item-title">{{item.title}}</text>
+              <text class="rm-item-desc">{{item.desc}}</text>
+            </view>
+            <view class="rm-item-right">
+              <view class="rm-item-btn" wx:if="{{item.actionKey}}" data-key="{{item.actionKey}}" data-itemkey="{{item.key}}" data-itemname="{{item.rawName}}" catchtap="onReminderAction">{{item.actionLabel}}</view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <view class="rm-btn" bindtap="confirmReminder">知道了</view>
+    </block>
+
+    <!-- ===== 补货面板 ===== -->
+    <block wx:elif="{{rmode === 'restock'}}">
+      <view class="rm-title">{{restockInfo.title}}</view>
+      <view class="rm-subtitle">当前库存 {{restockInfo.stock}} {{restockInfo.unit}}{{restockInfo.days ? ' · 约可用 ' + restockInfo.days + ' 天' : ''}}</view>
+      <view class="restock-options">
+        <view
+          wx:for="{{restockInfo.options}}"
+          wx:key="*this"
+          class="restock-opt {{selectedAdd === item ? 'on' : ''}}"
+          data-val="{{item}}"
+          bindtap="selectRestock"
+        >+{{item}} {{restockInfo.unit}}</view>
+      </view>
+      <view class="rm-btn" bindtap="confirmRestock">完成补货（共 {{restockInfo.stock + selectedAdd}} {{restockInfo.unit}}）</view>
+      <view class="rm-cancel" bindtap="backToList">返回</view>
+    </block>
+
+    <!-- ===== 详情面板 ===== -->
+    <block wx:elif="{{rmode === 'detail'}}">
+      <view class="rm-title">{{detailInfo.title}}</view>
+      <view class="rm-detail">
+        <view class="rm-detail-row" wx:for="{{detailInfo.rows}}" wx:key="label">
+          <text class="rm-detail-label">{{item.label}}</text>
+          <text class="rm-detail-value">{{item.value}}</text>
+        </view>
+      </view>
+      <view class="rm-btn" bindtap="confirmDetail">{{detailInfo.actionText}}</view>
+      <view class="rm-cancel" bindtap="backToList">返回</view>
+    </block>
+
+    <!-- ===== 今日辅食推荐食谱面板 ===== -->
+    <block wx:elif="{{rmode === 'recipe'}}">
+      <view class="rm-title">{{recipeInfo.title}}</view>
+      <view class="rm-subtitle">{{recipeInfo.stage}} · 依据中国居民膳食指南推荐</view>
+      <picker mode="time" value="{{suppRemindTime}}" bindchange="onSuppTimeChange">
+        <view class="supp-time-row">每日提醒时间：{{suppRemindTime}}（点击修改）</view>
+      </picker>
+      <view class="recipe-meal" wx:for="{{recipeInfo.meals}}" wx:key="time">
+        <view class="recipe-meal-time">{{item.time}}</view>
+        <view class="recipe-meal-body">
+          <view class="recipe-meal-food">{{item.food}}</view>
+          <view class="recipe-meal-note">{{item.note}}</view>
+        </view>
+      </view>
+      <view class="recipe-tips">
+        <view class="recipe-tips-title">喂养要点</view>
+        <view class="recipe-tip" wx:for="{{recipeInfo.tips}}" wx:for-item="tip" wx:key="*this">· {{tip}}</view>
+      </view>
+      <view class="rm-btn" bindtap="backToList">知道了</view>
+    </block>
+
+</dialog>
+
+<!-- 全局提醒弹窗（加入申请/结果通知） -->
+<dialog visible="{{showGlobalAlert}}" position="center" title="{{globalAlert.title}}" bind:close="closeGlobalAlert">
+  <view class="ga-content">
+    <text class="ga-message">{{globalAlert.message}}</text>
+    <view class="ga-btns" wx:if="{{globalAlert.type === 'confirm'}}">
+      <view class="ga-btn ga-cancel" bindtap="onGlobalAlertCancel">{{globalAlert.cancelText || '取消'}}</view>
+      <view class="ga-btn ga-confirm" bindtap="onGlobalAlertConfirm">{{globalAlert.confirmText || '确定'}}</view>
+    </view>
+    <view class="ga-btns" wx:else>
+      <view class="ga-btn ga-confirm" bindtap="closeGlobalAlert">{{globalAlert.confirmText || '知道了'}}</view>
+    </view>
+  </view>
+</dialog>

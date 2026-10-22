@@ -1,0 +1,114 @@
+<view class="page-no-tab">
+  <view class="status-bar" style="height:{{safeTop}}px"></view>
+
+  <!-- 页头 -->
+  <view class="page-header-back">
+    <view class="back-btn" bindtap="goBack">‹</view>
+    <view class="page-header-left">
+      <text class="header-kicker">保护你的数据与隐私</text>
+      <view class="header-title">权限与隐私</view>
+    </view>
+  </view>
+
+  <!-- 权限管理 -->
+  <view class="sec">
+    <view class="sec-title">权限管理</view>
+    <view class="group">
+      <view class="row" wx:for="{{permissions}}" wx:key="scope" data-scope="{{item.scope}}" bindtap="requestAuth">
+        <view class="row-icon"><image wx:if="{{item.icon && item.icon[0] === '/'}}" class="row-icon-img" src="{{item.icon}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+        <view class="row-info">
+          <text class="row-name">{{item.name}}</text>
+          <text class="row-desc">{{item.desc}}</text>
+        </view>
+        <text class="row-state {{item.state === '已授权' ? 'ok' : (item.state === '已拒绝' ? 'deny' : '')}}">{{item.state}}</text>
+        <view class="row-arrow" wx:if="{{item.state !== '已授权'}}">去授权</view>
+      </view>
+    </view>
+    <view class="sec-tip">点击权限项可立即拉起授权；已拒绝的权限会引导你到小程序设置中开启</view>
+  </view>
+
+  <!-- 提醒设置：真实控制首页每日提醒弹窗与日历红点 -->
+  <view class="sec">
+    <view class="sec-title">提醒设置</view>
+    <view class="group">
+      <view class="row" wx:for="{{remindItems}}" wx:key="key">
+        <view class="row-icon"><image wx:if="{{item.icon && item.icon[0] === '/'}}" class="row-icon-img" src="{{item.icon}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
+        <view class="row-info">
+          <text class="row-name">{{item.name}}</text>
+          <text class="row-desc">{{item.desc}}</text>
+        </view>
+        <switch checked="{{reminds[item.key]}}" data-key="{{item.key}}" bindchange="onRemindSwitch" color="#d9a417" />
+      </view>
+    </view>
+    <view class="sec-tip">关闭后对应提醒不再出现在今日提醒弹窗与日历红点中，已产生的数据不受影响</view>
+  </view>
+
+  <!-- 微信订阅消息推送 -->
+  <view class="sec">
+    <view class="sec-title">消息推送</view>
+    <view class="group">
+      <view class="row" bindtap="enablePush">
+        <view class="row-icon"><image class="row-icon-img" src="/images/icons/bell.svg" mode="aspectFit" /></view>
+        <view class="row-info">
+          <text class="row-name">微信订阅消息推送</text>
+          <text class="row-desc">疫苗应种 / 营养品补充 / 库存与母乳到期，通过微信服务通知提醒（需在小程序后台配置模板后可用）</text>
+        </view>
+        <text class="row-state ok" wx:if="{{pushEnabled}}">已开启</text>
+        <view class="row-arrow" wx:else>去开启</view>
+      </view>
+    </view>
+    <view class="sec-tip">订阅消息为一次性授权，每次授权可推送一次；建议每月重新开启一次</view>
+  </view>
+
+  <!-- 数据管理 -->
+  <view class="sec">
+    <view class="sec-title">数据管理</view>
+    <view class="group">
+      <view class="row" bindtap="clearCache">
+        <view class="row-icon"><image class="row-icon-img" src="/images/icons/icon-trash.png" mode="aspectFit" /></view>
+        <view class="row-info">
+          <text class="row-name">清除本地数据</text>
+          <text class="row-desc">当前占用 {{storageText}}</text>
+        </view>
+        <view class="row-arrow">›</view>
+      </view>
+    </view>
+    <view class="sec-tip warn">清除本地数据会删除全部喂养记录与档案，且无法恢复，请谨慎操作</view>
+  </view>
+
+  <!-- 协议与安全 -->
+  <view class="sec">
+    <view class="sec-title">协议与安全</view>
+    <view class="group">
+      <view class="row" bindtap="showPolicy">
+        <view class="row-icon"><image class="row-icon-img" src="/images/icons/icon-doc.png" mode="aspectFit" /></view>
+        <view class="row-info">
+          <text class="row-name">隐私政策</text>
+          <text class="row-desc">了解我们如何收集与使用你的信息</text>
+        </view>
+        <view class="row-arrow">›</view>
+      </view>
+      <view class="row" bindtap="showTerms">
+        <view class="row-icon"><image class="row-icon-img" src="/images/icons/icon-doc.png" mode="aspectFit" /></view>
+        <view class="row-info">
+          <text class="row-name">用户协议</text>
+          <text class="row-desc">使用熊宝喂养前请阅读</text>
+        </view>
+        <view class="row-arrow">›</view>
+      </view>
+      <view class="row">
+        <view class="row-icon"><image class="row-logo" src="/images/brand-logo.png" mode="aspectFit" /></view>
+        <view class="row-info">
+          <text class="row-name">熊宝喂养</text>
+          <text class="row-desc">版本 v1.0.0</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 注销账号 -->
+    <view wx:if="{{logged}}" class="del-account" bindtap="onDeleteAccount">
+      <text>注销账号</text>
+    </view>
+  </view>
+</view>
+

@@ -1,0 +1,394 @@
+/* pages/index/index.wxss - 品牌色：米白 FFFDF7 / 明黄 FFD95A / 深墨 29281F */
+.home-page {
+  padding-bottom: 200rpx;
+}
+
+/* ===== 问候头部 ===== */
+.home-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20rpx 8rpx 28rpx;
+}
+.head-greeting {
+  font-size: 42rpx;
+  font-weight: 800;
+  color: #29281F;
+}
+.head-title {
+  font-size: 25rpx;
+  color: #8f896d;
+  margin-top: 10rpx;
+  letter-spacing: 1rpx;
+}
+
+/* ===== 搜索框 ===== */
+.search-bar {
+  margin-top: 24rpx;
+  margin-bottom: 28rpx;
+}
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 48rpx;
+  padding: 0 28rpx;
+  height: 84rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.search-icon {
+  width: 30rpx;
+  height: 30rpx;
+}
+.search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #29281F;
+  height: 84rpx;
+}
+.search-placeholder { color: #b9b39c; }
+.search-clear { color: #e8e1d0; font-size: 30rpx; padding: 8rpx; }
+
+/* ===== 明黄提醒卡 ===== */
+.remind-card {
+  background: linear-gradient(135deg, #FFD95A 0%, #ffe994 100%);
+  border-radius: 32rpx;
+  padding: 34rpx 34rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 8rpx 24rpx rgba(255,217,90,0.35);
+}
+.remind-tag {
+  display: inline-block;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #FFFDF7;
+  background: #29281F;
+  border-radius: 20rpx;
+  padding: 6rpx 20rpx;
+  margin-bottom: 20rpx;
+}
+.remind-title {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #29281F;
+}
+.remind-sub {
+  font-size: 24rpx;
+  color: #6d5a00;
+  margin-top: 12rpx;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.remind-btn {
+  margin-top: 26rpx;
+  display: inline-block;
+  background: #29281F;
+  color: #FFD95A;
+  font-size: 26rpx;
+  font-weight: 700;
+  border-radius: 40rpx;
+  padding: 0 34rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  border: none;
+}
+.remind-btn::after { border: none; }
+
+/* ===== 工具 2×2 网格 ===== */
+.tools-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+  margin-bottom: 36rpx;
+}
+.tool-card {
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 30rpx 26rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.tool-card:active { transform: scale(0.97); }
+.tool-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 24rpx;
+  background: #f7f2e4;
+  margin-bottom: 18rpx;
+}
+.tool-name {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #29281F;
+}
+.tool-desc {
+  font-size: 22rpx;
+  color: #8f896d;
+  margin-top: 8rpx;
+  line-height: 1.4;
+}
+
+/* ===== 个性化推荐 ===== */
+.recommend-block {
+  background: #29281F;
+  border-radius: 28rpx;
+  padding: 32rpx 30rpx;
+  margin-bottom: 36rpx;
+}
+.recommend-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.recommend-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #FFD95A;
+}
+.recommend-note {
+  font-size: 22rpx;
+  color: #e8e1d0;
+}
+.recommend-desc {
+  font-size: 22rpx;
+  color: #e8e1d0;
+  margin-top: 14rpx;
+  line-height: 1.6;
+}
+.recommend-card {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.08);
+  border-radius: 20rpx;
+  padding: 22rpx 24rpx;
+  margin-top: 20rpx;
+}
+.recommend-card:active { background: rgba(255,255,255,0.16); }
+.recommend-icon {
+  width: 72rpx;
+  height: 72rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.recommend-info { flex: 1; min-width: 0; }
+.recommend-name { font-size: 28rpx; font-weight: 700; color: #fff; }
+.recommend-desc {
+  font-size: 22rpx;
+  color: #e8e1d0;
+  margin-top: 6rpx;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+.recommend-arrow { color: #8f896d; font-size: 40rpx; margin-left: 10rpx; }
+.recommend-foot {
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  color: #e8e1d0;
+  text-align: right;
+}
+
+/* 未填宝宝信息引导卡 */
+.baby-guide {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 2rpx solid #FFD95A;
+  border-radius: 24rpx;
+  padding: 28rpx 26rpx;
+  margin-bottom: 36rpx;
+}
+.baby-guide-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 24rpx;
+  background: #f7f2e4;
+}
+.baby-guide-text { flex: 1; min-width: 0; }
+.baby-guide-title { font-size: 30rpx; font-weight: 800; color: #29281F; }
+.baby-guide-desc { font-size: 23rpx; color: #8f896d; margin-top: 6rpx; }
+.baby-guide-btn {
+  background: #FFD95A;
+  color: #29281F;
+  font-size: 24rpx;
+  font-weight: 700;
+  border-radius: 30rpx;
+  padding: 12rpx 28rpx;
+  flex-shrink: 0;
+}
+
+/* ===== 技能模块（四大模块聚合） ===== */
+.section-title {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #29281F;
+  margin: 8rpx 8rpx 20rpx;
+}
+.module-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20rpx;
+  margin-bottom: 36rpx;
+}
+.module-card {
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 30rpx 26rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.module-card:active { transform: scale(0.97); }
+.module-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 24rpx;
+  background: #f7f2e4;
+  margin-bottom: 18rpx;
+}
+.module-name {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #29281F;
+}
+.module-tagline {
+  font-size: 22rpx;
+  color: #8f896d;
+  margin-top: 8rpx;
+  line-height: 1.4;
+}
+.module-count {
+  margin-top: 14rpx;
+  display: inline-block;
+  background: #FFD95A;
+  color: #29281F;
+  font-size: 22rpx;
+  font-weight: 700;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+}
+
+/* ===== 成长足迹 ===== */
+.footprint {
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 30rpx 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.footprint-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+.footprint-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #29281F;
+}
+.footprint-add {
+  font-size: 24rpx;
+  color: #8f896d;
+}
+.footprint-body {
+  display: flex;
+  align-items: center;
+}
+.footprint-item {
+  flex: 1;
+  text-align: center;
+}
+.footprint-num {
+  font-size: 44rpx;
+  font-weight: 800;
+  color: #29281F;
+}
+.footprint-label {
+  font-size: 22rpx;
+  color: #8f896d;
+  margin-top: 8rpx;
+}
+.footprint-divider {
+  width: 2rpx;
+  height: 56rpx;
+  background: #f0ead6;
+}
+
+/* 搜索结果 */
+.search-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 4rpx 8rpx 20rpx;
+}
+.search-head-title { font-size: 28rpx; font-weight: 700; color: #8f896d; }
+.search-head-clear { font-size: 24rpx; color: #8f896d; }
+.search-empty { text-align: center; padding: 80rpx 0; }
+.search-empty-icon {
+  width: 88rpx;
+  height: 88rpx;
+}
+.search-empty-text { font-size: 26rpx; color: #8f896d; }
+
+/* 技能卡片（搜索结果用） */
+.skill-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.skill-card:active { transform: scale(0.98); }
+.skill-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 24rpx;
+  background: #f7f2e4;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+.skill-info { flex: 1; min-width: 0; }
+.skill-name { font-size: 28rpx; font-weight: 800; color: #29281F; }
+.skill-desc {
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: #8f896d;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.skill-arrow { color: #e8e1d0; font-size: 48rpx; margin-left: 12rpx; }
+
+/* 免责 */
+.disclaimer {
+  font-size: 22rpx;
+  color: #8f896d;
+  line-height: 1.7;
+  padding: 24rpx 12rpx 8rpx;
+}
+
+/* 底部固定拨打120 */
+.call-bar {
+  position: fixed;
+  left: 24rpx;
+  right: 24rpx;
+  bottom: calc(24rpx + env(safe-area-inset-bottom));
+  background: #29281F;
+  color: #fff;
+  border-radius: 44rpx;
+  text-align: center;
+  padding: 22rpx 0;
+  box-shadow: 0 8rpx 24rpx rgba(41,40,31,0.25);
+  z-index: 99;
+}
+.call-bar-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #fff;
+}

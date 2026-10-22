@@ -1,0 +1,290 @@
+/* pages/kit/kit.wxss - 品牌色：米白 FFFDF7 / 明黄 FFD95A / 深墨 29281F */
+.kit-page {
+  padding-bottom: 60rpx;
+}
+
+/* 子 tab 切换 */
+.sub-tabs {
+  display: flex;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 8rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+.sub-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  padding: 20rpx 0;
+  border-radius: 18rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #8f896d;
+  transition: all 0.2s;
+}
+.sub-tab.active {
+  background: #FFD95A;
+  color: #29281F;
+}
+.sub-tab-icon { font-size: 32rpx; }
+
+/* 顶部进度卡 */
+.progress-card {
+  background: #29281F;
+  border-radius: 28rpx;
+  padding: 36rpx 32rpx;
+  color: #fff;
+  margin-bottom: 24rpx;
+}
+.progress-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.progress-num {
+  font-size: 72rpx;
+  font-weight: 800;
+  color: #FFD95A;
+  line-height: 1;
+}
+.percent {
+  font-size: 36rpx;
+  font-weight: 700;
+}
+.progress-label {
+  font-size: 26rpx;
+  color: #fff;
+  opacity: 0.9;
+}
+.progress-track {
+  height: 14rpx;
+  background: rgba(255,255,255,0.15);
+  border-radius: 8rpx;
+  overflow: hidden;
+  margin-top: 20rpx;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFD95A, #FFB800);
+  border-radius: 8rpx;
+  transition: width 0.3s ease;
+}
+.essential-row {
+  margin-top: 18rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.essential-text {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.85);
+}
+.essential-tip {
+  font-size: 24rpx;
+  color: #FFD95A;
+  font-weight: 700;
+}
+
+/* 操作按钮 */
+.op-row {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 20rpx;
+}
+.op-btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 30rpx;
+  text-align: center;
+  padding: 0;
+}
+
+/* 分享/打印按钮 */
+.share-row {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 28rpx;
+}
+.share-btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 30rpx;
+  text-align: center;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+}
+.share-btn-icon {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
+}
+
+/* 分类组 */
+.kit-group {
+  background: #fff;
+  border-radius: 24rpx;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(41,40,31,0.05);
+}
+
+/* 分类头 */
+.kit-cat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 30rpx;
+}
+.kit-cat-left {
+  display: flex;
+  align-items: center;
+}
+.kit-cat-icon {
+  width: 48rpx;
+  height: 48rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+.kit-sec-title {
+  font-size: 32rpx;
+  font-weight: 800;
+  color: #29281F;
+  padding: 24rpx 0 16rpx;
+}
+.kit-sec {
+  margin-bottom: 24rpx;
+}
+.kit-cat-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #29281F;
+}
+.kit-cat-right {
+  display: flex;
+  align-items: center;
+}
+.kit-cat-count {
+  font-size: 26rpx;
+  color: #8f896d;
+  margin-right: 14rpx;
+  font-weight: 600;
+}
+.kit-cat-arrow {
+  font-size: 28rpx;
+  color: #e8e1d0;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+.kit-cat-arrow.open {
+  transform: rotate(180deg);
+}
+
+/* 物品列表 */
+.kit-items {
+  border-top: 2rpx solid #F3EFE0;
+}
+.kit-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 24rpx 30rpx;
+  border-bottom: 2rpx solid #f6f3eb;
+}
+.kit-item:last-child {
+  border-bottom: none;
+}
+.kit-item:active {
+  background: #FFF9E8;
+}
+
+/* 复选框 */
+.kit-checkbox {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  border: 3rpx solid #e8e1d0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  margin-top: 4rpx;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+.kit-checkbox.checked {
+  background: #FFD95A;
+  border-color: #FFD95A;
+}
+.kit-check-mark {
+  color: #29281F;
+  font-size: 28rpx;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* 物品信息 */
+.kit-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.kit-item-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.kit-item-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #29281F;
+}
+.kit-item.checked .kit-item-name {
+  color: #9a9585;
+  text-decoration: line-through;
+}
+.kit-essential-badge {
+  font-size: 20rpx;
+  color: #29281F;
+  background: #FFD95A;
+  padding: 2rpx 12rpx;
+  border-radius: 20rpx;
+  margin-left: 12rpx;
+  font-weight: 700;
+}
+.kit-item-note {
+  font-size: 24rpx;
+  color: #8f896d;
+  line-height: 1.6;
+  margin-top: 8rpx;
+}
+.kit-item-qty {
+  font-size: 22rpx;
+  color: #b3ae9c;
+  margin-top: 6rpx;
+}
+
+/* 底部说明 */
+.kit-footer {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx 30rpx;
+  margin-top: 12rpx;
+}
+.kit-footer-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #29281F;
+  margin-bottom: 14rpx;
+}
+.kit-footer-line {
+  font-size: 24rpx;
+  color: #8f896d;
+  line-height: 1.8;
+}
