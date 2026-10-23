@@ -103,16 +103,16 @@
           <text wx:for="{{hours}}" wx:key="*this" style="height: {{hourUnit}}rpx; line-height: {{hourUnit}}rpx">{{item}}</text>
         </view>
         <view class="tl-track-wrap">
-          <view class="tl-track" style="height: {{24 * hourUnit}}rpx">
+          <view class="tl-track" style="height: {{24 * hourUnit}}rpx" bindtap="onTrackTap">
             <view
               wx:for="{{bars}}"
-              wx:key="title"
+              wx:key="barKey"
               wx:if="{{item.show}}"
-              class="tl-bar"
+              class="tl-bar {{selectedKey === item.barKey ? 'tl-bar-sel' : ''}}"
               style="left: {{item.left}}%; bottom: {{item.bottomRpx}}rpx; width: {{item.w}}%; height: {{item.hRpx}}rpx; background: {{item.color}}"
               hover-class="tl-bar-hover"
               data-index="{{index}}"
-              bindtap="onBarTap"
+              catchtap="onBarTap"
             ></view>
           </view>
         </view>
@@ -129,13 +129,15 @@
       </view>
     </view>
 
-    <!-- 喂养块详情（与喂养记录时间轴内容一致） -->
-    <view class="tl-detail-mask" wx:if="{{tlDetail.visible}}" bindtap="closeTlDetail">
-      <view class="tl-detail-card" catchtap="noop">
-        <text class="tld-title">{{tlDetail.title}}</text>
-        <text class="tld-desc" wx:if="{{tlDetail.desc}}">{{tlDetail.desc}}</text>
-        <text class="tld-tip">{{lang === 'en' ? 'Tap outside to close' : '点击空白处关闭'}}</text>
-      </view>
+  </view>
+
+  <!-- 喂养块详情（与喂养记录时间轴内容一致） -->
+  <view class="tl-detail-mask" wx:if="{{tlDetail.visible}}" bindtap="closeTlDetail" catchtouchmove="noop">
+    <view class="tl-detail-card" catchtap="noop">
+      <text class="tld-title">{{tlDetail.title}}</text>
+      <text class="tld-time" wx:if="{{tlDetail.time}}">{{tlDetail.time}}</text>
+      <text class="tld-desc" wx:if="{{tlDetail.desc}}">{{tlDetail.desc}}</text>
+      <text class="tld-tip">{{lang === 'en' ? 'Tap outside to close' : '点击空白处关闭'}}</text>
     </view>
   </view>
 

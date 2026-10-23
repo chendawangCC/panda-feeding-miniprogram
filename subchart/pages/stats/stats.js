@@ -261,7 +261,8 @@ Page({
     })),
     showAll: true,
     selectedTypes: [],
-    tlDetail: { visible: false, title: '', desc: '' },
+    tlDetail: { visible: false, title: '', time: '', desc: '' },
+    selectedKey: '',
     days: [],
     hours: ['24', '23', '22', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12', '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01'],
     bars: [],
@@ -531,12 +532,26 @@ Page({
       const seg = this.recordSegment(r);
       const slot = 100 / Math.max(1, days.length)
       const barW = 8
+      const en = this._en()
+      const label = en ? (EN_LABEL[meta.name] || meta.name) : meta.name
+      let timeText
+      if (seg) {
+        // 时间段只显示起止，时长放到明细里，避免重复
+        const from = this.fmtClock(seg.start)
+        const to = this.fmtClock((seg.start + seg.min) % 1440)
+        timeText = from + '–' + to
+      } else {
+        timeText = r.time
+      }
       bars.push({
         left: Math.round((di * slot + (slot - barW) / 2) * 10) / 10,
         w: barW,
         color: meta.color,
         type: meta.name,
-        title: r.date + ' ' + r.time + ' ' + (this._en() ? (EN_LABEL[meta.name] || meta.name) : meta.name),
+        barKey: r.id || (r.date + '_' + r.time + '_' + meta.name),
+        title: label,
+        dateText: r.date,
+        timeText,
         detail: this.recordDetail(r),
         show: true,
         isPoint: !seg,
@@ -671,6 +686,12 @@ Page({
     return weeks[d.getDay()];
   },
 
+  fmtClock(min) {
+    const m = ((Math.round(min) % 1440) + 1440) % 1440;
+    const h = Math.floor(m / 60);
+    return (h < 10 ? '0' + h : '' + h) + ':' + (m % 60 < 10 ? '0' + m % 60 : '' + m % 60);
+  },
+
   toMinutes(t) {
     const p = String(t || '00:00').split(':').map(Number);
     return (p[0] || 0) * 60 + (p[1] || 0);
@@ -715,18 +736,80 @@ Page({
     });
   },
 
-  /* 点击喂养块：查看该条记录详情（与喂养时间轴记录内容一致） */
+  /* 点击喂养块/细线：查看该条记录详情（与喂养时间轴记录内容一致） */
   onBarTap(e) {
     const b = this.data.bars[e.currentTarget.dataset.index];
     if (!b) return;
-    this.setData({ tlDetail: { visible: true, title: b.title, desc: b.detail || '' } });
+    this.openBarDetail(b);
+  },
+
+  openBarDetail(b) {
+    this.setData({
+      selectedKey: b.barKey || '',
+      tlDetail: {
+        visible: true,
+        title: b.title,
+        time: b.dateText + ' · ' + (b.timeText || b.time),
+        desc: b.detail || (this._en() ? 'No extra details for this record.' : '这条记录暂无更多明细。')
+      }
+    });
+  },
+
+  /* 点在色块/细线附近（尤其细线很难精准点中）也能命中最近的一条 */
+  onTrackTap(e) {
+    const t = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+    let x, y;
+    if (t && t.clientX !== undefined) {
+      x = t.clientX; y = t.clientY;           // 视口坐标，与 boundingClientRect 一致
+    } else if (e.detail && e.detail.x !== undefined) {
+      x = e.detail.x; y = e.detail.y;
+    }
+    if (x === undefined || y === undefined) return;
+    const bars = this.data.bars.filter(b => b.show);
+    if (!bars.length) return;
+    const winW = (wx.getSystemInfoSync().windowWidth) || 375;
+    const pxPerRpx = winW / 750;
+    wx.createSelectorQuery().in(this).select('.tl-track').boundingClientRect(rect => {
+      if (!rect || !rect.width) return;
+      const tx = x - rect.left;
+      const ty = y - rect.top;
+      let best = null, bestScore = Infinity;
+      bars.forEach(b => {
+        const left = rect.width * (b.left || 0) / 100;
+        const width = rect.width * (b.w || 8) / 100;
+        const height = (b.hRpx || 8) * pxPerRpx;
+        const top = rect.height - ((b.bottomRpx || 0) * pxPerRpx + height);
+        // 触点与色块矩形之间的横向/纵向间隙
+        const dx = tx < left ? left - tx : (tx > left + width ? tx - left - width : 0);
+        const dy = ty < top ? top - ty : (ty > top + height ? ty - top - height : 0);
+        if (dx > 26 || dy > 18) return;   // 热区：横向 26px、纵向 18px
+        const score = dx * dx + dy * dy;
+        if (score < bestScore) { bestScore = score; best = b; }
+      });
+      if (best) this.openBarDetail(best);
+    }).exec();
   },
 
   closeTlDetail() {
-    this.setData({ 'tlDetail.visible': false });
+    this.setData({ 'tlDetail.visible': false, selectedKey: '' });
   },
 
   noop() {},
+
+  /* 起止时间分钟数（跨天自动 +1440），没有起止时退回秒数 */
+  durationMin(start, end, seconds) {
+    const toM = (t) => {
+      const p = String(t || '').split(':');
+      if (p.length < 2 || p[0] === '' || isNaN(Number(p[0]))) return null;
+      return (Number(p[0]) || 0) * 60 + (Number(p[1]) || 0);
+    };
+    const a = toM(start), b = toM(end);
+    if (a !== null && b !== null && a !== b) {
+      const m = b - a;
+      return Math.round(m < 0 ? m + 1440 : m);
+    }
+    return seconds ? Math.round(seconds / 60) : 0;
+  },
 
   /* 记录详情（与我的-喂养记录时间轴保持一致） */
   recordDetail(r) {
@@ -751,10 +834,16 @@ Page({
         return choice + (r.diaperSize ? ' · size ' + r.diaperSize : '') + (r.peeColor ? ' · urine ' + r.peeColor : '') + (r.stoolColor ? ' · stool ' + r.stoolColor : '');
       }
       case '喝水': return (r.water || 0) + 'ml';
-      case '睡眠':
-        return en
-          ? (r.sleepStart || '') + ' to ' + (r.sleepEnd || '') + ', ' + Math.round((r.sleepSeconds || 0) / 60) + ' min'
-          : (r.sleepStart || '') + ' 至 ' + (r.sleepEnd || '') + ' 共 ' + Math.round((r.sleepSeconds || 0) / 60) + ' 分钟';
+      case '睡眠': {
+        const m = this.durationMin(r.sleepStart, r.sleepEnd, r.sleepSeconds);
+        return en ? 'Slept ' + m + ' min' : '共 ' + this.fmtMin(m);
+      }
+      case '洗澡': {
+        const m = this.durationMin(r.bathStart, r.bathEnd, r.bathSeconds);
+        return en ? 'Took ' + m + ' min' : '共 ' + this.fmtMin(m);
+      }
+      case '体温':
+        return (r.temperature || '--') + ' ℃';
       case '辅食': return (r.simpleAmount || 0) + 'g' + (r.food ? ' ' + r.food : '');
       case '营养品': return (r.supps || []).join(en ? ', ' : '、') || '';
       case '语音记录': return r.note || '';

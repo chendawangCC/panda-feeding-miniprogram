@@ -242,10 +242,16 @@
 .tl-bar::after {
   content: '';
   position: absolute;
-  left: -4rpx;
-  right: -4rpx;
-  top: -14rpx;
-  bottom: -14rpx;
+  left: -8rpx;
+  right: -8rpx;
+  top: -16rpx;
+  bottom: -16rpx;
+}
+/* 被点中的喂养块：加深并加一圈描边，便于确认选中 */
+.tl-bar-sel {
+  opacity: 1;
+  z-index: 3;
+  box-shadow: 0 0 0 3rpx rgba(255, 255, 255, 0.9), 0 0 0 6rpx rgba(41, 40, 31, 0.55);
 }
 .tl-bar-hover {
   opacity: 1;
@@ -570,7 +576,7 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.35);
-  z-index: 999;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -584,9 +590,17 @@
 }
 .tld-title {
   display: block;
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: 800;
   color: #29281f;
+  text-align: center;
+}
+.tld-time {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #b97b05;
   text-align: center;
 }
 .tld-desc {
