@@ -635,13 +635,15 @@ Page({
       if (app.isLegacyPresetStock && app.isLegacyPresetStock(s)) return;
       const size = s.size || '通用';
       const groupKey = s.name + '_' + size;
+      const isFormula = /奶粉|配方奶|配方牛奶/.test(s.name);
       if (!stockGroups[groupKey]) {
         stockGroups[groupKey] = {
           name: s.name,
           size: size,
           unit: s.unit || '个',
           count: 0,
-          threshold: 10 // 默认阈值：低于10个提醒
+          isFormula: isFormula,
+          threshold: isFormula ? 2 : 10 // 奶粉低于 2 罐才提醒；其他耗材低于 10 个提醒
         };
       }
       stockGroups[groupKey].count += Number(s.count) || 0;
@@ -650,16 +652,20 @@ Page({
     const dismissedStockLow = wx.getStorageSync('dismissed_stock_low') || {};
     Object.keys(stockGroups).forEach(groupKey => {
       const g = stockGroups[groupKey];
-      if (g.count > 0 && g.count <= g.threshold) {
+      // 奶粉：剩余 < 2 罐提醒（1 罐或更少）；其他耗材：剩余 ≤ 10 提醒
+      const lowNow = g.count > 0 && (g.isFormula ? g.count < g.threshold : g.count <= g.threshold);
+      if (lowNow) {
         // 已点知道了的库存偏低提醒不再显示
         if (dismissedStockLow[groupKey]) {
           // 如果补货后库存回到阈值以上，清除忽略状态，下次再偏低会重新提醒
           return;
         }
-        const isUrgent = g.count <= 3; // 低于3个显示红色紧急标签
+        const isUrgent = g.count <= (g.isFormula ? 1 : 3); // 奶粉仅剩1罐/其他耗材低于3个显示红色紧急标签
         items.push({
           key: 'stock_low_' + groupKey, rawName: groupKey, iconImg: '/images/icons/rec-stats.png', icon: '', title: g.name + (g.size !== '通用' ? '（' + g.size + '码）' : '') + '库存偏低',
-          desc: '剩余 ' + g.count + ' ' + g.unit + ' · 建议及时补货',
+          desc: g.isFormula
+            ? ('仅剩 ' + g.count + ' ' + g.unit + ' · 低于 2 罐，建议及时补货')
+            : ('剩余 ' + g.count + ' ' + g.unit + ' · 建议及时补货'),
           tag: isUrgent ? '紧急' : '需补货', tagClass: isUrgent ? 'red' : 'amber',
           actionLabel: '知道了', actionKey: 'dismiss_stock_low', minutesUntil: 0
         });

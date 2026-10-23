@@ -76,7 +76,10 @@
   </view>
 
 </view>
-<dialog visible="{{showReminder}}" position="center" bind:close="confirmReminder">
+<!-- 每日提醒浮层：自定义遮罩，底部留出 tabbar 高度，弹窗时 tabbar 不消失 -->
+<view class="rm-overlay" wx:if="{{showReminder}}" catchtap="confirmReminder">
+  <view class="rm-sheet" catchtap="noop">
+    <scroll-view scroll-y class="rm-scroll" enhanced show-scrollbar="{{false}}">
 
     <!-- ===== 列表：2 小时内临近提醒（库存预警 / 保质期 / 疫苗待接种 / 喂养） ===== -->
     <block wx:if="{{rmode === 'list'}}">
@@ -203,7 +206,9 @@
       <view class="rm-btn" bindtap="backToList">{{lang === 'en' ? 'Got it' : '知道了'}}</view>
     </block>
 
-</dialog>
+    </scroll-view>
+  </view>
+</view>
 
 <!-- 全局提醒弹窗（加入申请/结果通知） -->
 <dialog visible="{{showGlobalAlert}}" position="center" title="{{globalAlert.title}}" bind:close="closeGlobalAlert">

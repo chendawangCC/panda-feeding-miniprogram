@@ -1851,13 +1851,31 @@ Page({
     const open = !this.data.record.milkOpen;
     this.setData({ 'record.milkOpen': open });
     if (open) {
-      wx.showToast({ title: '已开罐，保存后生成到期提醒', icon: 'none' });
+      wx.showToast({ title: '已开罐：保存后库存自动 -1 罐，并生成到期提醒', icon: 'none' });
     }
   },
 
   /* 勾选到期提醒（开罐后按国标 28 天） */
   toggleMilkWarn() {
     this.setData({ 'record.milkWarn': !this.data.record.milkWarn });
+  },
+
+  /**
+   * 奶粉开罐 → 库存自动 -1 罐
+   * 只在「新增配方奶记录 + 勾选已开罐」时调用一次（编辑不重复扣）
+   * 返回扣减后的库存项；没有可扣减的奶粉时返回 null
+   */
+  deductFormulaCan() {
+    const g = app.globalData;
+    const items = (g.stockItems || []).slice();
+    const idx = items.findIndex(s => s && /奶粉|配方奶|配方牛奶/.test(s.name || '')
+      && !/吸奶器|消毒器|温奶器|摇奶器|辅食机|料理机|恒温壶|烘干机|暖奶器/.test(s.name || '')
+      && (Number(s.count) || 0) > 0);
+    if (idx < 0) return null;
+    const cur = Number(items[idx].count) || 0;
+    items[idx] = Object.assign({}, items[idx], { count: Math.max(0, cur - 1), _u: Date.now() });
+    g.stockItems = items;
+    return items[idx];
   },
 
   /* 母乳储存方式（国标） */
@@ -2439,6 +2457,7 @@ Page({
     recBase._u = Date.now();
 
     const patch = { 'record.visible': false };
+    let formulaCanLeft = null; // 本次开罐后剩余奶粉罐数（用于保存提示）
     if (isEdit) {
       // 编辑：更新该条记录（不重复消耗库存）
       g.records[rec.editIndex] = recBase;
@@ -2446,6 +2465,11 @@ Page({
       // 新增：联动消耗库存
       if (rec.type === '配方奶') {
         g.supplies.milkFeeds = Math.max(0, (g.supplies.milkFeeds || 0) - 1);
+        // 勾选「已开罐」→ 奶粉库存自动 -1 罐
+        if (recBase.milkOpen) {
+          const after = this.deductFormulaCan();
+          if (after) formulaCanLeft = after.count;
+        }
       }
       if (rec.type === '换尿布') {
         const used = Math.min(rec.diaperAmount, rec.diaperStock);
@@ -2512,6 +2536,14 @@ Page({
     if (rec.type === '睡眠' && rec.sleepRunning) this.startSleepRunningSync();
     if (rec.type === '换尿布') {
       wx.showToast({ title: (isEdit ? '已更新' : '已保存') + '，' + (rec.diaperSize || '') + '码剩 ' + (isEdit ? (rec.diaperStock || 0) : patch['record.diaperStock']) + ' 片', icon: 'none' });
+    } else if (rec.type === '配方奶' && recBase.milkOpen && !isEdit) {
+      wx.showToast({
+        title: formulaCanLeft === null
+          ? '已保存 · 库存里没有可扣减的奶粉，请先到喂养台添加'
+          : '已保存 · 已开罐，奶粉库存剩 ' + formulaCanLeft + ' 罐',
+        icon: 'none',
+        duration: 2500
+      });
     } else {
       wx.showToast({ title: (isEdit ? '已更新' : '已保存') + rec.type + '记录', icon: 'none' });
     }

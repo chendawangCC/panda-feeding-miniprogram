@@ -426,6 +426,34 @@
   from { transform: translateY(40rpx) scale(0.96); opacity: 0.5; }
   to { transform: translateY(0) scale(1); opacity: 1; }
 }
+/* 每日提醒浮层：遮罩底部让出 tabbar 高度（48pt + 安全区），弹窗时 tabbar 依然可见可点 */
+.rm-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: calc(48px + env(safe-area-inset-bottom));
+  background: rgba(35, 30, 15, 0.45);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 44rpx;
+  box-sizing: border-box;
+}
+.rm-sheet {
+  width: 100%;
+  max-width: 660rpx;
+  background: #ffffff;
+  border-radius: 36rpx;
+  padding: 44rpx 40rpx 36rpx;
+  box-sizing: border-box;
+  box-shadow: 0 24rpx 80rpx rgba(53, 44, 16, 0.18);
+  animation: rmodal-in 0.18s ease-out;
+}
+.rm-scroll {
+  max-height: 68vh;
+}
 .rm-header {
   position: relative;
   display: flex;
