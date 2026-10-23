@@ -1,4 +1,5 @@
 const app = getApp();
+const ARTICLES_EN = require('./articles-en.js');
 
 /* 育儿百科文章内容库 */
 const ARTICLES = {
@@ -185,14 +186,19 @@ const ARTICLES = {
 
 Page({
 
+  _en() { return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en'; },
+
   onShareAppMessage() {
     return {
-        imageUrl: '/images/share-cover.png', title: '熊宝喂养 · 育儿百科', path: 'pages/encyclopedia-detail/encyclopedia-detail' };
+        imageUrl: '/images/share-cover.png',
+        title: this._en() ? 'Panda Feeding · Parenting Guide' : '熊宝喂养 · 育儿百科',
+        path: 'pages/encyclopedia-detail/encyclopedia-detail' };
   },
   onShareTimeline() {
-    return { title: '熊宝喂养 · 育儿百科' };
+    return { title: this._en() ? 'Panda Feeding · Parenting Guide' : '熊宝喂养 · 育儿百科' };
   },
   data: {
+    lang: 'zh',
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     title: '',
     tag: '',
@@ -203,15 +209,19 @@ Page({
 
   onLoad(options) {
     const key = (options && options.key) || 'baby_0to1';
-    const a = ARTICLES[key] || ARTICLES.baby_0to1;
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en';
+    const zh = ARTICLES[key] || ARTICLES.baby_0to1;
+    const tr = en ? (ARTICLES_EN[key] || null) : null;
+    const a = tr || zh;
     this.setData({
+      lang: en ? 'en' : 'zh',
       title: a.title,
       tag: a.tag,
       intro: a.intro,
       sections: a.sections || [],
       tips: a.tips || []
     });
-    wx.setNavigationBarTitle({ title: a.title || '育儿百科' });
+    wx.setNavigationBarTitle({ title: a.title || (en ? 'Parenting Guide' : '育儿百科') });
   },
 
   goBack() {

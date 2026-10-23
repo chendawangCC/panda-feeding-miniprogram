@@ -28,7 +28,7 @@
 
     <!-- 温馨提示 -->
     <view class="tips-card" wx:if="{{tips.length}}">
-      <view class="tips-title">💡 温馨提示</view>
+      <view class="tips-title">💡 {{lang === 'en' ? 'Gentle reminder' : '温馨提示'}}</view>
       <text class="tips-text" wx:for="{{tips}}" wx:key="*this">{{item}}</text>
     </view>
 
