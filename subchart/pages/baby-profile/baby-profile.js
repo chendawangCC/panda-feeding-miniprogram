@@ -85,6 +85,39 @@ const VAX_NOTE_EN = {
   '2岁': '2 years', '3岁': '3 years', '4岁': '4 years', '6岁': '6 years'
 };
 
+/* 指定日期的实际年龄：不足 1 个月显示天数，满月显示 X个月Y天 */
+function calcAgeAt(birthday, dateStr, lang) {
+  if (!birthday || !dateStr) return '';
+  const bp = String(birthday).split('-').map(Number);
+  const dp = String(dateStr).split('-').map(Number);
+  if (bp.length !== 3 || dp.length !== 3 || bp.some(n => !isFinite(n)) || dp.some(n => !isFinite(n))) return '';
+  const b = new Date(bp[0], bp[1] - 1, bp[2]);
+  const d = new Date(dp[0], dp[1] - 1, dp[2]);
+  if (isNaN(b.getTime()) || isNaN(d.getTime())) return '';
+  if (d < b) return lang === 'en' ? '0 days' : '0天';
+  let months = (d.getFullYear() - b.getFullYear()) * 12 + (d.getMonth() - b.getMonth());
+  // 目标月份不存在同一天（如 1/31 -> 2 月）时，按目标月最后一天计算
+  const clampMonth = (n) => {
+    const y = b.getFullYear();
+    const m = b.getMonth() + n;
+    const last = new Date(y, m + 1, 0).getDate();
+    return new Date(y, m, Math.min(b.getDate(), last));
+  };
+  if (clampMonth(months) > d) months -= 1;
+  if (months < 0) months = 0;
+  const anchorDate = clampMonth(months);
+  const days = Math.max(0, Math.round((d.getTime() - anchorDate.getTime()) / 86400000));
+  if (months <= 0) {
+    return lang === 'en' ? days + (days === 1 ? ' day' : ' days') : days + '天';
+  }
+  if (days === 0) {
+    return lang === 'en' ? months + (months === 1 ? ' month' : ' months') : months + '个月';
+  }
+  return lang === 'en'
+    ? months + (months === 1 ? ' month ' : ' months ') + days + (days === 1 ? ' day' : ' days')
+    : months + '个月' + days + '天';
+}
+
 /* 月龄：X 月 Y 天 */
 function calcAge(birthday, lang) {
   if (!birthday) return '';
@@ -410,15 +443,18 @@ Page({
         formatter: (params) => {
           if (!params || !params.length) return '';
           const axis = params[0].axisValue;
+          const axisNum = Number(axis);
+          const pt = curve.find(p => isFinite(axisNum) && Math.abs(p.month - axisNum) < 0.02);
+          const ageTxt = (pt && pt.date && this.data.baby && this.data.baby.birthday)
+            ? calcAgeAt(this.data.baby.birthday, pt.date, en ? 'en' : 'zh')
+            : '';
+          const moTxt = isFinite(axisNum) ? String(Math.round(axisNum * 10) / 10) : '--';
+          const lines = [en ? ('Age: ' + (ageTxt || (moTxt + ' mo'))) : ('月龄：' + (ageTxt || (moTxt + ' 个月')))];
           const baby = params.find(p => p.seriesName && (en ? p.seriesName.indexOf('Baby') === 0 : p.seriesName.indexOf('宝宝') === 0));
-          const moTxt = String(Math.round(axisNum * 10) / 10);
-          const lines = [en ? ('Age: ' + moTxt + ' mo') : ('月龄：' + moTxt + ' 月')];
           if (baby && baby.value !== null && baby.value !== undefined) {
             const v = Array.isArray(baby.value) ? baby.value[1] : baby.value;
             lines.push(en ? (baby.seriesName + ': ' + v + tab.unit) : (baby.seriesName + '：' + v + tab.unit));
           }
-          const axisNum = Number(axis);
-          const pt = curve.find(p => Math.abs(p.month - axisNum) < 0.02);
           if (pt && pt.date) lines.push(en ? ('Measured on: ' + pt.date) : ('测量日期：' + pt.date));
           return lines.join('\n');
         }
