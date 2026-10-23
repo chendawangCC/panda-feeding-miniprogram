@@ -53,12 +53,14 @@ Component({
       const cur = pages[pages.length - 1];
       const isPlan = cur && cur.route === 'pages/plan/plan';
       if (isPlan) {
+        if (app.globalData) app.globalData.quickOrigin = 'plan';
         if (cur && typeof cur.openQuick === 'function') cur.openQuick();
         return;
       }
-      // 首页点 +：先把隐藏的记录页切到快速记录态，再切 tab，
+      // 首页点 +：先把已存在的记录页切到快速记录态，再切 tab，
       // 避免 switchTab 先渲染一帧完整的「我的」页造成闪烁。
-      this.setData({ hidden: true });
+      // 注意：不要隐藏首页自己的 tabbar，否则切回首页时可能残留 hidden 状态。
+      if (app.globalData) app.globalData.quickOrigin = 'home';
       const planPage = app.globalData.planPage;
       if (planPage && typeof planPage.openQuick === 'function') {
         let switched = false;
@@ -72,7 +74,6 @@ Component({
         // openQuick 失败（例如宝宝刚被删）时兜底，保证不会停在无 tabbar 的首页
         setTimeout(() => {
           if (switched) return;
-          this.setData({ hidden: false });
           app.globalData.pendingQuickAdd = true;
           wx.switchTab({ url: '/pages/plan/plan' });
         }, 300);

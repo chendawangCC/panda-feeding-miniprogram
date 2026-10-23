@@ -168,7 +168,8 @@ Page({
     (app.globalData.records||[]).forEach((r,i) => console.log('[index onShow] r', i, 'type=', r.type, 'date=', r.date, 'by=', r.by && r.by.name));
     this.guideFirst();
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 0, hidden: (this._ovl || 0) > 0 });
+      // 首页没有自己的遮罩层；显式复位，避免从快速记录/记录页切回时沿用 hidden 状态
+      this.getTabBar().setData({ selected: 0, hidden: false });
     }
     // 如果没有宝宝，清空喂养记录（避免显示旧记录）
     const user = app.getUser();

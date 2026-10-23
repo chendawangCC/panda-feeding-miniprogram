@@ -1511,6 +1511,9 @@ Page({
 
   openQuick(cb) {
     if (!this.guardBaby()) return;
+    // 记录快速记录是从首页还是「我的」页打开的，关闭时回到对应页面
+    this._quickOrigin = (app.globalData && app.globalData.quickOrigin) || 'plan';
+    if (app.globalData) app.globalData.quickOrigin = '';
     const sel = this._selDate || new Date();
     const label = (sel.getMonth() + 1) + '月' + sel.getDate() + '日';
     const isToday = this.isSameDay(sel, new Date());
@@ -1531,10 +1534,13 @@ Page({
   closeQuick() {
     if (this.data.voiceState.recording && this.recorder) this.recorder.stop();
     this.stopVoiceTimer();
-    // 点击关闭按钮：关闭快速记录抽屉并退出米色空白页，跳转到「记录」页
+    // 点击关闭按钮：关闭快速记录抽屉并退出米色空白页；从首页进入则回首页，
+    // 从「我的」页进入则留在记录页，避免无端跳走。
+    const origin = this._quickOrigin || 'plan';
+    this._quickOrigin = '';
     this.setData({ showQuick: false, quickMode: false, 'voiceState.recording': false, 'voiceState.recognizing': false, 'voiceState.result': '' });
     this.syncTabBar();
-    wx.switchTab({ url: '/pages/plan/plan' });
+    wx.switchTab({ url: origin === 'home' ? '/pages/index/index' : '/pages/plan/plan' });
   },
 
   /* 抽屉内语音按钮：长按开始录音（麦克风授权已在首次登录时处理，这里不再叠加弹窗） */
