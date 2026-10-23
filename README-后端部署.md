@@ -102,7 +102,12 @@
 返回重点看：
 - `没有订阅记录` → 授权弹窗没点同意，或 familyCloud 未部署
 - `details[].skipped: 未授权该模板` → 用户只勾了部分模板
-- `details[].errors[].errCode = 47003` → 模板字段名和内置映射不一致（后台模板被换过？按返回的 `errMsg` 改 `DEFAULT_FIELDS` 或写 `panda_push_config` 覆盖）
+- `details[].errors[].errCode = 47003` → 订阅消息字段问题，现在有两种原因，都会被自动兜底：
+  1. **字段名为空/缺失**（errMsg 形如 `data.thing1.value is empty`）：字段映射指向的变量没有值。`buildData` 现在会按字段类型换一个语义变量，仍为空则填兜底文案（如「库存不足」「疫苗提醒」），不会再传空串。
+  2. **后台模板字段名变了**（thing1 → thing2 之类）：云函数会调用 `subscribeMessage.getTemplateList` 读真实字段名，再按「字段类型顺序」自动对齐（vaccine: time→date / number→value / thing→name；stock: thing→note,name；milk: thing→food,name），**通常不需要再手改映射**。
+  - 拿不到模板列表（接口异常/无权限）时自动退回 `DEFAULT_FIELDS`，行为与旧版一致。
+  - 想确认实际用了哪个映射：返回体 `details[].fieldMap[type]` 里有 `fields`（本次采用的映射）、`detected`（从后台读到的真实字段）和 `data`（实际发送的字段值）。
+  - 仍想强制指定映射：写 `panda_push_config` 的 `fields` 即可覆盖；若映射里的变量不存在，会自动按类型换一个语义变量，不会传空值。
 - `details[].errors[].errCode = 43101` → 该模板的一次性授权已用完，需要用户再点「去开启」
 - `hit` 全为 0 → 今天没有到期提醒，属于正常（可先用 `{"action":"send"}` 手动推一次）
 

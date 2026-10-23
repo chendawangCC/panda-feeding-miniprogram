@@ -100,36 +100,124 @@ async function getConfig() {
   }
 }
 
-function templateOf(cfg, type) {
-  const c = cfg[type] || {};
-  return {
-    tmplId: c.tmplId || TMPL[type] || '',
-    page: c.page || 'pages/plan/plan',
-    fields: c.fields || DEFAULT_FIELDS[type] || { thing1: 'name', time2: 'date' }
-  };
+/**
+ * 各类型模板里「语义 → 字段类型」的出场顺序。
+ * 后台把 thing1 改成 thing2 之类只是重编号，按类型顺序对齐即可自动适配。
+ */
+const KIND_POOL = {
+  vaccine: { time: ['date'], date: ['date'], number: ['value'], thing: ['name'], phrase: ['name'], character_string: ['name'] },
+  supplement: { thing: ['note', 'extra'], phrase: ['note'] },
+  stock: { thing: ['note', 'name'], number: ['value'], phrase: ['note'] },
+  milk: { time: ['date'], date: ['date'], thing: ['food', 'name'], number: ['value'], phrase: ['name'] }
+};
+
+/** 空值兜底文案：微信订阅消息任何字段都不允许空字符串，否则报 47003 */
+const EMPTY_FALLBACK = {
+  vaccine: { thing: '疫苗提醒', phrase: '疫苗', number: 0 },
+  supplement: { thing: '营养品提醒', phrase: '补充', number: 0 },
+  stock: { thing: '库存不足', phrase: '库存', number: 0 },
+  milk: { thing: '保质期提醒', phrase: '到期', number: 0 }
+};
+
+/** 读取后台真实模板字段（{{thing1.DATA}} 形式），冷启动缓存一次 */
+let TEMPLATE_FIELDS_CACHE = null;
+async function fetchTemplateFields() {
+  if (TEMPLATE_FIELDS_CACHE) return TEMPLATE_FIELDS_CACHE;
+  const out = {};
+  try {
+    const r = await cloud.openapi.subscribeMessage.getTemplateList({});
+    const list = (r && r.data) || [];
+    list.forEach(t => {
+      const names = [];
+      const re = /\{\{([a-zA-Z0-9_]+)\.DATA\}\}/g;
+      let m;
+      while ((m = re.exec(String(t.content || ''))) !== null) names.push(m[1]);
+      out[t.priTmplId] = { title: t.title, content: t.content, fields: names };
+    });
+  } catch (e) {
+    out.__error = (e && (e.errMsg || e.message)) || 'getTemplateList failed';
+  }
+  TEMPLATE_FIELDS_CACHE = out;
+  return out;
 }
 
-/** 按微信字段类型整理取值：thing*≤20字 / phrase*≤5字 / number*数字 / time*日期时间 */
-function buildData(fields, vars) {
-  const out = {};
-  Object.keys(fields).forEach(key => {
-    const raw = vars[fields[key]];
-    if (raw === undefined || raw === null) return;
-    const prefix = String(key).replace(/\d+$/, '');
-    if (prefix === 'number') {
-      const n = Number(raw);
-      out[key] = isNaN(n) ? 0 : n;
-    } else if (prefix === 'time' || prefix === 'date') {
-      // 微信 time/date 类型要求「年月日」，例：2026年11月5日
-      const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(raw));
-      out[key] = m ? (Number(m[1]) + '年' + Number(m[2]) + '月' + Number(m[3]) + '日') : String(raw);
-    } else if (prefix === 'phrase') {
-      out[key] = String(raw).slice(0, 5);
-    } else if (prefix === 'amount' || prefix === 'money') {
-      out[key] = String(raw);
-    } else {
-      out[key] = String(raw).slice(0, 20);
+/** 按「字段类型顺序」把后台字段名对到语义变量上 */
+function autoMapFields(type, names) {
+  const pool = KIND_POOL[type] || {};
+  const used = {};
+  const map = {};
+  (names || []).forEach(fn => {
+    const kind = String(fn).replace(/\d+$/, '');
+    const list = pool[kind] || pool.thing || [];
+    const i = used[kind] === undefined ? 0 : used[kind] + 1;
+    used[kind] = i;
+    const varName = list[i] || list[list.length - 1];
+    if (varName) map[fn] = varName;
+  });
+  return map;
+}
+
+async function templateOf(cfg, type) {
+  const c = cfg[type] || {};
+  const tmplId = c.tmplId || TMPL[type] || '';
+  let fields = c.fields || null;
+  let detected = null;
+  let title = '';
+  if (!fields && tmplId) {
+    const all = await fetchTemplateFields();
+    const t = all[tmplId];
+    if (t && t.fields && t.fields.length) {
+      detected = t.fields.slice();
+      title = t.title || '';
+      const auto = autoMapFields(type, t.fields);
+      // 只有自动映射覆盖模板全部字段时才采用，避免漏字段继续报 47003
+      if (Object.keys(auto).length === t.fields.length) fields = auto;
     }
+  }
+  if (!fields) fields = DEFAULT_FIELDS[type] || { thing1: 'name', time2: 'date' };
+  return { tmplId, page: c.page || 'pages/plan/plan', fields, detected, title };
+}
+
+/**
+ * 按微信字段类型整理取值：thing*≤20字 / phrase*≤5字 / number*数字 / time*日期时间
+ * 微信规定订阅消息的每个字段都必须有非空值，空字符串会直接报 47003
+ * （data.xxx.value is empty），所以这里对空值统一兜底。
+ */
+function buildData(fields, vars, type) {
+  const out = {};
+  const fallback = EMPTY_FALLBACK[type] || EMPTY_FALLBACK.stock;
+  const today = new Date();
+  const todayCn = today.getFullYear() + '年' + (today.getMonth() + 1) + '月' + today.getDate() + '日';
+  const pool = KIND_POOL[type] || {};
+  Object.keys(fields).forEach(key => {
+    const prefix = String(key).replace(/\d+$/, '');
+    let raw = vars[fields[key]];
+    // 配置里写的变量不存在（例如旧映射指向 title）时，按字段类型换一个语义变量
+    if (raw === undefined || raw === null || String(raw).trim() === '') {
+      const alt = (pool[prefix] || pool.thing || []).map(k => vars[k]).find(v => v !== undefined && v !== null && String(v).trim() !== '');
+      if (alt !== undefined) raw = alt;
+    }
+    if (prefix === 'number') {
+      const n = Number(String(raw === undefined || raw === null ? '' : raw).replace(/[^\d.-]/g, ''));
+      out[key] = isNaN(n) ? (fallback.number || 0) : n;
+      return;
+    }
+    let v = raw === undefined || raw === null ? '' : String(raw).trim();
+    if (prefix === 'time' || prefix === 'date') {
+      const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(v);
+      out[key] = m ? (Number(m[1]) + '年' + Number(m[2]) + '月' + Number(m[3]) + '日') : (v ? v.slice(0, 20) : todayCn);
+      return;
+    }
+    if (prefix === 'phrase') {
+      out[key] = (v || fallback.phrase || '提醒').slice(0, 5);
+      return;
+    }
+    if (prefix === 'amount' || prefix === 'money') {
+      out[key] = v || String(fallback.number || 0);
+      return;
+    }
+    // thing / name / character_string / letter / symbol 等
+    out[key] = (v || fallback.thing || '提醒').slice(0, 20);
   });
   return out;
 }
@@ -339,10 +427,11 @@ async function pushForSubscription(sub, cfg, opts) {
   }
 
   const types = ['vaccine', 'supplement', 'stock', 'milk'];
+  const fieldMap = {};
   for (const type of types) {
     const list = rem[type] || [];
     if (!list.length) continue;
-    const t = templateOf(cfg, type);
+    const t = await templateOf(cfg, type);
     if (!t.tmplId) { detail.skipped.push(type + ':未配置模板ID'); continue; }
     if ((sub.templateIds || []).indexOf(t.tmplId) < 0) { detail.skipped.push(type + ':未授权该模板'); continue; }
 
@@ -358,7 +447,8 @@ async function pushForSubscription(sub, cfg, opts) {
       extra: first.extra || '',
       count: list.length
     });
-    const data = buildData(t.fields, vars);
+    const data = buildData(t.fields, vars, type);
+    fieldMap[type] = { tmplId: t.tmplId, fields: t.fields, detected: t.detected || null, data };
     const res = await sendOne(openid, t.tmplId, t.page, data, opts && opts.state);
     if (res.ok) {
       detail.sent.push({ type, templateId: t.tmplId, data });
@@ -370,6 +460,7 @@ async function pushForSubscription(sub, cfg, opts) {
       await markSent(openid, type, dedupeKey, { templateId: t.tmplId, ok: false, errCode: res.errCode, errMsg: res.errMsg });
     }
   }
+  if (fieldMap && Object.keys(fieldMap).length) detail.fieldMap = fieldMap;
   return detail;
 }
 
@@ -424,3 +515,6 @@ exports.main = async (event) => {
     return fail('服务异常：' + (e && e.message), -2);
   }
 };
+
+/* 便于本地单测（云函数运行时用不到） */
+exports.__test = { buildData, autoMapFields, templateOf, fetchTemplateFields, EMPTY_FALLBACK };

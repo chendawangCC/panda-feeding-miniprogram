@@ -166,9 +166,19 @@ Page({
           const errs = details.reduce((a, d) => a.concat(d.errors || []), []);
           if (errs.length) {
             const e0 = errs[0];
+            const typeName = {
+              vaccine: self._t('疫苗提醒', 'Vaccine'),
+              supplement: self._t('营养品提醒', 'Supplement'),
+              stock: self._t('库存提醒', 'Stock'),
+              milk: self._t('保质期提醒', 'Expiry')
+            }[e0.type] || e0.type || '';
+            // 把本次实际发送的字段值一起显示，便于一眼看出是哪个字段空了
+            const sent = e0.data ? Object.keys(e0.data).map(k => k + '=' + e0.data[k]).join('  ') : '';
             wx.showModal({
               title: self._t('推送未成功', 'Push failed'),
-              content: 'errCode ' + e0.errCode + '：' + (e0.errMsg || '') + self._t('\n（多为模板字段名不匹配，见 README 第四节）', '\n(likely template field mismatch, see README section 4)'),
+              content: (typeName ? typeName + ' · ' : '') + 'errCode ' + e0.errCode + '\n' + (e0.errMsg || '') +
+                (sent ? self._t('\n本次发送：', '\nSent: ') + sent : '') +
+                self._t('\n（若字段名不符，检查后台模板或重新上传 pushReminder）', '\n(re-upload pushReminder if the template changed)'),
               showCancel: false
             });
           } else {
