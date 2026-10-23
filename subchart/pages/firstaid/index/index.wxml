@@ -5,8 +5,8 @@
   <view class="fa-nav">
     <view class="fa-back" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">紧急照护指引</text>
-      <view class="header-title header-title-sub">SOS 指导</view>
+      <text class="header-kicker">{{lang === 'en' ? 'Emergency Care Guide' : '紧急照护指引'}}</text>
+      <view class="header-title header-title-sub">{{lang === 'en' ? 'SOS Guide' : 'SOS 指导'}}</view>
     </view>
   </view>
 
@@ -16,7 +16,7 @@
       <image class="search-icon" src="/subchart/pages/firstaid/icons/swallow.png" mode="aspectFit" />
       <input
         class="search-input"
-        placeholder="搜索技能，如：海姆立克、湿疹、凯格尔…"
+        placeholder="{{lang === 'en' ? 'Search skills, e.g. choking, eczema, Kegel…' : '搜索技能，如：海姆立克、湿疹、凯格尔…'}}"
         placeholder-class="search-placeholder"
         value="{{keyword}}"
         bindinput="onSearchInput"
@@ -29,8 +29,8 @@
   <!-- 搜索结果 -->
   <block wx:if="{{searching}}">
     <view class="search-head">
-      <text class="search-head-title">搜索"{{keyword}}" · {{searchResults.length}} 项</text>
-      <text class="search-head-clear" bindtap="onSearchClear">清除</text>
+      <text class="search-head-title">{{lang === 'en' ? ('Results for “' + keyword + '” · ' + searchResults.length + ' items') : ('搜索"' + keyword + '" · ' + searchResults.length + ' 项')}}</text>
+      <text class="search-head-clear" bindtap="onSearchClear">{{lang === 'en' ? 'Clear' : '清除'}}</text>
     </view>
     <view
       class="skill-card"
@@ -48,7 +48,7 @@
     </view>
     <view class="search-empty" wx:if="{{!searchResults.length}}">
       <image class="search-empty-icon" src="/subchart/pages/firstaid/icons/swallow.png" mode="aspectFit" />
-      <view class="search-empty-text">没有找到相关技能，换个关键词试试</view>
+      <view class="search-empty-text">{{lang === 'en' ? 'No matching skills — try another keyword' : '没有找到相关技能，换个关键词试试'}}</view>
     </view>
   </block>
 
@@ -66,7 +66,7 @@
     <!-- 个性化推荐：按宝宝年龄/性别 -->
     <view class="recommend-block" wx:if="{{recommendation}}">
       <view class="recommend-head">
-        <view class="recommend-title">🎯 为{{recommendation.genderTitle}}推荐</view>
+        <view class="recommend-title">{{lang === 'en' ? '🎯 Recommended for your baby' : ('🎯 为' + recommendation.genderTitle + '推荐')}}</view>
         <view class="recommend-note">{{recommendation.ageText}} · {{recommendation.band.label}}</view>
       </view>
       <view class="recommend-desc">{{recommendation.band.note}}</view>
@@ -87,7 +87,7 @@
     </view>
 
     <!-- 四大模块聚合卡片 -->
-    <view class="section-title">技能模块</view>
+    <view class="section-title">{{lang === 'en' ? 'Skill Modules' : '技能模块'}}</view>
     <view class="module-grid">
       <view
         class="module-card"
@@ -99,7 +99,7 @@
         <image class="module-icon" src="{{item.icon}}" mode="aspectFit" />
         <view class="module-name">{{item.name}}</view>
         <view class="module-tagline">{{item.tagline}}</view>
-        <view class="module-count">{{item.count}} 项 ›</view>
+        <view class="module-count">{{lang === 'en' ? (item.count + ' items ›') : (item.count + ' 项 ›')}}</view>
       </view>
     </view>
 
@@ -107,11 +107,11 @@
 
   <!-- 免责声明 -->
   <view class="disclaimer">
-    本应用用于日常学习与演练，不能替代专业急救培训与真实急救处置。遇紧急情况请立即拨打 120。
+    {{lang === 'en' ? 'This app is for daily learning and practice only. It cannot replace professional first aid training or real emergency response. Call 120 immediately in an emergency.' : '本应用用于日常学习与演练，不能替代专业急救培训与真实急救处置。遇紧急情况请立即拨打 120。'}}
   </view>
 
   <!-- 底部固定拨打120 -->
   <view class="call-bar" bindtap="onCall120">
-    <text class="call-bar-text">☎ 紧急情况拨打 120</text>
+    <text class="call-bar-text">{{lang === 'en' ? '☎ Emergency — call 120' : '☎ 紧急情况拨打 120'}}</text>
   </view>
 </view>

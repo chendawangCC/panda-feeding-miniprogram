@@ -5,8 +5,8 @@
   <view class="page-header-back">
     <view class="back-btn" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">每天一点，育儿更安心</text>
-      <view class="header-title header-title-sub">育儿百科全书</view>
+      <text class="header-kicker">{{lang === 'en' ? 'A little every day, parenting with confidence' : '每天一点，育儿更安心'}}</text>
+      <view class="header-title header-title-sub">{{lang === 'en' ? 'Parenting Encyclopedia' : '育儿百科全书'}}</view>
     </view>
   </view>
 
@@ -22,7 +22,7 @@
   </view>
 
   <!-- 分类标题 -->
-  <view class="cate-title">{{activeTab === 'baby' ? '宝宝成长指南' : '妈妈安心手册'}}</view>
+  <view class="cate-title">{{lang === 'en' ? (activeTab === 'baby' ? 'Baby Growth Guide' : 'Mom Care Handbook') : (activeTab === 'baby' ? '宝宝成长指南' : '妈妈安心手册')}}</view>
 
   <!-- 分类卡片 2 列 4 行 -->
   <view class="cate-grid">
@@ -43,7 +43,7 @@
   <view class="today-card" bindtap="openToday">
     <view class="today-icon">✨</view>
     <view class="today-info">
-      <text class="today-label">今日推荐</text>
+      <text class="today-label">{{lang === 'en' ? 'Today’s Pick' : '今日推荐'}}</text>
       <text class="today-title">{{today.title}}</text>
     </view>
     <text class="today-arrow">›</text>

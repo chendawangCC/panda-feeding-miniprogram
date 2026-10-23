@@ -14,6 +14,7 @@ Page({
   },
 
   data: {
+    lang: 'zh',
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     greeting: '你好',
     modules: [],         // 四大模块聚合卡片
@@ -33,7 +34,12 @@ Page({
     searching: false,    // 是否处于搜索状态
   },
 
+  _en() { return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en'; },
+  _t(zh, enTxt) { return this._en() ? enTxt : zh; },
+
   onLoad() {
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en';
+    this.setData({ lang: en ? 'en' : 'zh' });
     // 时间问候（对齐母 App"早上好，妈妈"）
     const h = new Date().getHours()
     let greeting = '你好'
@@ -45,19 +51,30 @@ Page({
     greeting = greeting + '，妈妈'
 
     // 四大模块聚合卡片
-    const modules = MODULES.map(mod => ({
-      key: mod.key,
-      name: mod.name,
-      icon: mod.icon,
-      tagline: mod.tagline,
-      count: getModuleSkills(mod.key).length,
-    }))
+    const MODULE_EN = {
+      baby_care: { name: 'Baby Care', tagline: 'Daily care' },
+      baby_emergency: { name: 'Baby First Aid', tagline: 'Life-saving skills' },
+      mama: { name: 'Mom Care', tagline: 'Postpartum care & recovery' },
+      general: { name: 'General', tagline: 'Adult & general first aid' }
+    };
+    const modules = MODULES.map(mod => {
+      const enTxt = MODULE_EN[mod.key] || {};
+      return {
+        key: mod.key,
+        name: en ? (enTxt.name || mod.name) : mod.name,
+        icon: mod.icon,
+        tagline: en ? (enTxt.tagline || mod.tagline) : mod.tagline,
+        count: getModuleSkills(mod.key).length,
+      };
+    })
 
     // 工具 2×2 网格（聚焦 SOS 指导职责）
     // 工具网格：去掉「家庭急救」「紧急呼救」（家庭急救内容已并入通用急救模块）
     const tools = [
-      { key: 'kit', icon: '/subchart/pages/firstaid/icons/backpack.png', name: '急救包清单', desc: '物资核对与常备药' },
-      { key: 'record', icon: '/subchart/pages/firstaid/icons/video.png', name: '自学录制', desc: '录制规范急救与护理' },
+      { key: 'kit', icon: '/subchart/pages/firstaid/icons/backpack.png',
+        name: en ? 'First Aid Kit' : '急救包清单', desc: en ? 'Check supplies & essentials' : '物资核对与常备药' },
+      { key: 'record', icon: '/subchart/pages/firstaid/icons/video.png',
+        name: en ? 'Self-recording' : '自学录制', desc: en ? 'Record standard first aid & care' : '录制规范急救与护理' },
     ]
 
     this.setData({
