@@ -489,7 +489,7 @@ module.exports = {
           </view>
           <view class="milk-warn-check" wx:if="{{record.milkOpen}}" bindtap="toggleMilkWarn">
             <view class="check-box {{record.milkWarn ? 'on' : ''}}">{{record.milkWarn ? '✓' : ''}}</view>
-            <text class="check-text">到期提醒 · 开罐后 {{openDays}} 天内用完（国标）</text>
+            <text class="check-text">{{i18n.openWarnPre}}{{openDays}}{{i18n.openWarnSuf}}</text>
           </view>
         </view>
         <!-- 记录时间：开始/结束（默认空，可手动选） -->

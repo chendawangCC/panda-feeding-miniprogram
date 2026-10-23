@@ -456,6 +456,8 @@ Page({
       milkOpened: 'Formula can opened',
       opened: 'Opened',
       notOpened: 'Not opened',
+      openWarnPre: 'Expiry reminder · use within ',
+      openWarnSuf: ' days of opening',
       startTime: 'Start Time',
       endTime: 'End Time',
       leftRightTimer: 'Tap left/right to start timer',
@@ -564,6 +566,8 @@ Page({
       milkOpened: '本次奶粉开罐',
       opened: '已开罐',
       notOpened: '未开罐',
+      openWarnPre: '到期提醒 · 开罐后 ',
+      openWarnSuf: ' 天内用完（国标）',
       startTime: '开始时间',
       endTime: '结束时间',
       leftRightTimer: '左右点击计时',
@@ -1846,13 +1850,35 @@ Page({
     this.setData({ 'record.milkType': e.currentTarget.dataset.type });
   },
 
-  /* 奶粉开罐（非必选） */
+  /* 库存里是否还有可扣减的配方奶粉 */
+  hasFormulaStock() {
+    const items = (app.globalData.stockItems || []);
+    return items.some(s => s && /奶粉|配方奶|配方牛奶/.test(s.name || '')
+      && !/吸奶器|消毒器|温奶器|摇奶器|辅食机|料理机|恒温壶|烘干机|暖奶器/.test(s.name || '')
+      && (Number(s.count) || 0) > 0);
+  },
+
+  /**
+   * 奶粉开罐（非必选）
+   * 库存里没有奶粉也允许开罐：照样生成「开罐到期提醒」，只是不扣库存。
+   * 勾选开罐时自动勾上到期提醒（用户仍可手动取消）。
+   */
   toggleMilkOpen() {
     const open = !this.data.record.milkOpen;
-    this.setData({ 'record.milkOpen': open });
-    if (open) {
-      wx.showToast({ title: '已开罐：保存后库存自动 -1 罐，并生成到期提醒', icon: 'none' });
-    }
+    const days = app.globalData.FORMULA_OPEN_DAYS || 28;
+    const en = wx.getStorageSync('lang') === 'en';
+    const patch = { 'record.milkOpen': open };
+    if (open) patch['record.milkWarn'] = true;
+    this.setData(patch);
+    if (!open) return;
+    const stockText = this.hasFormulaStock()
+      ? (en ? ' · stock −1 can' : ' · 库存 -1 罐')
+      : (en ? ' · no stock to deduct' : ' · 库存无奶粉，不扣减');
+    wx.showToast({
+      title: (en ? 'Opened · expiry reminder in ' + days + ' days' : '已开罐 · 自动生成 ' + days + ' 天到期提醒') + stockText,
+      icon: 'none',
+      duration: 2500
+    });
   },
 
   /* 勾选到期提醒（开罐后按国标 28 天） */
@@ -1902,11 +1928,14 @@ Page({
       const id = 'w' + Date.now() + Math.floor(Math.random() * 1000);
       warns.push({
         id,
+        kind: 'formulaOpen',
+        openDays: days,
         name: '奶粉开罐 · ' + dateLabel,
         date,
         tip: '建议 ' + expire.getFullYear() + '年' + pad(expire.getMonth() + 1) + '月' + pad(expire.getDate()) + '日前用完（开罐后 ' + days + ' 天内 · 国标）'
       });
       recBase.milkWarnId = id;
+      recBase.milkWarnDate = date;
     }
     g.shelfWarnings = warns;
   },
@@ -2537,13 +2566,18 @@ Page({
     if (rec.type === '换尿布') {
       wx.showToast({ title: (isEdit ? '已更新' : '已保存') + '，' + (rec.diaperSize || '') + '码剩 ' + (isEdit ? (rec.diaperStock || 0) : patch['record.diaperStock']) + ' 片', icon: 'none' });
     } else if (rec.type === '配方奶' && recBase.milkOpen && !isEdit) {
-      wx.showToast({
-        title: formulaCanLeft === null
-          ? '已保存 · 库存里没有可扣减的奶粉，请先到喂养台添加'
-          : '已保存 · 已开罐，奶粉库存剩 ' + formulaCanLeft + ' 罐',
-        icon: 'none',
-        duration: 2500
-      });
+      const en = wx.getStorageSync('lang') === 'en';
+      let tip;
+      if (formulaCanLeft !== null) {
+        tip = en ? 'Saved · opened, ' + formulaCanLeft + ' can(s) left' : '已保存 · 已开罐，奶粉库存剩 ' + formulaCanLeft + ' 罐';
+      } else if (recBase.milkWarn && recBase.milkWarnDate) {
+        const p = recBase.milkWarnDate.split('-');
+        const dd = (Number(p[1]) || 0) + (en ? '/' : '月') + (Number(p[2]) || 0) + (en ? '' : '日');
+        tip = en ? 'Saved · opened (no stock to deduct), use by ' + dd : '已保存 · 已开罐（库存无奶粉未扣减），' + dd + '前用完';
+      } else {
+        tip = en ? 'Saved · formula can opened' : '已保存 · 已开罐';
+      }
+      wx.showToast({ title: tip, icon: 'none', duration: 2800 });
     } else {
       wx.showToast({ title: (isEdit ? '已更新' : '已保存') + rec.type + '记录', icon: 'none' });
     }

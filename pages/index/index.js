@@ -798,6 +798,31 @@ Page({
       }
     });
 
+    // —— 奶粉开罐到期提醒：库存里没有奶粉也照样提醒（按开罐日 + 国标天数） ——
+    const enK = (wx.getStorageSync('lang') === 'en');
+    (g.shelfWarnings || []).forEach((w) => {
+      if (!w || w.kind !== 'formulaOpen' || !w.date) return;
+      const op = String(w.date).split('-').map(Number);
+      const oex = new Date(op[0], (op[1] || 1) - 1, op[2] || 1);
+      oex.setHours(0, 0, 0, 0);
+      const omin = Math.round((oex - now) / 60000);
+      if (omin > 3 * 1440) return;            // 到期前 3 天才开始提醒
+      const oleft = Math.ceil(omin / 1440);
+      const mdd = (oex.getMonth() + 1) + (enK ? '/' : '月') + oex.getDate() + (enK ? '' : '日');
+      items.push({
+        key: 'milkopen_' + (w.id || Date.now()), iconImg: '/images/icons/rec-bottle.png', icon: '',
+        title: enK
+          ? ('Opened formula ' + (omin < 0 ? 'has expired' : 'expires in ' + oleft + ' day(s)'))
+          : ('奶粉开罐' + (omin < 0 ? '已到期' : '剩 ' + oleft + ' 天到期')),
+        desc: enK
+          ? (omin < 0 ? 'Passed the use-by date of ' + mdd + ', discard it' : 'Use before ' + mdd + ' (within ' + (w.openDays || 28) + ' days of opening)')
+          : (omin < 0 ? '已超过 ' + mdd + ' 的用完期限，请丢弃' : '建议 ' + mdd + ' 前用完（开罐后 ' + (w.openDays || 28) + ' 天内）'),
+        tag: enK ? (omin < 0 ? 'Expired' : 'Expiring') : (omin < 0 ? '已到期' : '即将到期'),
+        tagClass: 'red',
+        actionLabel: enK ? 'Manage' : '去处理', actionKey: 'inventory', minutesUntil: omin
+      });
+    });
+
     if (hasBaby) {
     const lang = this.data.lang || wx.getStorageSync('lang') || 'zh';
     // —— 喂养提醒：按宝宝月龄推荐间隔，有上次记录则提前10分钟提醒；无记录则常驻「今天该喂奶了」 ——
