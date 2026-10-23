@@ -54,6 +54,28 @@ Component({
       const isPlan = cur && cur.route === 'pages/plan/plan';
       if (isPlan) {
         if (cur && typeof cur.openQuick === 'function') cur.openQuick();
+        return;
+      }
+      // 首页点 +：先把隐藏的记录页切到快速记录态，再切 tab，
+      // 避免 switchTab 先渲染一帧完整的「我的」页造成闪烁。
+      this.setData({ hidden: true });
+      const planPage = app.globalData.planPage;
+      if (planPage && typeof planPage.openQuick === 'function') {
+        let switched = false;
+        const go = () => {
+          if (switched) return;
+          switched = true;
+          app.globalData.pendingQuickAdd = false;
+          wx.switchTab({ url: '/pages/plan/plan' });
+        };
+        planPage.openQuick(go);
+        // openQuick 失败（例如宝宝刚被删）时兜底，保证不会停在无 tabbar 的首页
+        setTimeout(() => {
+          if (switched) return;
+          this.setData({ hidden: false });
+          app.globalData.pendingQuickAdd = true;
+          wx.switchTab({ url: '/pages/plan/plan' });
+        }, 300);
       } else {
         app.globalData.pendingQuickAdd = true;
         wx.switchTab({ url: '/pages/plan/plan' });

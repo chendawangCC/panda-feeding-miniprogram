@@ -1,4 +1,5 @@
 const app = getApp();
+const initialQuick = !!(app.globalData && app.globalData.pendingQuickAdd);
 const cs = require('../../utils/cloud-sync.js');
 const perm = require('../../utils/perm.js');
 const remindUtil = require('../../utils/remind.js');
@@ -107,8 +108,8 @@ Page({
     hasRecord: false,
 
     myOpenid: ((app.globalData.user && app.globalData.user.openid) || (wx.getStorageSync('panda_user') || {}).openid) || '',
-    showQuick: false,
-    quickMode: false,
+    showQuick: initialQuick,
+    quickMode: initialQuick,
     diaperSizes: ['NB', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
     showRecordTimePicker: false,
     recordTimeTarget: null,
@@ -166,6 +167,13 @@ Page({
   },
 
   onLoad() {
+    // 供底部 tabbar 在当前页被隐藏时提前准备快速记录，避免先闪一下「我的」页
+    if (app.globalData) app.globalData.planPage = this;
+    // 首次从首页点 + 进来时，在 onLoad 就进入快速记录态，避免先渲染完整页
+    if (app.globalData && app.globalData.pendingQuickAdd) {
+      app.globalData.pendingQuickAdd = false;
+      this.openQuick();
+    }
     this.setData({ openDays: (app.globalData.FORMULA_OPEN_DAYS || 28) });
     // 加载辅食列表（从本地缓存）
     this.setData({ foodOptions: this.loadFoodOptions() });
@@ -699,7 +707,7 @@ Page({
 
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       // 我的=记录页：第三项高亮
-      this.getTabBar().setData({ selected: 2, hidden: (this._ovl || 0) > 0 });
+      this.getTabBar().setData({ selected: 2, hidden: (this._ovl || 0) > 0 || !!this.data.showQuick });
     }
     // 引导「去登录」：进入记录页后自动弹出登录抽屉
     if (app.globalData.pendingLogin) {
@@ -844,6 +852,7 @@ Page({
   },
 
   onUnload() {
+    if (app.globalData && app.globalData.planPage === this) app.globalData.planPage = null;
     this.clearTimers();
     this.stopVoiceTimer();
   },
@@ -1500,7 +1509,7 @@ Page({
     return false;
   },
 
-  openQuick() {
+  openQuick(cb) {
     if (!this.guardBaby()) return;
     const sel = this._selDate || new Date();
     const label = (sel.getMonth() + 1) + '月' + sel.getDate() + '日';
@@ -1513,8 +1522,10 @@ Page({
       'voiceState.recognizing': false,
       'voiceState.result': '',
       'voiceState.seconds': 0
+    }, () => {
+      this.syncTabBar();
+      if (typeof cb === 'function') cb();
     });
-    this.syncTabBar();
   },
 
   closeQuick() {
