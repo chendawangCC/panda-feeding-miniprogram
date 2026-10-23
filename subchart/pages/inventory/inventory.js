@@ -11,6 +11,7 @@ Page({
     return { title: '熊宝喂养 · 耗材库存管理' };
   },
   data: {
+    lang: 'zh',
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     baby: {},
     stockItems: [],
@@ -24,6 +25,9 @@ Page({
     unitOptions: ['罐', '包', '片', '盒', '瓶', '支', '个', '袋', '桶', '箱', '台', '套'],
     unitIndex: 0,
     sizeOptions: ['通用', 'NB', 'S', 'M', 'L', 'XL', 'XXL'],
+    sizeLabelOptions: ['通用', 'NB', 'S', 'M', 'L', 'XL', 'XXL'],
+    unitLabelOptions: ['罐', '包', '片', '盒', '瓶', '支', '个', '袋', '桶', '箱', '台', '套'],
+    unitMap: { '罐': 'can', '包': 'pack', '片': 'pcs', '盒': 'box', '瓶': 'bottle', '支': 'tube', '个': 'pc', '袋': 'bag', '桶': 'tub', '箱': 'case', '台': 'unit', '套': 'set' },
     // 动态字段：按名称识别商品类型 → 显示对应尺码/克数/保修期
     stockKind: 'other',            // diaper|cloth|tissue|milk|appliance|other
     kindSizes: { diaper: ['NB', 'S', 'M', 'L', 'XL', 'XXL'], cloth: ['52', '59', '66', '73', '80', '90'], tissue: ['S', 'M', 'L', 'XL'] },
@@ -34,7 +38,40 @@ Page({
     voiceState: { recording: false }
   },
 
+  /* 当前是否英文界面 */
+  _en() {
+    const st = wx.getStorageSync('lang');
+    return (st || (this.data && this.data.lang) || 'zh') === 'en';
+  },
+  /* 中英选词 */
+  _t(zh, en) { return this._en() ? en : zh; },
+  /* 计量单位英译（底层仍存中文单位） */
+  _unit(u) {
+    if (!this._en()) return u;
+    const map = { '罐': 'can', '包': 'pack', '片': 'pcs', '盒': 'box', '瓶': 'bottle', '支': 'tube', '个': 'pc', '袋': 'bag', '桶': 'tub', '箱': 'case', '台': 'unit', '套': 'set' };
+    return map[u] || u;
+  },
+  _milkCfgEn(st) {
+    const map = {
+      room: { label: 'Room temp', desc: '≤25℃ · within 4 hours' },
+      fridge: { label: 'Fridge', desc: '4℃ · within 48 hours' },
+      freezer: { label: 'Freezer', desc: '-18℃ · within 3 months' }
+    };
+    return map[st] || map.fridge;
+  },
+
+  /* 尺码数组的显示副本（仅「通用」英译，索引与 sizeOptions 一致） */
+  _sizeLabels(list) {
+    if (!this._en()) return list;
+    return (list || []).map(x => (x === '通用' ? 'Universal' : x));
+  },
+  /* 单位数组的显示副本（索引与 unitOptions 一致） */
+  _unitLabels() {
+    return (this.data.unitOptions || []).map(u => this._unit(u));
+  },
+
   onShow() {
+    this.setData({ lang: wx.getStorageSync('lang') || 'zh', unitLabelOptions: this._unitLabels() });
     // 喂养台录入：需登录后才可使用
     if (!app.requireLogin()) {
       setTimeout(() => wx.navigateBack({ fail: () => {} }), 400);
@@ -132,13 +169,15 @@ Page({
         expire = ex.getFullYear() + '-' + pad(ex.getMonth() + 1) + '-' + pad(ex.getDate());
         const diff = Math.round((ex - now) / 86400000);
         daysLeft = diff;
-        daysLabel = diff < 0 ? '已过期' : diff === 0 ? '今天到期' : '剩 ' + diff + ' 天';
+        if (this._en()) daysLabel = diff < 0 ? 'Expired' : diff === 0 ? 'Expires today' : diff + ' days left';
+        else daysLabel = diff < 0 ? '已过期' : diff === 0 ? '今天到期' : '剩 ' + diff + ' 天';
       }
       const nameSize = s.name ? ((String(s.name).match(/(NB|S|M|L|XL|XXL)/i) || ['', ''])[1]).toUpperCase() : '';
       const size = s.size || nameSize;
       return Object.assign({}, s, {
         initial: (s.name || '?').slice(0, 1),
-        sizeText: size ? (size + ' 码') : '',
+        sizeText: size ? (this._en() ? (size === '通用' ? 'Universal' : 'Size ' + size) : size + ' 码') : '',
+        unitText: this._unit(s.unit || ''),
         expire,
         daysLeft,
         daysLabel,
@@ -177,15 +216,17 @@ Page({
       }
       const diffMs = expire - now;
       const expired = diffMs <= 0;
+      const en = this._en();
       let daysLabel;
       if (expired) {
-        daysLabel = '已过期，若未瓶喂使用，请丢弃';
+        daysLabel = en ? 'Expired — discard if not used' : '已过期，若未瓶喂使用，请丢弃';
       } else if (cfg.unit === 'h') {
         const mins = Math.max(1, Math.floor(diffMs / 60000));
-        if (mins < 60) daysLabel = '剩 ' + mins + ' 分钟';
+        if (en) daysLabel = mins < 60 ? mins + ' min left' : Math.floor(mins / 60) + ' hr ' + (mins % 60) + ' min left';
+        else if (mins < 60) daysLabel = '剩 ' + mins + ' 分钟';
         else daysLabel = '剩 ' + Math.floor(mins / 60) + ' 小时 ' + (mins % 60) + ' 分钟';
       } else {
-        daysLabel = '剩 ' + Math.ceil(diffMs / 86400000) + ' 天';
+        daysLabel = en ? Math.ceil(diffMs / 86400000) + ' days left' : '剩 ' + Math.ceil(diffMs / 86400000) + ' 天';
       }
       const total = (r.pumpLeftAmt || 0) + (r.pumpRightAmt || 0);
       const dateLabel = String(r.date || '').split('-').slice(1).join('/');
@@ -196,8 +237,8 @@ Page({
         expired,
         daysLabel,
         amount: total ? total + ' ml' : '—',
-        name: '母乳 · ' + dateLabel + ' ' + (r.time || ''),
-        storageLabel: (cfg.label || '') + ' ' + (cfg.desc || '')
+        name: (en ? 'Breast milk · ' : '母乳 · ') + dateLabel + ' ' + (r.time || ''),
+        storageLabel: en ? (() => { const e = this._milkCfgEn(st); return e.label + ' ' + e.desc; })() : ((cfg.label || '') + ' ' + (cfg.desc || ''))
       });
     });
     return list.reverse();
@@ -208,7 +249,7 @@ Page({
     const dismissed = wx.getStorageSync('dismissed_milk_exp') || {};
     dismissed[id] = true;
     wx.setStorageSync('dismissed_milk_exp', dismissed);
-    wx.showToast({ title: '已知道了', icon: 'success' });
+    wx.showToast({ title: this._t('已知道了', 'Got it'), icon: 'success' });
     this.setData({ milkWarnings: this.buildMilkWarnings() });
   },
 
@@ -221,15 +262,17 @@ Page({
       const end = new Date(wp[0], (wp[1] || 1) - 1, (wp[2] || 1), 23, 59, 59);
       const diffMs = end - now;
       let label = '', urgent = false, over = false;
-      if (diffMs <= 0) { label = '已过保'; over = true; }
+      const en = this._en();
+      if (diffMs <= 0) { label = en ? 'Out of warranty' : '已过保'; over = true; }
       else if (diffMs < 30 * 86400000) {
         urgent = true;
         const days = Math.max(1, Math.ceil(diffMs / 86400000));
-        label = days <= 1 ? '今日到期' : '剩 ' + days + ' 天';
+        if (en) label = days <= 1 ? 'Expires today' : days + ' days left';
+        else label = days <= 1 ? '今日到期' : '剩 ' + days + ' 天';
       } else {
-        label = '剩 ' + Math.round(diffMs / 86400000) + ' 天';
+        label = en ? Math.round(diffMs / 86400000) + ' days left' : '剩 ' + Math.round(diffMs / 86400000) + ' 天';
       }
-      return { id: 'warr_' + s.id, name: s.name || '电器', tip: '保修至 ' + s.warrantyUntil + ' · 录入时自动同步', daysLabel: label, over, urgent };
+      return { id: 'warr_' + s.id, name: s.name || (en ? 'Appliance' : '电器'), tip: (en ? 'Warranty until ' + s.warrantyUntil + ' · synced on entry' : '保修至 ' + s.warrantyUntil + ' · 录入时自动同步'), daysLabel: label, over, urgent };
     });
     list.sort((a, b) => (a.over ? 0 : 1) - (b.over ? 0 : 1));
     this.setData({ warrantyWarnings: list });
@@ -265,11 +308,16 @@ Page({
       seen[dedupKey] = true;
       if (dismissed[dedupKey]) return null; // 已点知道了，不显示
       const low = cnt > 0;
+      const en = this._en();
+      const sizeTag = s.size ? (en ? ' (' + s.size + ')' : '（' + s.size + '）') : '';
+      const unitTxt = this._unit(s.unit || '个');
       return {
         id: 'stockw_' + dedupKey,
-        name: s.name + (s.size ? '（' + s.size + '）' : ''),
-        tip: '库存 ' + cnt + ' ' + (s.unit || '个') + (low ? ('，低于建议 ' + t) : '，请及时补货'),
-        daysLabel: low ? '偏低' : '用尽',
+        name: s.name + sizeTag,
+        tip: en
+          ? ('Stock ' + cnt + ' ' + unitTxt + (low ? (', below suggested ' + t) : ', please restock'))
+          : ('库存 ' + cnt + ' ' + (s.unit || '个') + (low ? ('，低于建议 ' + t) : '，请及时补货')),
+        daysLabel: low ? (en ? 'Low' : '偏低') : (en ? 'Out' : '用尽'),
         over: !low, urgent: low
       };
     }).filter(Boolean);
@@ -283,7 +331,7 @@ Page({
     const dismissed = wx.getStorageSync('dismissed_stock_warn') || {};
     dismissed[dedupKey] = true;
     wx.setStorageSync('dismissed_stock_warn', dismissed);
-    wx.showToast({ title: '已知道了', icon: 'success' });
+    wx.showToast({ title: this._t('已知道了', 'Got it'), icon: 'success' });
     this.buildStockWarnings();
   },
 
@@ -299,7 +347,8 @@ Page({
     app.saveBabyData();
     this.setData({ milkWarnings: this.buildMilkWarnings() });
     const cfg = (g.MILK_STORAGE || {})[st] || {};
-    wx.showToast({ title: '已按「' + (cfg.label || '') + '」储存：' + (cfg.desc || ''), icon: 'none' });
+    const enCfg = this._milkCfgEn(st);
+    wx.showToast({ title: this._en() ? ('Stored as ' + enCfg.label + ': ' + enCfg.desc) : ('已按「' + (cfg.label || '') + '」储存：' + (cfg.desc || '')), icon: 'none' });
   },
 
   /* 保质期剩余时间：按真实当前时间动态计算（不足 24h 精确到小时分钟） */
@@ -313,17 +362,24 @@ Page({
         const end = new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 59);
         const diffMs = end - now;
         daysLeft = Math.round(diffMs / 86400000);
+        const en = this._en();
         if (diffMs <= 0) {
-          label = '已过期';
+          label = en ? 'Expired' : '已过期';
         } else if (diffMs < 86400000) {
           const mins = Math.max(1, Math.floor(diffMs / 60000));
-          if (mins < 60) label = '剩 ' + mins + ' 分钟';
+          if (en) label = mins < 60 ? mins + ' min left' : Math.floor(mins / 60) + ' hr ' + (mins % 60) + ' min left';
+          else if (mins < 60) label = '剩 ' + mins + ' 分钟';
           else label = '剩 ' + Math.floor(mins / 60) + ' 小时 ' + (mins % 60) + ' 分钟';
         } else {
-          label = '剩 ' + Math.round(diffMs / 86400000) + ' 天';
+          label = en ? Math.round(diffMs / 86400000) + ' days left' : '剩 ' + Math.round(diffMs / 86400000) + ' 天';
         }
       }
-      return Object.assign({}, w, { daysLeft, daysLabel: label });
+      let tip = w.tip;
+      if (w.date) {
+        const isStock = String(w.id || '').indexOf('stock_') === 0;
+        tip = this.buildWarnTip(w.date) + (isStock ? (this._en() ? ' · auto-synced' : ' · 自动同步') : '');
+      }
+      return Object.assign({}, w, { daysLeft, daysLabel: label, tip });
     });
   },
 
@@ -357,7 +413,8 @@ Page({
     this.setData({
       stockDialog: { visible: true, id: '', name: '', brand: '', count: '', unit: '', produceDate: this.todayStr(), shelfLife: '', price: '', size: '通用', sizeIndex: 0, grams: 800, warrantyMonths: 12 },
       stockKind: 'other',
-      sizeOptions: ['通用']
+      sizeOptions: ['通用'],
+      sizeLabelOptions: this._sizeLabels(['通用'])
     });
   },
   /* 名称 → 商品类型（决定尺码/克数/保修期字段） */
@@ -383,6 +440,7 @@ Page({
       stockDialog: { visible: true, id: item.id, name: item.name, brand: item.brand || '', count: String(item.count), unit: item.unit || '', produceDate: item.produceDate || this.todayStr(), shelfLife: item.shelfLife ? String(item.shelfLife) : '', price: item.price ? String(item.price) : '', size, sizeIndex, grams: item.grams || 800, warrantyMonths: item.warrantyMonths || 12 },
       stockKind: dk.kind,
       sizeOptions: dk.sizes,
+      sizeLabelOptions: this._sizeLabels(dk.sizes),
       unitIndex: Math.max(0, this.data.unitOptions.indexOf(item.unit || ''))
     });
   },
@@ -399,6 +457,7 @@ Page({
       const dk = this.detectKind(val);
       patch.stockKind = dk.kind;
       patch.sizeOptions = dk.sizes;
+      patch.sizeLabelOptions = this._sizeLabels(dk.sizes);
       patch['stockDialog.sizeIndex'] = 0;
       patch['stockDialog.size'] = dk.sizes[0] && dk.sizes[0] !== '通用' ? dk.sizes[0] : '通用';
     }
@@ -447,7 +506,7 @@ Page({
     if (!item) return;
     const next = (Number(item.count) || 0) - 1;
     if (next < 0) {
-      wx.showToast({ title: '库存已为 0', icon: 'none' });
+      wx.showToast({ title: this._t('库存已为 0', 'Stock is 0'), icon: 'none' });
       return;
     }
     const list = this.data.stockItems.map(s => s.id === id ? Object.assign({}, s, { count: next }) : s);
@@ -498,7 +557,7 @@ Page({
     });
     this.recorder.onError(() => {
       this.setData({ 'voiceState.recording': false });
-      wx.showToast({ title: '录音失败，请检查麦克风权限', icon: 'none' });
+      wx.showToast({ title: this._t('录音失败，请检查麦克风权限', 'Recording failed, check microphone access'), icon: 'none' });
     });
     return this.recorder;
   },
@@ -513,9 +572,9 @@ Page({
       fail() {
         // 拒绝过：引导去设置页开启
         wx.showModal({
-          title: '需要麦克风权限',
-          content: '请在设置中开启麦克风权限后使用语音录入',
-          confirmText: '去设置',
+          title: that._t('需要麦克风权限', 'Microphone access needed'),
+          content: that._t('请在设置中开启麦克风权限后使用语音录入', 'Please enable microphone access in Settings to use voice input'),
+          confirmText: that._t('去设置', 'Open Settings'),
           success(res) { if (res.confirm) wx.openSetting(); }
         });
       }
@@ -542,7 +601,7 @@ Page({
     const cloud = wx.cloud;
     if (!cloud || !cloud.uploadFile) {
       this.setData({ 'voiceState.recording': false });
-      wx.showToast({ title: '未开通云开发，请手动录入', icon: 'none' });
+      wx.showToast({ title: this._t('未开通云开发，请手动录入', 'Cloud not enabled, please add manually'), icon: 'none' });
       return;
     }
     wx.showLoading({ title: '识别中…' });
@@ -554,7 +613,7 @@ Page({
         if (!up || !up.fileID) {
           wx.hideLoading();
           this.setData({ 'voiceState.recording': false });
-          wx.showToast({ title: '上传失败，请重试', icon: 'none' });
+          wx.showToast({ title: this._t('上传失败，请重试', 'Upload failed, please retry'), icon: 'none' });
           return;
         }
         wx.cloud.callFunction({
@@ -567,23 +626,23 @@ Page({
               this.onStockVoiceResult(res.text);
             } else if (res.code === -3) {
               this.setData({ 'voiceState.recording': false });
-              wx.showToast({ title: '语音识别未配置密钥，请部署 voiceAsr', icon: 'none', duration: 3000 });
+              wx.showToast({ title: this._t('语音识别未配置密钥，请部署 voiceAsr', 'Voice ASR key missing, please deploy voiceAsr'), icon: 'none', duration: 3000 });
             } else {
               this.setData({ 'voiceState.recording': false });
-              wx.showToast({ title: '识别失败：' + (res.msg || '未知错误'), icon: 'none' });
+              wx.showToast({ title: this._t('识别失败：', 'Recognition failed: ') + (res.msg || this._t('未知错误', 'unknown error')), icon: 'none' });
             }
           },
           fail: () => {
             wx.hideLoading();
             this.setData({ 'voiceState.recording': false });
-            wx.showToast({ title: '云函数调用失败，请确认已部署 voiceAsr', icon: 'none' });
+            wx.showToast({ title: this._t('云函数调用失败，请确认已部署 voiceAsr', 'Cloud function failed, check voiceAsr deployment'), icon: 'none' });
           }
         });
       },
       fail: () => {
         wx.hideLoading();
         this.setData({ 'voiceState.recording': false });
-        wx.showToast({ title: '录音上传失败，请重试', icon: 'none' });
+        wx.showToast({ title: this._t('录音上传失败，请重试', 'Audio upload failed, please retry'), icon: 'none' });
       }
     });
   },
@@ -626,7 +685,7 @@ Page({
     const parsed = this.parseStockVoice(text);
     if (!parsed) {
       this.setData({ 'voiceState.recording': false });
-      wx.showToast({ title: '识别失败，请重新录入', icon: 'none' });
+      wx.showToast({ title: this._t('识别失败，请重新录入', 'Recognition failed, please try again'), icon: 'none' });
       return;
     }
     const today = this.todayStr();
@@ -651,13 +710,13 @@ Page({
     this.persist();
     this.buildWarrantyWarnings();
     this.buildStockWarnings();
-    wx.showToast({ title: '已识别并添加「' + parsed.name + '」', icon: 'success' });
+    wx.showToast({ title: this._t('已识别并添加「' + parsed.name + '」', 'Added: ' + parsed.name), icon: 'success' });
   },
 
   saveStock() {
     // 库存是账号级别的，只要登录即可使用
     if (!app.globalData.user || !app.globalData.user.openid) {
-      wx.showToast({ title: '请先登录账号', icon: 'none' });
+      wx.showToast({ title: this._t('请先登录账号', 'Please sign in first'), icon: 'none' });
       return;
     }
     const d = this.data.stockDialog;
@@ -666,7 +725,7 @@ Page({
     const count = Math.max(0, Number(d.count) || 0);
     const unit = (d.unit || '').trim();
     if (!name) {
-      wx.showToast({ title: '请填写名称', icon: 'none' });
+      wx.showToast({ title: this._t('请填写名称', 'Please enter a name'), icon: 'none' });
       return;
     }
     const produceDate = d.produceDate || '';
@@ -702,25 +761,25 @@ Page({
     }
     const savedId = d.id || list[list.length - 1].id;
     if (expireDate) {
-      warnings.push({ id: 'stock_' + savedId, name: name + (size ? '（' + size + '）' : ''), date: expireDate, tip: '按录入保质期自动同步' });
+      warnings.push({ id: 'stock_' + savedId, name: name + (size ? (this._en() ? ' (' + size + ')' : '（' + size + '）') : ''), date: expireDate, tip: this._t('按录入保质期自动同步', 'Auto-synced from shelf life') });
     }
     this.setData({ shelfWarnings: this.decorateWarnings(warnings) });
     this.persist();
     this.buildWarrantyWarnings();
     this.buildStockWarnings();
-    wx.showToast({ title: d.id ? '已更新' : '已新增', icon: 'none' });
+    wx.showToast({ title: d.id ? this._t('已更新', 'Updated') : this._t('已新增', 'Added'), icon: 'none' });
   },
 
   removeStock() {
     // 库存是账号级别的，只要登录即可使用
     if (!app.globalData.user || !app.globalData.user.openid) {
-      wx.showToast({ title: '请先登录账号', icon: 'none' });
+      wx.showToast({ title: this._t('请先登录账号', 'Please sign in first'), icon: 'none' });
       return;
     }
     const id = this.data.stockDialog.id;
     wx.showModal({
-      title: '删除耗材',
-      content: '确定删除该耗材吗？',
+      title: this._t('删除耗材', 'Delete Item'),
+      content: this._t('确定删除该耗材吗？', 'Delete this item?'),
       confirmColor: '#e25b4a',
       success: (res) => {
         if (!res.confirm) return;
@@ -735,7 +794,7 @@ Page({
         this.persist();
         this.buildWarrantyWarnings();
         this.buildStockWarnings();
-        wx.showToast({ title: '已删除', icon: 'none' });
+        wx.showToast({ title: this._t('已删除', 'Deleted'), icon: 'none' });
       }
     });
   },
@@ -778,7 +837,7 @@ Page({
     const d = this.data.warnDialog;
     const name = (d.name || '').trim();
     if (!name) {
-      wx.showToast({ title: '请填写名称', icon: 'none' });
+      wx.showToast({ title: this._t('请填写名称', 'Please enter a name'), icon: 'none' });
       return;
     }
     const tip = this.buildWarnTip(d.date);
@@ -790,20 +849,21 @@ Page({
     }
     this.setData({ shelfWarnings: this.decorateWarnings(list), 'warnDialog.visible': false });
     this.persist();
-    wx.showToast({ title: d.id ? '已更新' : '已添加提醒', icon: 'none' });
+    wx.showToast({ title: d.id ? this._t('已更新', 'Updated') : this._t('已添加提醒', 'Alert added'), icon: 'none' });
   },
 
   buildWarnTip(date) {
     if (!date) return '';
     const parts = date.split('-').map(Number);
+    if (this._en()) return 'Use by ' + parts[0] + '-' + String(parts[1]).padStart(2, '0') + '-' + String(parts[2]).padStart(2, '0');
     return '建议 ' + parts[0] + '年' + String(parts[1]).padStart(2, '0') + '月' + String(parts[2]).padStart(2, '0') + '日前使用完';
   },
 
   removeWarning() {
     const id = this.data.warnDialog.id;
     wx.showModal({
-      title: '删除提醒',
-      content: '确定删除该保质期提醒吗？',
+      title: this._t('删除提醒', 'Delete Alert'),
+      content: this._t('确定删除该保质期提醒吗？', 'Delete this expiry alert?'),
       confirmColor: '#e25b4a',
       success: (res) => {
         if (!res.confirm) return;
@@ -815,7 +875,7 @@ Page({
         this.persist();
         this.buildWarrantyWarnings();
         this.buildStockWarnings();
-        wx.showToast({ title: '已删除', icon: 'none' });
+        wx.showToast({ title: this._t('已删除', 'Deleted'), icon: 'none' });
       }
     });
   },
@@ -823,24 +883,24 @@ Page({
   /* ==================== 好物种草（智能推荐 · 橱窗预留） ==================== */
   GOODS_LIB() {
     return [
-      { id: 'g01', cat: '喂养', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '宽口径奶瓶', desc: '防胀气，好清洗', min: 0, max: 24, price: '', buyUrl: '', tags: ['奶瓶', '喂养'] },
-      { id: 'g02', cat: '消耗', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '纸尿裤', desc: '轻薄透气 整夜干爽', min: 0, max: 36, price: '', buyUrl: '', tags: ['纸尿裤', '消耗'] },
-      { id: 'g03', cat: '消耗', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '婴儿湿巾', desc: 'EDI纯水 温和不刺激', min: 0, max: 36, price: '', buyUrl: '', tags: ['湿巾', '消耗'] },
-      { id: 'g04', cat: '喂养', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '储奶袋', desc: '双层密封 不漏液', min: 0, max: 18, price: '', buyUrl: '', tags: ['母乳', '储奶'] },
-      { id: 'g05', cat: '喂养', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '电动吸奶器', desc: '双模式 低噪舒适', min: 0, max: 18, price: '', buyUrl: '', tags: ['吸奶', '母乳'] },
-      { id: 'g06', cat: '喂养', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '温奶器', desc: '恒温解冻 快速加热', min: 0, max: 18, price: '', buyUrl: '', tags: ['温奶', '喂养'] },
-      { id: 'g07', cat: '喂养', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '奶瓶消毒器', desc: '蒸汽烘干一体', min: 0, max: 18, price: '', buyUrl: '', tags: ['消毒', '喂养'] },
-      { id: 'g08', cat: '营养', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '维生素D3', desc: '出生15天起每日一滴', min: 0, max: 24, price: '', buyUrl: '', tags: ['D3', '营养'] },
-      { id: 'g09', cat: '睡眠', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '婴儿睡袋', desc: '防踢被 恒温安睡', min: 3, max: 24, price: '', buyUrl: '', tags: ['睡袋', '睡眠'] },
-      { id: 'g10', cat: '护理', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '婴儿抚触油', desc: '天然成分 温和滋润', min: 0, max: 12, price: '', buyUrl: '', tags: ['抚触', '护理'] },
-      { id: 'g11', cat: '护理', icon: '/subchart/pages/firstaid/icons/cream.png', title: '婴儿面霜', desc: '秋冬保湿不干燥', min: 0, max: 36, price: '', buyUrl: '', tags: ['面霜', '护理'] },
-      { id: 'g12', cat: '辅食', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '高铁米粉', desc: '补铁第一口', min: 4, max: 24, price: '', buyUrl: '', tags: ['辅食', '米粉'] },
-      { id: 'g13', cat: '辅食', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '辅食碗勺套装', desc: '食品级硅胶 防摔', min: 4, max: 36, price: '', buyUrl: '', tags: ['辅食', '餐具'] },
-      { id: 'g14', cat: '辅食', icon: '/subchart/pages/firstaid/icons/teether.png', title: '咬咬乐', desc: '磨牙啃咬好帮手', min: 5, max: 18, price: '', buyUrl: '', tags: ['磨牙', '辅食'] },
-      { id: 'g15', cat: '辅食', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '防水围兜', desc: '易清洗 好打理', min: 4, max: 36, price: '', buyUrl: '', tags: ['围兜', '辅食'] },
-      { id: 'g16', cat: '辅食', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '辅食机', desc: '蒸打一体 细腻辅食', min: 4, max: 24, price: '', buyUrl: '', tags: ['辅食机', '辅食'] },
-      { id: 'g17', cat: '护理', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '婴儿体温计', desc: '快速测温 安心守护', min: 0, max: 36, price: '', buyUrl: '', tags: ['体温', '护理'] },
-      { id: 'g18', cat: '出行', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '爬行垫', desc: '加厚防摔 自由探索', min: 4, max: 18, price: '', buyUrl: '', tags: ['爬行', '出行'] }
+      { id: 'g01', cat: '喂养', catEn: 'Feeding', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '宽口径奶瓶', titleEn: 'Wide-neck Bottle', desc: '防胀气，好清洗', descEn: 'Anti-colic, easy to clean', min: 0, max: 24, price: '', buyUrl: '', tags: ['奶瓶', '喂养'] },
+      { id: 'g02', cat: '消耗', catEn: 'Consumables', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '纸尿裤', titleEn: 'Diapers', desc: '轻薄透气 整夜干爽', descEn: 'Thin & breathable, dry all night', min: 0, max: 36, price: '', buyUrl: '', tags: ['纸尿裤', '消耗'] },
+      { id: 'g03', cat: '消耗', catEn: 'Consumables', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '婴儿湿巾', titleEn: 'Baby Wipes', desc: 'EDI纯水 温和不刺激', descEn: 'EDI pure water, gentle on skin', min: 0, max: 36, price: '', buyUrl: '', tags: ['湿巾', '消耗'] },
+      { id: 'g04', cat: '喂养', catEn: 'Feeding', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '储奶袋', titleEn: 'Milk Storage Bags', desc: '双层密封 不漏液', descEn: 'Double sealed, leak-proof', min: 0, max: 18, price: '', buyUrl: '', tags: ['母乳', '储奶'] },
+      { id: 'g05', cat: '喂养', catEn: 'Feeding', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '电动吸奶器', titleEn: 'Electric Breast Pump', desc: '双模式 低噪舒适', descEn: 'Dual mode, quiet & comfortable', min: 0, max: 18, price: '', buyUrl: '', tags: ['吸奶', '母乳'] },
+      { id: 'g06', cat: '喂养', catEn: 'Feeding', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '温奶器', titleEn: 'Bottle Warmer', desc: '恒温解冻 快速加热', descEn: 'Constant temp thawing, fast warming', min: 0, max: 18, price: '', buyUrl: '', tags: ['温奶', '喂养'] },
+      { id: 'g07', cat: '喂养', catEn: 'Feeding', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '奶瓶消毒器', titleEn: 'Bottle Sterilizer', desc: '蒸汽烘干一体', descEn: 'Steam & dry in one', min: 0, max: 18, price: '', buyUrl: '', tags: ['消毒', '喂养'] },
+      { id: 'g08', cat: '营养', catEn: 'Nutrition', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '维生素D3', titleEn: 'Vitamin D3', desc: '出生15天起每日一滴', descEn: 'One drop daily from 15 days old', min: 0, max: 24, price: '', buyUrl: '', tags: ['D3', '营养'] },
+      { id: 'g09', cat: '睡眠', catEn: 'Sleep', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '婴儿睡袋', titleEn: 'Baby Sleep Sack', desc: '防踢被 恒温安睡', descEn: 'Anti-kick, warm and sound sleep', min: 3, max: 24, price: '', buyUrl: '', tags: ['睡袋', '睡眠'] },
+      { id: 'g10', cat: '护理', catEn: 'Care', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '婴儿抚触油', titleEn: 'Baby Massage Oil', desc: '天然成分 温和滋润', descEn: 'Natural formula, gentle moisture', min: 0, max: 12, price: '', buyUrl: '', tags: ['抚触', '护理'] },
+      { id: 'g11', cat: '护理', catEn: 'Care', icon: '/subchart/pages/firstaid/icons/cream.png', title: '婴儿面霜', titleEn: 'Baby Face Cream', desc: '秋冬保湿不干燥', descEn: 'Hydrating for autumn and winter', min: 0, max: 36, price: '', buyUrl: '', tags: ['面霜', '护理'] },
+      { id: 'g12', cat: '辅食', catEn: 'Solids', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '高铁米粉', titleEn: 'Iron-fortified Cereal', desc: '补铁第一口', descEn: 'The first bite for iron', min: 4, max: 24, price: '', buyUrl: '', tags: ['辅食', '米粉'] },
+      { id: 'g13', cat: '辅食', catEn: 'Solids', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '辅食碗勺套装', titleEn: 'Baby Bowl and Spoon Set', desc: '食品级硅胶 防摔', descEn: 'Food-grade silicone, drop-proof', min: 4, max: 36, price: '', buyUrl: '', tags: ['辅食', '餐具'] },
+      { id: 'g14', cat: '辅食', catEn: 'Solids', icon: '/subchart/pages/firstaid/icons/teether.png', title: '咬咬乐', titleEn: 'Teether Feeder', desc: '磨牙啃咬好帮手', descEn: 'A helper for teething and chewing', min: 5, max: 18, price: '', buyUrl: '', tags: ['磨牙', '辅食'] },
+      { id: 'g15', cat: '辅食', catEn: 'Solids', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '防水围兜', titleEn: 'Waterproof Bib', desc: '易清洗 好打理', descEn: 'Easy to clean, easy to care', min: 4, max: 36, price: '', buyUrl: '', tags: ['围兜', '辅食'] },
+      { id: 'g16', cat: '辅食', catEn: 'Solids', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '辅食机', titleEn: 'Baby Food Maker', desc: '蒸打一体 细腻辅食', descEn: 'Steam and blend, smooth purees', min: 4, max: 24, price: '', buyUrl: '', tags: ['辅食机', '辅食'] },
+      { id: 'g17', cat: '护理', catEn: 'Care', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '婴儿体温计', titleEn: 'Baby Thermometer', desc: '快速测温 安心守护', descEn: 'Fast reading, peace of mind', min: 0, max: 36, price: '', buyUrl: '', tags: ['体温', '护理'] },
+      { id: 'g18', cat: '出行', catEn: 'Outdoor', icon: '/subchart/pages/firstaid/icons/spoon.png', title: '爬行垫', titleEn: 'Play Mat', desc: '加厚防摔 自由探索', descEn: 'Thick padding, safe exploring', min: 4, max: 18, price: '', buyUrl: '', tags: ['爬行', '出行'] }
     ];
   },
   babyMonths() {
@@ -881,6 +941,7 @@ Page({
       'g02': ['纸尿裤', '尿不湿'], 'g03': ['湿巾', '棉柔巾'], 'g05': ['吸奶器'], 'g06': ['温奶器'], 'g07': ['消毒器'],
       'g08': ['D3', '维生素'], 'g12': ['米粉'], 'g16': ['辅食机'], 'g17': ['体温计']
     };
+    const enG = this._en();
     const all = this.GOODS_LIB().map((it) => {
       let score = 50;
       const reason = [];
@@ -888,21 +949,25 @@ Page({
       else if (m !== null) score -= 40;
       if (m !== null) {
         if (m >= it.min) {
-          if (it.max !== null && m > it.max) reason.push('宝宝已超过' + it.max + '月适用期');
+          if (it.max !== null && m > it.max) reason.push(enG ? ('Baby is past the ' + it.max + '-month suitability') : ('宝宝已超过' + it.max + '月适用期'));
         } else {
-          reason.push('宝宝' + m + '个月，建议' + it.min + '月+再用');
+          reason.push(enG ? ('Baby is ' + m + ' months, try again from ' + it.min + ' months') : ('宝宝' + m + '个月，建议' + it.min + '月+再用'));
         }
       }
       const b = boosts[it.id] || 0;
       score += b;
-      if (b >= 26) reason.push('根据近期喂养记录推荐');
-      else if (b >= 18) reason.push('结合宝宝记录贴心推荐');
+      if (b >= 26) reason.push(enG ? 'Recommended from recent feeding records' : '根据近期喂养记录推荐');
+      else if (b >= 18) reason.push(enG ? 'Picked from your baby records' : '结合宝宝记录贴心推荐');
       const oc = ownedCheck[it.id];
-      if (oc && owned(oc)) { score -= 15; reason.push('已在库存清单中'); }
+      if (oc && owned(oc)) { score -= 15; reason.push(enG ? 'Already in your stock list' : '已在库存清单中'); }
       const favs = wx.getStorageSync('panda_goods_fav') || [];
       const faved = favs.indexOf(it.id) >= 0;
       return Object.assign({}, it, {
         score,
+        catText: enG ? (it.catEn || it.cat) : it.cat,
+        titleText: enG ? (it.titleEn || it.title) : it.title,
+        descText: enG ? (it.descEn || it.desc) : it.desc,
+        reasonText: reason.length ? reason.join(' · ') : (m !== null ? (enG ? ('Baby ' + m + ' months' + (m >= it.min ? ' · just right' : '')) : ('宝宝' + m + '个月' + (m >= it.min ? '正合适' : ''))) : (enG ? 'Recommended by baby age' : '按宝宝月龄推荐')),
         reason: reason.length ? reason.join(' · ') : (m !== null ? ('宝宝' + m + '个月' + (m >= it.min ? '正合适' : '')) : '按宝宝月龄推荐'),
         faved
       });
@@ -935,6 +1000,6 @@ Page({
     const patch = { 'goodsDetail.faved': i < 0 };
     if (ai >= 0) patch['goodsAll[' + ai + '].faved'] = i < 0;
     this.setData(patch);
-    wx.showToast({ title: i < 0 ? '已加入关注' : '已取消关注', icon: 'none' });
+    wx.showToast({ title: i < 0 ? this._t('已加入关注', 'Following') : this._t('已取消关注', 'Unfollowed'), icon: 'none' });
   }
 });
