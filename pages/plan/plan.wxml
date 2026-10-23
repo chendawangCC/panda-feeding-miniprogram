@@ -119,7 +119,7 @@ module.exports = {
       <view class="mc-nav">
         <view class="mc-nav-btn" catchtap="calPrevYear">«</view>
         <view class="mc-nav-btn" catchtap="calPrevMonth">‹</view>
-        <text class="mc-title">{{calYear}} 年 {{calMonth + 1}} 月</text>
+        <text class="mc-title">{{calTitle}}</text>
         <view class="mc-nav-btn" catchtap="calNextMonth">›</view>
         <view class="mc-nav-btn" catchtap="calNextYear">»</view>
       </view>

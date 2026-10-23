@@ -165,7 +165,7 @@ Page({
     this.setData({
       calYear: today.getFullYear(),
       calMonth: today.getMonth(),
-      calTitle: today.getFullYear() + ' 年 ' + (today.getMonth() + 1) + ' 月'
+      calTitle: this.calTitleOf(today.getFullYear(), today.getMonth())
     });
     this.initRealDateHeader();
     this.rebuildAround(today);
@@ -268,6 +268,26 @@ Page({
     const d = Math.floor(h / 24);
     const rh = h % 24;
     return rh ? d + ' 天 ' + rh + ' 小时' : d + ' 天';
+  },
+
+  /* 日期条文案：zh=10 月 23 日，周五 / en=Oct 23, Fri */
+  fmtDateLabel(d, withYear) {
+    const en = this._tlEn();
+    const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const WK = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const ZH_W = ['周日','周一','周二','周三','周四','周五','周六'];
+    if (en) {
+      return withYear
+        ? (WK[d.getDay()] + ', ' + MON[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear())
+        : (MON[d.getMonth()] + ' ' + d.getDate() + ', ' + WK[d.getDay()]);
+    }
+    return (withYear ? d.getFullYear() + ' 年 ' : '') + (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日，' + ZH_W[d.getDay()];
+  },
+
+  /* 整月日历标题：zh=2026 年 10 月 / en=Oct 2026 */
+  calTitleOf(y, m) {
+    const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return this._tlEn() ? (MON[m] + ' ' + y) : (y + ' 年 ' + (m + 1) + ' 月');
   },
 
   /* 当前是否英文界面（时间轴卡片在 onLoad 阶段构建，需回退读 storage） */
@@ -971,8 +991,7 @@ Page({
 
   initRealDateHeader() {
     const d = new Date();
-    const weeks = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-    this.setData({ headerDate: (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日，' + weeks[d.getDay()] });
+    this.setData({ headerDate: this.fmtDateLabel(d) });
   },
 
   // 以 anchor 为中心重建日期条（±2 天）、整月日历与选中态，保证两者同步
@@ -996,7 +1015,7 @@ Page({
       dates.push({
         week: weeks[d.getDay()],
         num: d.getDate(),
-        label: (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日，' + weeks[d.getDay()],
+        label: this.fmtDateLabel(d),
         year: d.getFullYear(),
         month: d.getMonth(),
         day: d.getDate(),
@@ -1186,7 +1205,7 @@ Page({
     if (!ymd) return;
     const items = this.collectDayReminds(ymd);
     const parts = ymd.split('-');
-    const label = (parts[1] ? parts[1] + ' 月 ' : '') + (parts[2] ? parts[2] + ' 日' : '');
+    const label = this.fmtDateLabel(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
     this.setData({ showDayRemind: true, dayRemind: { date: ymd, label, items } });
   },
   closeDayRemind() {
@@ -1315,7 +1334,7 @@ Page({
       monthDays: this.buildMonthDays(sel),
       calYear: d.year,
       calMonth: d.month,
-      calTitle: d.year + ' 年 ' + (d.month + 1) + ' 月'
+      calTitle: this.calTitleOf(d.year, d.month)
     });
     // 选中日期变化后按真实记录重建时间轴
     this.buildTimeline();
@@ -1338,7 +1357,7 @@ Page({
     this.setData({
       calYear: base.getFullYear(),
       calMonth: base.getMonth(),
-      calTitle: base.getFullYear() + ' 年 ' + (base.getMonth() + 1) + ' 月',
+      calTitle: this.calTitleOf(base.getFullYear(), base.getMonth()),
       monthDays: this.buildMonthDays(base)
     });
   },
@@ -1347,7 +1366,7 @@ Page({
     this.setData({
       calYear: base.getFullYear(),
       calMonth: base.getMonth(),
-      calTitle: base.getFullYear() + ' 年 ' + (base.getMonth() + 1) + ' 月',
+      calTitle: this.calTitleOf(base.getFullYear(), base.getMonth()),
       monthDays: this.buildMonthDays(base)
     });
   },
@@ -1386,7 +1405,7 @@ Page({
     this.setData({
       calYear: today.getFullYear(),
       calMonth: today.getMonth(),
-      calTitle: today.getFullYear() + ' 年 ' + (today.getMonth() + 1) + ' 月',
+      calTitle: this.calTitleOf(today.getFullYear(), today.getMonth()),
       monthDays: this.buildMonthDays(today)
     });
   },
@@ -2421,7 +2440,7 @@ Page({
     // 切换日历到对应月份
     patch.calYear = y;
     patch.calMonth = m - 1;
-    patch.calTitle = y + ' 年 ' + m + ' 月';
+    patch.calTitle = this.calTitleOf(y, m);
     // 手动构造以选中日期为中心的5天日期条（补全红点字段）
     const weeks = ['日', '一', '二', '三', '四', '五', '六'];
     const target = new Date(y, m - 1, d);
