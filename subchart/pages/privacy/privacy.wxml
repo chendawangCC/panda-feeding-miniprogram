@@ -57,7 +57,7 @@
         <view class="row-arrow" wx:else>{{lang === 'en' ? 'Enable' : '去开启'}}</view>
       </view>
     </view>
-    <view class="sec-tip">{{lang === 'en' ? 'Subscription messages are one-off: each authorization allows one push, so re-enable monthly' : '订阅消息为一次性授权，每次授权可推送一次；建议每月重新开启一次'}}</view>
+    <view class="sec-tip">{{lang === 'en' ? 'One-off authorization: each template can push once. Tap “Enable” again anytime to top up; reminders are sent when they fall due (8:00–21:00)' : '一次性授权：每个模板只能推 1 条。随时再点「去开启」补充授权；有到期提醒时在 8:00–21:00 推送'}}</view>
   </view>
 
   <!-- 数据管理 -->

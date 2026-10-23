@@ -530,9 +530,13 @@ exports.main = async (event) => {
         }
         const where = { familyId, openid };
         const exist = await db.collection(SUB).where(where).limit(1).get();
-        const rec = { familyId, openid, templateIds, updatedAt: now, expireAt: now + 30 * 24 * 3600 * 1000 };
+        // 合并已有授权：用户分次授权（每次最多 3 个模板）不能把上一批冲掉
+        const prev = exist.data.length ? (exist.data[0].templateIds || []) : [];
+        const merged = prev.slice();
+        templateIds.forEach(t => { if (merged.indexOf(t) < 0) merged.push(t); });
+        const rec = { familyId, openid, templateIds: merged, updatedAt: now, expireAt: now + 30 * 24 * 3600 * 1000 };
         if (exist.data.length) {
-          await db.collection(SUB).doc(exist.data[0]._id).update({ data: rec });
+          await db.collection('panda_subscriptions').doc(exist.data[0]._id).update({ data: rec });
         } else {
           rec.createdAt = now;
           await db.collection(SUB).add({ data: rec });

@@ -1,0 +1,9 @@
+{
+  "name": "pushReminder",
+  "version": "1.0.0",
+  "description": "熊宝喂养：订阅消息定时推送（疫苗 / 营养品 / 库存与保质期）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

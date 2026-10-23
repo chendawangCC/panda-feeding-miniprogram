@@ -71,11 +71,41 @@
    - **母乳 / 喂养提醒**（milk）
 3. 把申请到的模板 ID 填到 `utils/cloud-sync.js` 顶部 `REMIND_TEMPLATES` 对应 `tmplId`（未填的类型只在站内弹窗提醒，不推送）
 4. 用户侧：**我的 → 设置 → 权限与隐私 → 开启提醒推送**，会拉起订阅授权（一次性授权，每次授权推送一次，建议定期引导开启）
-5. `pushReminder` 云函数需配置**定时触发器**（`config.json` 已带，默认每 1 小时），并重新部署
+5. 部署 `pushReminder` 云函数（`cloudfunctions/pushReminder`，右键「上传并部署：云端安装依赖」），它自带定时触发器 `config.json`（每天 8:00–21:00 每小时整点）和 `subscribeMessage.send` 云调用权限
+6. ⚠️ 一次 `requestSubscribeMessage` 最多传 **3 个模板 ID**，本项目 4 个模板已按「每次取 3 个 + 再点一次补授权」处理，并且云端登记会把多次授权**合并**保存
+
+### 模板字段配置（必做，否则发送返回 47003）
+`pushReminder` 云函数要按模板的**关键词**组装 data，关键词名必须和小程序后台模板一致（如 `thing1` / `time2` / `phrase3` / `number2`）。
+
+1. 云开发控制台 → 数据库 → 新建集合 `panda_push_config`（权限设为「仅管理端可读写」）
+2. 新建文档，`_id` 填 `templates`，内容（按你后台实际字段名改）：
+```json
+{
+  "_id": "templates",
+  "vaccine":    { "tmplId": "模板ID1", "page": "pages/plan/plan", "fields": { "thing1": "name", "time2": "date", "thing3": "note" } },
+  "supplement": { "tmplId": "模板ID2", "page": "pages/plan/plan", "fields": { "thing1": "name", "time2": "date", "thing3": "note" } },
+  "stock":      { "tmplId": "模板ID3", "page": "pages/plan/plan", "fields": { "thing1": "name", "number2": "value", "thing3": "note" } }
+}
+```
+3. `fields` 的右值可用变量：`name`（提醒名称）/ `date`（日期，YYYY-MM-DD）/ `note`（提示文案）/ `value`（数值，库存等）
+
+### 自检（1 分钟定位为什么收不到）
+小程序端先点一次「去开启」，然后在**云开发控制台 → 云函数 → pushReminder → 测试**，传入：
+```json
+{ "action": "diagnose" }
+```
+返回重点看：
+- `没有订阅记录` → 授权弹窗没点同意，或 familyCloud 未部署
+- `details[].skipped: 未授权该模板` → 用户只勾了部分模板
+- `details[].errors[].errCode = 47003` → 模板字段名和 `panda_push_config` 不一致（按返回的 `errMsg` 改）
+- `details[].errors[].errCode = 43101` → 该模板的一次性授权已用完，需要用户再点「去开启」
+- `hit` 全为 0 → 今天没有到期提醒，属于正常（可先用 `{"action":"send"}` 手动推一次）
 
 ### 推送范围（v2）
 - 家庭扫描：加入家庭的所有成员按各自订阅类型推送
 - **主账户（self）扫描**：无家庭的主账户也可收到自己宝宝的提醒推送（无需创建家庭）
+- 推送内容取云端同步数据：疫苗（`panda_baby_meta.vaccinePlan` 待接种、3 天内）、营养品（`panda_records` 按频率/手动改期）、库存与保质期（`panda_baby_meta.shelfWarnings` 当天到期）
+- 同类提醒当天只推 1 条（`panda_push_log` 去重），每条会消耗对应模板 1 次授权
 
 ---
 

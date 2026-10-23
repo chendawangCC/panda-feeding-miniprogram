@@ -130,13 +130,55 @@ Page({
 
   /* 开启提醒推送：无需家庭，主账户即可使用（需先配置订阅消息模板） */
   enablePush() {
-    cs.enableRemind().then(() => {
+    const self = this;
+    cs.enableRemind().then(r => {
       wx.setStorageSync(PUSH_KEY, true);
-      this.setData({ pushEnabled: true });
-      wx.showToast({ title: this._t('提醒推送已开启', 'Push reminders enabled'), icon: 'success' });
+      self.setData({ pushEnabled: true });
+      const n = (r && r.grantedCount) || 0;
+      wx.showToast({
+        title: self._t('已授权 ' + n + ' 项（每项可推 1 条）', 'Authorized ' + n + ' templates (1 push each)'),
+        icon: 'none',
+        duration: 2000
+      });
+      // 授权后立即自检一次：今天若有到期提醒就马上推一条，证明推送链路可用
+      self.probePush();
     }).catch(e => {
-      wx.showToast({ title: e.message || this._t('开启失败', 'Could not enable'), icon: 'none' });
+      wx.showToast({ title: (e && e.message) || self._t('开启失败', 'Could not enable'), icon: 'none', duration: 3000 });
     });
+  },
+
+  /* 授权后自检：调用 pushReminder 诊断一次，有到期提醒就立刻推送 */
+  probePush() {
+    const self = this;
+    if (!wx.cloud || !wx.cloud.callFunction) return;
+    wx.cloud.callFunction({ name: 'pushReminder', data: { action: 'diagnose' } })
+      .then(res => {
+        const r = (res && res.result) || {};
+        if (r.code !== 0) {
+          wx.showToast({ title: (r.msg || self._t('推送自检失败，请查看云函数日志', 'Self-check failed, see cloud logs')), icon: 'none', duration: 3000 });
+          return;
+        }
+        const details = r.details || [];
+        const sent = details.reduce((n, d) => n + ((d.sent || []).length), 0);
+        if (sent > 0) {
+          wx.showToast({ title: self._t('已推送 ' + sent + ' 条到期提醒，请在微信服务通知查看', 'Pushed ' + sent + ' reminder(s), check WeChat service notifications'), icon: 'none', duration: 3000 });
+        } else {
+          const errs = details.reduce((a, d) => a.concat(d.errors || []), []);
+          if (errs.length) {
+            const e0 = errs[0];
+            wx.showModal({
+              title: self._t('推送未成功', 'Push failed'),
+              content: 'errCode ' + e0.errCode + '：' + (e0.errMsg || '') + self._t('\n（多为模板字段名不匹配，见 README 第四节）', '\n(likely template field mismatch, see README section 4)'),
+              showCancel: false
+            });
+          } else {
+            wx.showToast({ title: self._t('已授权；今天没有到期提醒，有提醒时会推送', 'Authorized; nothing due today — will push when due'), icon: 'none', duration: 3000 });
+          }
+        }
+      })
+      .catch(() => {
+        wx.showToast({ title: self._t('已授权，但云函数 pushReminder 未部署', 'Authorized, but pushReminder is not deployed'), icon: 'none', duration: 3000 });
+      });
   },
 
   /* 读取真实授权状态：getSetting + getAppAuthorizeSetting 双源，授权后进入页面/返回页面即同步 */

@@ -366,19 +366,41 @@ function enableRemind() {
   // 无家庭时以主账户（self）开启：主账户可直接使用提醒推送
   const configured = REMIND_TEMPLATES.filter(t => t.tmplId && String(t.tmplId).trim());
   if (!configured.length) return Promise.reject(new Error('尚未配置订阅消息模板：请在小程序后台「功能-订阅消息」申请模板后，把模板 ID 填入 utils/cloud-sync.js 的 REMIND_TEMPLATES'));
-  const tmplIds = configured.map(t => t.tmplId);
+  // ⚠️ 小程序单次 requestSubscribeMessage 最多 3 个模板 ID，超过会直接失败（20002）
+  //    这里按游标每次取 3 个，用户再点一次可补授权剩下的模板
+  const ROT_KEY = 'panda_push_rotate';
+  let start = 0;
+  try { start = Number(wx.getStorageSync(ROT_KEY) || 0) || 0; } catch (e) { start = 0; }
+  const picked = [];
+  for (let i = 0; i < configured.length && picked.length < 3; i++) {
+    picked.push(configured[(start + i) % configured.length]);
+  }
+  try { wx.setStorageSync(ROT_KEY, (start + 3) % configured.length); } catch (e) {}
+  const batch = picked;
+  const tmplIds = batch.map(t => t.tmplId);
   return new Promise((resolve, reject) => {
     wx.requestSubscribeMessage({
       tmplIds,
       success: async (res) => {
-        const granted = configured.filter(t => res[t.tmplId] === 'accept');
-        if (!granted.length) return reject(new Error('未同意订阅，未开启提醒推送'));
+        const granted = batch.filter(t => res[t.tmplId] === 'accept');
+        if (!granted.length) {
+          return reject(new Error('你拒绝了订阅授权，未开启提醒推送（可再次点击「去开启」授权）'));
+        }
         try {
-          const r = await callFn('familyCloud', { action: 'subscribe', familyId: meta.familyId || 'self', templateIds: granted });
-          resolve(r);
+          const r = await callFn('familyCloud', { action: 'subscribe', familyId: meta.familyId || 'self', templateIds: granted.map(t => t.tmplId) });
+          if (!r || r.code !== 0) return reject(new Error((r && r.msg) || '订阅登记失败，请检查云开发是否已部署 familyCloud'));
+          // 返回本次实际授权的模板数：一次性订阅，每个模板只能推 1 条
+          resolve(Object.assign({ grantedCount: granted.length, grantedTypes: granted.map(t => t.type) }, r));
         } catch (e) { reject(e); }
       },
-      fail: reject
+      fail: (err) => {
+        const code = err && (err.errCode || (err.detail && err.detail.errCode));
+        let msg = (err && err.errMsg) || '订阅授权失败';
+        if (code === 20004) msg = '你在设置中关闭了订阅消息接收，请到「微信-设置-消息通知」里打开';
+        else if (code === 20001 || code === 20002) msg = '订阅消息模板 ID 无效或与小程序的类目不匹配，请在小程序后台核对模板';
+        else if (code === 20003) msg = '已达今日订阅次数上限（每个模板每天最多弹一次授权），明天再试';
+        reject(new Error(msg));
+      }
     });
   });
 }
