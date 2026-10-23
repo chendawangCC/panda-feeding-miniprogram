@@ -97,7 +97,7 @@
       </view>
     </scroll-view>
 
-    <scroll-view class="tl-scroll" scroll-y show-scrollbar="{{false}}" bindtouchstart="onTlTouchStart" bindtouchmove="onTlTouchMove" bindtouchend="onTlTouchEnd" bindtouchcancel="onTlTouchEnd">
+    <scroll-view class="tl-scroll" scroll-y="{{tlScrollY}}" show-scrollbar="{{false}}" style="height: {{tlH}}rpx" bindtouchstart="onTlTouchStart" bindtouchmove="onTlTouchMove" bindtouchend="onTlTouchEnd" bindtouchcancel="onTlTouchEnd">
       <view class="timeline-grid">
         <view class="tl-hour" style="height: {{24 * hourUnit}}rpx">
           <text wx:for="{{hours}}" wx:key="*this" style="height: {{hourUnit}}rpx; line-height: {{hourUnit}}rpx">{{item}}</text>
@@ -108,7 +108,7 @@
               wx:for="{{bars}}"
               wx:key="title"
               wx:if="{{item.show}}"
-              class="tl-bar {{item.circle ? 'tl-dot' : ''}}"
+              class="tl-bar"
               style="left: {{item.left}}%; bottom: {{item.bottomRpx}}rpx; width: {{item.w}}%; height: {{item.hRpx}}rpx; background: {{item.color}}"
               hover-class="tl-bar-hover"
               data-index="{{index}}"
@@ -118,7 +118,7 @@
         </view>
       </view>
     </scroll-view>
-    <view class="tl-days">
+    <view class="tl-days" style="grid-template-columns: repeat({{days.length}}, 1fr)">
       <text wx:for="{{days}}" wx:key="label" class="{{item.isToday ? 'today' : ''}}">{{item.label}}</text>
     </view>
 

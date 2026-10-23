@@ -265,7 +265,9 @@ Page({
     days: [],
     hours: ['24', '23', '22', '21', '20', '19', '18', '17', '16', '15', '14', '13', '12', '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01'],
     bars: [],
-    hourUnit: 26,
+    hourUnit: 25,          // 每小时高度（rpx），默认按容器高度铺满 24 小时
+    tlH: 600,              // 时间轴可视高度（= 24 * hourUnit，最大 620）
+    tlScrollY: false,      // 24 小时未放大时不需要滚动
     babyName: '',
     legend: LEGEND,
     // 每日喂养小结：勾选项 + 数据 + 设置/小记弹窗
@@ -527,9 +529,11 @@ Page({
       if (!meta) return;
       // 时间段记录 → 色块；仅时间点记录 → 圆点
       const seg = this.recordSegment(r);
+      const slot = 100 / Math.max(1, days.length)
+      const barW = 8
       bars.push({
-        left: Math.round((di * (100 / 7) + 1.5) * 10) / 10,
-        w: 9,
+        left: Math.round((di * slot + (slot - barW) / 2) * 10) / 10,
+        w: barW,
         color: meta.color,
         type: meta.name,
         title: r.date + ' ' + r.time + ' ' + (this._en() ? (EN_LABEL[meta.name] || meta.name) : meta.name),
@@ -564,43 +568,52 @@ Page({
     return { start: s, min };
   },
 
-  /* 竖轴拉伸：按 hourUnit（每小时rpx）计算色块/圆点位置，横向不缩放 */
+  /* 竖轴拉伸：按 hourUnit（每小时rpx）计算圆角时间块位置，横向不缩放 */
   applyBarLayout(bars, unit) {
-    const u = unit || 26;
+    const u = unit || this.data.hourUnit || 25;
     bars.forEach(b => {
       if (b.isPoint) {
+        // 单点记录也做成圆角时间块（固定高度，居中于该时间刻度）
         const m = this.toMinutes(b.time);
-        // 圆心对齐刻度文字中心（刻度文字中心在 h*u + u/2），圆点高30rpx故再减15
-        b.bottomRpx = Math.round(m / 60 * u + u / 2 - 15);
-        b.hRpx = 30;
-        b.circle = true;
+        b.hRpx = 26;
+        b.bottomRpx = Math.round(m / 60 * u + u / 2 - 13);
       } else {
         b.bottomRpx = Math.round(b.startMin / 60 * u + u / 2);
-        b.hRpx = Math.max(6, Math.round(b.hMin / 60 * u));
-        b.circle = false;
+        b.hRpx = Math.max(14, Math.round(b.hMin / 60 * u));
       }
+      b.circle = false;
+    });
+  },
+
+  /* 统一设置每小时高度：默认铺满 24 小时不滚动，放大后超出 620rpx 才可上下滚动 */
+  setHourUnit(unit) {
+    const FIT_H = 620;
+    const fitUnit = Math.floor(FIT_H / 24);
+    const u = Math.max(fitUnit, Math.min(320, Math.round(unit)));
+    const total = 24 * u;
+    const bars = this.data.bars.map(b => Object.assign({}, b));
+    this.applyBarLayout(bars, u);
+    this.setData({
+      hourUnit: u,
+      bars,
+      tlH: Math.min(FIT_H, total),
+      tlScrollY: total > FIT_H
     });
   },
 
   /* 竖轴拉伸：放大/缩小（15~130 rpx/小时），横轴不可拉伸 */
   zoomIn() {
-    const u = Math.min(130, (this.data.hourUnit || 26) + 16);
-    const bars = this.data.bars.map(b => Object.assign({}, b));
-    this.applyBarLayout(bars, u);
-    this.setData({ hourUnit: u, bars });
+    this.setHourUnit((this.data.hourUnit || 25) + 16);
   },
   zoomOut() {
-    const u = Math.max(15, (this.data.hourUnit || 26) - 16);
-    const bars = this.data.bars.map(b => Object.assign({}, b));
-    this.applyBarLayout(bars, u);
-    this.setData({ hourUnit: u, bars });
+    this.setHourUnit((this.data.hourUnit || 25) - 16);
   },
 
   /* 双指捏合拉伸竖轴（15~130 rpx/小时），替代原 −/+ 按钮 */
   onTlTouchStart(e) {
     if (e.touches && e.touches.length === 2) {
       this._pinchDist = this.pinchDist(e.touches);
-      this._pinchUnit = this.data.hourUnit || 26;
+      this._pinchUnit = this.data.hourUnit || 25;
     }
   },
   onTlTouchMove(e) {
@@ -608,12 +621,8 @@ Page({
       const d = this.pinchDist(e.touches);
       if (this._pinchDist && d > 0) {
         const ratio = d / this._pinchDist;
-        const u = Math.min(130, Math.max(15, Math.round(this._pinchUnit * ratio)));
-        if (u !== this.data.hourUnit) {
-          const bars = this.data.bars.map(b => Object.assign({}, b));
-          this.applyBarLayout(bars, u);
-          this.setData({ hourUnit: u, bars });
-        }
+        const u = Math.round(this._pinchUnit * ratio);
+        if (u !== this.data.hourUnit) this.setHourUnit(u);
       }
     }
   },

@@ -198,7 +198,8 @@
 
 /* 双指捏合拉伸竖轴（替代原 −/+ 按钮） */
 .tl-scroll {
-  touch-action: pinch-zoom;
+  /* 双指捏合由页面 JS 处理，避免浏览器整页缩放 */
+  touch-action: pan-y;
   height: 620rpx;
   margin-top: 16rpx;
 }
@@ -234,14 +235,8 @@
 }
 .tl-bar {
   position: absolute;
-  border-radius: 12rpx;
-  opacity: 0.75; /* 重叠时半透明叠放，仍可分辨 */
-}
-.tl-dot {
-  width: 30rpx !important;
-  height: 30rpx !important;
-  border-radius: 50%;
-  opacity: 0.9;
+  border-radius: 8rpx;
+  opacity: 0.85; /* 重叠时半透明叠放，仍可分辨 */
 }
 .tl-bar-hover {
   opacity: 1;
