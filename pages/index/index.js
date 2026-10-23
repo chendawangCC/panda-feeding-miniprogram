@@ -8,6 +8,17 @@ function todayStr() {
   return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
 }
 
+
+/* 跨时区辅助：按某个时区偏移（分钟，东为正）把绝对时刻格式化成 YYYY-MM-DD */
+function dateStrAtOffset(ms, offMin) {
+  const d = new Date(ms + (offMin || 0) * 60000);
+  return d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + d.getUTCDate()).slice(-2);
+}
+/* 记录发生时刻：优先绝对时间戳 ts，其次云端版本时间 _u（老数据也能跨时区算对） */
+function recordTs(r) {
+  const t = Number(r && (r.ts || r._u)) || 0;
+  return t > 0 ? t : 0;
+}
 function pad(n) {
   return n < 10 ? '0' + n : '' + n;
 }
@@ -264,13 +275,18 @@ Page({
     const records = app.globalData.records || [];
     const feedTypes = ['母乳', '配方奶', '瓶喂母乳', '吸奶', '辅食', '喝水', '换尿布', '睡眠', '营养品', '洗澡', '体温'];
     const ts = todayStr();
+    const nowMs = Date.now();
     console.log('[buildNextReminder] records=', records.length, 'ts=', ts, 'currentBabyId=', app.globalData.currentBabyId);
     records.forEach((r,i) => { if (i < 5) console.log('[buildNextReminder] r', i, 'type=', r.type, 'date=', r.date, 'inFeedTypes=', feedTypes.indexOf(r.type) >= 0); });
     // 只取「当天」的喂养记录：当天没有记录 → 显示每日祝福语；当天有记录 → 显示最新一条
+    // 跨国家庭：按记录自带的时区判断「今天」；老数据无 tz 时，24 小时内发生的记录也视为当前（避免对方看不到刚喂的记录）
     let last = null;
     for (let i = records.length - 1; i >= 0; i--) {
       const r = records[i];
-      if (r && feedTypes.indexOf(r.type) >= 0 && r.date === ts) { last = r; break; }
+      if (!r || feedTypes.indexOf(r.type) < 0) continue;
+      const rTs = recordTs(r);
+      const isToday = (r.tz === 0 || r.tz) ? (r.date === dateStrAtOffset(nowMs, r.tz)) : (r.date === ts || (rTs > 0 && nowMs - rTs >= 0 && nowMs - rTs < 24 * 3600000));
+      if (isToday) { last = r; break; }
     }
     if (!last) {
       this.setData({
@@ -283,10 +299,13 @@ Page({
       return;
     }
     const now = new Date();
-    const dp = String(last.date || todayStr()).split('-').map(Number);
-    const tp = String(last.time || '00:00').split(':').map(Number);
-    const lastDt = new Date(dp[0], (dp[1] || 1) - 1, dp[2] || 1, tp[0] || 0, tp[1] || 0, 0);
-    const agoMin = Math.round((now - lastDt) / 60000);
+    let lastDt = recordTs(last);
+    if (!lastDt) {
+      const dp = String(last.date || todayStr()).split('-').map(Number);
+      const tp = String(last.time || '00:00').split(':').map(Number);
+      lastDt = new Date(dp[0], (dp[1] || 1) - 1, dp[2] || 1, tp[0] || 0, tp[1] || 0, 0).getTime();
+    }
+    const agoMin = Math.round((now.getTime() - lastDt) / 60000);
     // 图标与记录页保持一致（记录页各类型图片图标）
     const iconMap = { 母乳: '/images/icons/rec-nursing.png', 配方奶: '/images/icons/rec-bottle.png', 瓶喂母乳: '/images/icons/rec-bottle.png', 吸奶: '/images/icons/rec-pump.png', 换尿布: '/images/icons/rec-diaper.png', 营养品: '/images/icons/rec-supplement.png', 睡眠: '/images/icons/rec-sleep.png', 辅食: '/images/icons/rec-food.png', 喝水: '/images/icons/rec-water.png', 洗澡: '/images/icons/rec-bath.png', 体温: '/images/icons/rec-temp.png' };
     const detail = this.feedDetail(last);
@@ -731,7 +750,9 @@ Page({
       // 解析时间（支持 HH:MM 和 HH:MM:SS）
       const tp = String(r.time || '00:00').split(':').map(Number);
       const startSec = tp[2] || 0;
-      const start = new Date(dp[0], (dp[1] || 1) - 1, dp[2] || 1, tp[0] || 0, tp[1] || 0, startSec);
+      // 跨时区：优先用记录绝对时间戳，避免把对方时区的墙上时间按本机时区重算
+      const _abs = recordTs(r);
+      const start = _abs ? new Date(_abs) : new Date(dp[0], (dp[1] || 1) - 1, dp[2] || 1, tp[0] || 0, tp[1] || 0, startSec);
       let expire;
       if (cfg.unit === 'h') expire = new Date(start.getTime() + cfg.value * 3600000);
       else expire = new Date(start.getFullYear(), start.getMonth() + cfg.value, start.getDate(), start.getHours(), start.getMinutes(), startSec);
@@ -835,14 +856,17 @@ Page({
     const intervalText = Math.round(feedIntervalMin / 60 * 10) / 10 + ' 小时';
     if (feeds.length) {
       const last = feeds[0];
-      const dp = String(last.date || todayStr()).split('-').map(Number);
-      const tp = String(last.time || '00:00').split(':').map(Number);
-      const lastTs = new Date(dp[0], (dp[1] || 1) - 1, dp[2] || 1, tp[0] || 0, tp[1] || 0);
-      const nextTs = new Date(lastTs.getTime() + feedIntervalMin * 60000);
+      let lastMs = recordTs(last);
+      if (!lastMs) {
+        const dp = String(last.date || todayStr()).split('-').map(Number);
+        const tp = String(last.time || '00:00').split(':').map(Number);
+        lastMs = new Date(dp[0], (dp[1] || 1) - 1, dp[2] || 1, tp[0] || 0, tp[1] || 0).getTime();
+      }
+      const nextMs = lastMs + feedIntervalMin * 60000;
       // 提前 10 分钟开始提醒
-      const min = Math.round((nextTs - now) / 60000) - 10;
+      const min = Math.round((nextMs - now.getTime()) / 60000) - 10;
       if (min <= WINDOW) {
-        const passedMin = Math.max(0, Math.round((now - lastTs) / 60000));
+        const passedMin = Math.max(0, Math.round((now.getTime() - lastMs) / 60000));
         todos.push({
           key: 'feed', iconImg: '/images/icons/rec-nursing.png', icon: '',
           title: lang === 'en' ? (min < 0 ? 'Time to feed' : 'Upcoming feed') : (min < 0 ? '该喂奶了' : '即将到喂奶时间'),

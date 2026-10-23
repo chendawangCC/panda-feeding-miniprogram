@@ -10,6 +10,12 @@ function calcDays(birthday) {
   return Math.max(0, Math.floor((now - b) / 86400000));
 }
 
+/* 本地日历日期（不要用 toISOString：它按 UTC 取日期，东八区凌晨 / 西半球傍晚都会差一天） */
+function localDateStr(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+
 Page({
 
   onShareAppMessage() {
@@ -22,7 +28,7 @@ Page({
   data: {
     guide: { visible: false, title: '', desc: '', primary: '', mode: '' },
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
-    today: new Date().toISOString().slice(0,10),
+    today: localDateStr(new Date()),
     // ===== 账号登录（合并自我的页） =====
     user: { openid: '', avatar: '', nickname: '', phone: '', logged: false },
     loginVisible: false,
@@ -107,7 +113,7 @@ Page({
       visible: false,
       editIndex: -1,
       time: '',
-      recordDate: new Date().toISOString().slice(0,10),
+      recordDate: localDateStr(new Date()),
       type: '母乳',
       icon: '🍼',
       hint: '轻点左右一侧开始或暂停计时',
@@ -1641,7 +1647,7 @@ Page({
         visible: true,
         editIndex: -1,
         time: now,
-        recordDate: new Date().toISOString().slice(0,10),
+        recordDate: localDateStr(new Date()),
         type,
         icon: icons[type] || '🍼',
         iconImg: iconsImg[type] || '',
@@ -1711,7 +1717,7 @@ Page({
     }
     // 如果选择的是今天，时间不能超过当前时间
     const now = new Date();
-    const todayStr = now.toISOString().slice(0,10);
+    const todayStr = localDateStr(now);
     if (rec.recordDate === todayStr) {
       const hh = String(now.getHours()).padStart(2,'0');
       const mm = String(now.getMinutes()).padStart(2,'0');
@@ -2484,6 +2490,18 @@ Page({
 
     // 记录级版本时间戳（云端增量同步用：修改后 _u 变新，覆盖云端旧版本）
     recBase._u = Date.now();
+    // 记录发生时刻（绝对 epoch）+ 记录时区偏移（分钟，东为正）：
+    // 跨国家庭按绝对时间算「多久前」，并按记录者时区判断「今天」，避免另一方看到 0 条或差 12 小时
+    try {
+      const _dp = String(recBase.date || '').split('-').map(Number);
+      const _tp = String(recBase.time || '').split(':').map(Number);
+      recBase.tz = -new Date().getTimezoneOffset();
+      if (_dp[0] && _dp[1] && _dp[2]) {
+        const _d = new Date(_dp[0], _dp[1] - 1, _dp[2], _tp[0] || 0, _tp[1] || 0, _tp[2] || 0);
+        const _t = _d.getTime();
+        if (isFinite(_t)) recBase.ts = _t;
+      }
+    } catch (e) {}
 
     const patch = { 'record.visible': false };
     let formulaCanLeft = null; // 本次开罐后剩余奶粉罐数（用于保存提示）
@@ -3020,7 +3038,12 @@ Page({
     const g = app.globalData;
     const me2 = wx.getStorageSync('panda_user') || {};
     const by2 = (me2.logged && me2.openid) ? { openid: me2.openid, name: me2.nickname || '我', avatar: me2.avatar || '' } : null;
-    g.records.push(Object.assign({ type: '语音记录', time: now, date: this.selDateStr(), note: text }, by2 ? { by: by2 } : {}));
+    const _vDate = this.selDateStr();
+    const _vd = String(_vDate).split('-').map(Number);
+    const _vt = String(now).split(':').map(Number);
+    const _vNow = new Date();
+    const _vTs = new Date(_vd[0], (_vd[1] || 1) - 1, _vd[2] || 1, _vt[0] || 0, _vt[1] || 0).getTime();
+    g.records.push(Object.assign({ type: '语音记录', time: now, date: _vDate, ts: isFinite(_vTs) ? _vTs : Date.now(), tz: -_vNow.getTimezoneOffset(), note: text }, by2 ? { by: by2 } : {}));
     app.persist();
     this.stopVoiceTimer();
     this.buildTimeline();
