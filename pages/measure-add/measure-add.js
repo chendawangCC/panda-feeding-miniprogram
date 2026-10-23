@@ -17,7 +17,7 @@ Page({
     const pad = n => (n < 10 ? '0' + n : '' + n);
     const today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
     const baby = app.globalData.baby || {};
-    // 编辑模式：回填已有测量记录（idx 由成长档案页传入）
+    // 编辑模式：回填已有测量记录（优先用成长档案页传入的稳定 key）
     let idx = -1;
     // 优先用稳定 key 定位记录：成长档案列表按日期排序，显示序号不等于存储下标
     if (options && options.key) {
