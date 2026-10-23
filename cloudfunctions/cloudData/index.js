@@ -315,6 +315,20 @@ async function doPush(openid, batches) {
   const force = Array.isArray(batches.force) ? batches.force : [];
   const conflicts = [];
 
+  // 预取墓碑：已删除的数据不允许被「离线很久的旧设备」重新写回云端
+  // （客户端也会按墓碑过滤显示，但云端文档不应被复活）
+  const tombTs = { records: {}, inventory: {}, measures: {}, vaccines: {} };
+  for (const kind of Object.keys(tombTs)) {
+    try {
+      const arr = await getColl(COLLS.tombs, { kind });
+      arr.forEach(t => {
+        if (!t || !t.cid) return;
+        const ts = t.updatedAt || 0;
+        if (!tombTs[kind][t.cid] || ts > tombTs[kind][t.cid]) tombTs[kind][t.cid] = ts;
+      });
+    } catch (e) {}
+  }
+
   // 按集合处理，逐条校验权限（模块映射：records/inventory/measures→profile/vaccines→profile）
   const plan = [
     ['babies', COLLS.babies, ''],
@@ -360,6 +374,16 @@ async function doPush(openid, batches) {
         const ok = await canWrite(babyId, openid, module);
         if (!ok) { console.log('[push] canWrite false key=', key, 'babyId=', babyId, 'openid=', openid); continue; }
         writes.push(d);
+      }
+      // 墓碑优先：云端已删除且删除时间晚于本条修改时间 → 拒绝写回
+      if (tombTs[key]) {
+        const deadTs = tombTs[key][d.cid] || 0;
+        const localU = d._u || 0;
+        if (deadTs && deadTs >= localU) {
+          conflicts.push({ _id: d._id, kind: coll, localU: localU, cloudU: deadTs, reason: 'deleted' });
+          writes.pop();
+          continue;
+        }
       }
     }
     console.log('[push] plan key=', key, 'docs=', docs.length, 'writes=', writes.length);
