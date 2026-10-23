@@ -142,47 +142,47 @@ Page({
   /* 读取真实授权状态：getSetting + getAppAuthorizeSetting 双源，授权后进入页面/返回页面即同步 */
   refreshPermissions() {
     const self = this;
+    const en = self._en();
+    const appKeyOf = {
+      'scope.record': 'microphoneAuthorized',
+      'scope.userLocation': 'locationAuthorized',
+      'scope.writePhotosAlbum': 'albumAuthorized'
+    };
+    let appAuth = {};
+    try { appAuth = wx.getAppAuthorizeSetting ? (wx.getAppAuthorizeSetting() || {}) : {}; } catch (e) {}
+    if (!this._granted) this._granted = {};
+
+    /* 只认小程序级真实授权状态：
+       true=已授权，false=已拒绝，undefined=从未申请；
+       系统级 denied 说明已被系统关闭，同样属于“已拒绝”，需引导去设置；
+       本次会话内用户刚点过授权成功的（部分 scope 不回传），按已授权处理 */
+    const decorate = (it, authSetting) => {
+      const v = authSetting[it.scope];
+      const sysDenied = ['denied', 'restricted'].indexOf(appAuth[appKeyOf[it.scope]]) > -1;
+      let st;
+      if (v === true) st = 'ok';
+      else if (v === false) st = 'denied';
+      else if (sysDenied) st = 'denied';
+      else if (self._granted[it.scope]) st = 'ok';
+      else st = 'none';
+      return Object.assign({}, it, {
+        state: st,
+        stateOk: st === 'ok',
+        stateDeny: st === 'denied',
+        stateText: st === 'ok' ? (en ? 'Granted' : '已授权') : (st === 'denied' ? (en ? 'Denied' : '已拒绝') : (en ? 'Not enabled' : '未开启')),
+        actionText: st === 'denied' ? (en ? 'Settings' : '去设置') : (en ? 'Grant' : '去授权'),
+        nameText: en ? it.nameEn : it.name,
+        descText: en ? it.descEn : it.desc
+      });
+    };
+
     wx.getSetting({
       success: (res) => {
-        const auth = res.authSetting || {};
-        let appAuth = {};
-        try { appAuth = wx.getAppAuthorizeSetting ? wx.getAppAuthorizeSetting() : {}; } catch (e) {}
-        const scopeMap = {
-          'scope.record': appAuth.microphoneAuthorized,
-          'scope.userLocation': appAuth.locationAuthorized,
-          'scope.writePhotosAlbum': appAuth.albumAuthorized
-        };
-        const stateOf = (scope) => {
-          const v = auth[scope];
-          if (v === true) return '已授权';
-          if (v === false) return '已拒绝';
-          const aa = scopeMap[scope];
-          if (aa === 'authorized') return '已授权';
-          if (aa === 'denied') return '已拒绝';
-          return '未开启';
-        };
-        const list = SCOLE_LIST_CONST().map((it) => {
-          const st = stateOf(it.scope);
-          const en = self._en();
-          return Object.assign({}, it, {
-            state: st,
-            stateOk: st === '已授权',
-            stateText: st === '已授权' ? (en ? 'Granted' : '已授权') : (st === '已拒绝' ? (en ? 'Denied' : '已拒绝') : (en ? 'Not enabled' : '未开启')),
-            nameText: en ? it.nameEn : it.name,
-            descText: en ? it.descEn : it.desc
-          });
-        });
-        self.setData({ permissions: list });
+        const auth = (res && res.authSetting) || {};
+        self.setData({ permissions: SCOLE_LIST_CONST().map(it => decorate(it, auth)) });
       },
       fail: () => {
-        const en = self._en();
-        const list = SCOLE_LIST_CONST().map((it) => Object.assign({}, it, {
-          state: '未开启', stateOk: false,
-          stateText: en ? 'Not enabled' : '未开启',
-          nameText: en ? it.nameEn : it.name,
-          descText: en ? it.descEn : it.desc
-        }));
-        self.setData({ permissions: list });
+        self.setData({ permissions: SCOLE_LIST_CONST().map(it => decorate(it, {})) });
       }
     });
   },
@@ -195,6 +195,8 @@ Page({
     wx.authorize({
       scope: scope,
       success: () => {
+        if (!this._granted) this._granted = {};
+        this._granted[scope] = true;
         wx.showToast({ title: this._t('已授权' + item.name, (item.nameEn || item.name) + ' granted'), icon: 'success' });
         this.refreshPermissions();
       },

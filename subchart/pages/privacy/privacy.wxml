@@ -20,8 +20,8 @@
           <text class="row-name">{{item.nameText || item.name}}</text>
           <text class="row-desc">{{item.descText || item.desc}}</text>
         </view>
-        <text class="row-state {{item.stateOk ? 'ok' : (item.state === '已拒绝' ? 'deny' : '')}}">{{item.stateText || item.state}}</text>
-        <view class="row-arrow" wx:if="{{!item.stateOk}}">{{lang === 'en' ? 'Grant' : '去授权'}}</view>
+        <text class="row-state {{item.stateOk ? 'ok' : 'deny'}}" wx:if="{{item.stateOk || item.stateDeny}}">{{item.stateText}}</text>
+        <view class="row-arrow {{item.stateDeny ? 'deny' : ''}}" wx:if="{{!item.stateOk}}" catchtap="requestAuth" data-scope="{{item.scope}}">{{item.actionText}}</view>
       </view>
     </view>
     <view class="sec-tip">{{lang === 'en' ? 'Tap a permission to request it; denied permissions lead you to the mini program settings' : '点击权限项可立即拉起授权；已拒绝的权限会引导你到小程序设置中开启'}}</view>
