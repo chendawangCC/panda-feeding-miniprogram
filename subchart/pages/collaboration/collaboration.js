@@ -1076,6 +1076,8 @@ Page({
             localBabies.forEach(b => {
               // 只清除共享宝宝（非自己创建的）的本地数据
               if (b.ownerOpenid && b.ownerOpenid !== myOpenid) {
+                // 宝宝数据实际存储键为 panda_feeding_baby_<id>，旧代码删的是 panda_baby_<id>，导致退出后残留
+                try { wx.removeStorageSync('panda_feeding_baby_' + b.id); } catch (e) {}
                 try { wx.removeStorageSync('panda_baby_' + b.id); } catch (e) {}
               }
             });

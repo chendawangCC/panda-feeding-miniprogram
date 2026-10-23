@@ -248,6 +248,56 @@ function deleteAccount() {
 }
 
 /** 合并云端数据到 app.globalData（由 app 传入 getApp() 实例），遍历全部宝宝按授权过滤 */
+/* ==================== 孤儿数据清理 ==================== */
+/**
+ * 清理已退出 / 被移除家庭的宝宝残留：
+ * 1) globalData 中 babyId 已不在宝宝列表的 records / measures
+ * 2) 本地存储中已无权访问宝宝的整份数据（含库存耗材、提醒等）
+ * 退出家庭时页面可能先把共享宝宝从列表移除，云端 pull 后 removedBabyIds 为空，
+ * 旧逻辑因此不会触发清理，导致 A 的喂养记录 / 库存留在 B 的本机。
+ */
+function purgeOrphans(g, data) {
+  if (!g) return;
+  // 只在云端确实返回了宝宝列表时才做清理，避免本地读取异常时误删
+  if (!data || !Array.isArray(data.babies)) return;
+  const valid = {};
+  (g.babies || []).forEach(b => { if (b && b.id) valid[b.id] = 1; });
+  const keep = (r) => {
+    const bid = r && (r.babyId || (r.data && r.data.babyId));
+    if (!bid) return !!g.currentBabyId;
+    return !!valid[bid];
+  };
+  const before = (g.records || []).length;
+  g.records = (g.records || []).filter(keep);
+  g.measures = (g.measures || []).filter(keep);
+  if (g.records.length !== before) {
+    console.log('[merge] 清理孤儿记录', before, '->', g.records.length);
+  }
+  if (!g.babies || !g.babies.length) {
+    g.currentBabyId = '';
+    g.baby = null;
+    g.records = [];
+    g.stockItems = [];
+    g.measures = [];
+    g.vaccineDone = [];
+  }
+  try {
+    const info = wx.getStorageInfoSync ? wx.getStorageInfoSync() : null;
+    (info && info.keys || []).forEach(k => {
+      if (k.indexOf(BABY_KEY) === 0) {
+        const bid = k.slice(BABY_KEY.length);
+        if (!valid[bid]) {
+          wx.removeStorageSync(k);
+          console.log('[merge] 清理孤儿宝宝存储', bid);
+        }
+      } else if (k.indexOf('panda_baby_') === 0) {
+        const bid = k.slice('panda_baby_'.length);
+        if (!valid[bid]) wx.removeStorageSync(k);
+      }
+    });
+  } catch (e) {}
+}
+
 function mergeInto(app, data) {
   if (!app || !data) return;
   const g = app.globalData;
@@ -509,6 +559,8 @@ function mergeInto(app, data) {
     g.baby = g.babies.find(b => b.id === g.currentBabyId) || g.babies[0];
 
   }
+  // 清理孤儿数据：已退出/被移除家庭的宝宝，其记录、库存与本地存储一并清除
+  try { purgeOrphans(g, data); } catch (e) { console.log('[merge] purgeOrphans err', e); }
   // 兜底：如果 g.records 空但云端有 records，按 babyId 过滤后给当前宝宝
   if ((!g.records || g.records.length === 0) && data.records && data.records.length > 0) {
     console.log('[merge] 兜底 records=', data.records.length, 'currentBabyId=', g.currentBabyId);
