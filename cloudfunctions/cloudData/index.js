@@ -170,7 +170,8 @@ async function upsertChecked(name, docs, forceIds) {
       try {
         const ex = await db.collection(name).doc(d._id).get().catch(() => null);
         if (ex && ex.data) {
-          const cloudU = ex.data._u || 0;
+          // 兼容历史嵌套结构：_u 可能被包在 data.data 里
+          const cloudU = ex.data._u || (ex.data.data && ex.data.data._u) || 0;
           const localU = doc._u || 0;
           if (cloudU > localU) {
             conflicts.push({ _id: d._id, kind: name, localU: localU, cloudU: cloudU });
@@ -180,15 +181,16 @@ async function upsertChecked(name, docs, forceIds) {
       } catch (e) { /* 查询失败视为可写 */ }
     }
     try {
-      // 同时更新顶层字段和 data 字段（pull 按顶层 ownerOpenid/babyId 查询）
-      const top = { data: doc };
+      // 业务对象直接放 data，cid/babyId/ownerOpenid/_u/updatedAt 提到顶层
+      // （pull 端按顶层 cid 合并；历史数据被多包了一层 data，pull 时会自动兼容）
+      const body = (doc.data && doc.data.data) ? doc.data.data : (doc.data !== undefined ? doc.data : {});
+      const top = { data: body, updatedAt: doc.updatedAt || Date.now(), _u: doc._u || Date.now() };
+      if (doc.cid !== undefined) top.cid = doc.cid;
+      if (doc.familyId !== undefined) top.familyId = doc.familyId;
       // babies 集合需要顶层 ownerOpenid/avatar/name 等供 pull 查询
       if (name === 'panda_babies') {
-        if (doc.ownerOpenid !== undefined) top.ownerOpenid = doc.ownerOpenid;
         if (doc.avatar !== undefined) top.avatar = doc.avatar;
         if (doc.name !== undefined) top.name = doc.name;
-        if (doc.babyId !== undefined) top.babyId = doc.babyId;
-        if (doc._u !== undefined) top._u = doc._u;
       }
       // records/inventory/measures/vaccines 都需要顶层 babyId 供 pull 按宝宝过滤
       if (doc.babyId !== undefined) top.babyId = doc.babyId;
@@ -239,10 +241,18 @@ async function doPull(openid) {
     data.metas = data.metas.concat(meta);
     data.vaccines = data.vaccines.concat(await getColl(COLLS.vaccines, { babyId: bid }));
   }
-  // records/measures/tombs 全量拉（兼容旧数据无 babyId 字段）
-  data.records = await getColl(COLLS.records, {});
+  // records/measures 按可见宝宝过滤拉取（历史无 babyId 的数据只归属本人）
+  // 修复越权：原先全表拉取会把陌生宝宝的数据返回给客户端
+  for (const bid of babyIds) {
+    data.records = data.records.concat(await getColl(COLLS.records, { babyId: bid }));
+    data.measures = data.measures.concat(await getColl(COLLS.measures, { babyId: bid }));
+    data.tombs = data.tombs.concat(await getColl(COLLS.tombs, { babyId: bid }));
+  }
+  data.records = data.records.concat(await getColl(COLLS.records, { ownerOpenid: openid }));
+  data.measures = data.measures.concat(await getColl(COLLS.measures, { ownerOpenid: openid }));
   // 库存耗材：有家庭则家庭成员共享，无家庭只跟随账号
   const fams = await myFamilies(openid);
+  const invOwners = [openid];
   if (fams.length) {
     // 有家庭：拉取家庭中所有成员的库存（familyId 匹配或 ownerOpenid 匹配兼容旧数据）
     const familyIds = fams.map(f => f._id);
@@ -253,6 +263,8 @@ async function doPull(openid) {
       memberOpenids.push(f.ownerOpenid);
       (f.members || []).forEach(m => memberOpenids.push(m.openid));
     });
+    // 家庭成员的库存墓碑也要回传（成员删了创建者的库存，创建者才能同步消失）
+    memberOpenids.forEach(o => { if (o && invOwners.indexOf(o) < 0) invOwners.push(o); });
     data.inventory = allInv.filter(inv => {
       if (!inv) return false;
       // 新数据：familyId 匹配
@@ -265,8 +277,33 @@ async function doPull(openid) {
     // 无家庭：只拉取自己的库存
     data.inventory = await getColl(COLLS.inventory, { ownerOpenid: openid });
   }
-  data.measures = await getColl(COLLS.measures, {});
-  data.tombs = await getColl(COLLS.tombs, {});
+  // 库存墓碑跟随账号 / 家庭成员
+  for (const o of invOwners) {
+    data.tombs = data.tombs.concat(await getColl(COLLS.tombs, { kind: 'inventory', ownerOpenid: o }));
+  }
+  // 去重：同一文档可能同时命中 babyId 与 ownerOpenid 条件
+  const dedupe = (arr) => {
+    const m = {};
+    (arr || []).forEach(d => { if (d && d._id) m[d._id] = d; });
+    return Object.keys(m).map(k => m[k]);
+  };
+  ['babies', 'metas', 'records', 'inventory', 'measures', 'vaccines', 'tombs'].forEach(k => {
+    data[k] = dedupe(data[k]);
+  });
+  // 兼容历史嵌套结构：历史写入把业务对象包成了 { data: { cid, data: 业务对象 } }
+  const flatten = (arr) => (arr || []).map(d => {
+    if (!d) return d;
+    const inner = (d.data && d.data.data) ? d.data.data : d.data;
+    const cid = d.cid || (d.data && d.data.cid) || '';
+    return Object.assign({}, d, { cid: cid, data: inner || {} });
+  });
+  ['records', 'inventory', 'measures', 'vaccines'].forEach(k => { data[k] = flatten(data[k]); });
+  data.metas = (data.metas || []).map(m => {
+    if (!m) return m;
+    const wrap = m.data || {};
+    const inner = (wrap && wrap.data) ? wrap.data : wrap;
+    return Object.assign({}, m, { data: inner || {}, updatedAt: m.updatedAt || wrap.updatedAt || wrap._u || 0 });
+  });
   return data;
 }
 
@@ -309,6 +346,14 @@ async function doPush(openid, batches) {
           // 无 familyId：只有 owner 本人可写
           if (d.ownerOpenid !== openid) { console.log('[push] inventory skip not owner d._id=', d._id); continue; }
         }
+        // 库存文档 id 以创建者 openid 拼接，成员编辑时会用自己 openid 另建一份重复文档
+        // → 按 cid 复用已有文档 id，保证同一条库存全家庭只有一份
+        if (d.cid) {
+          try {
+            const exist = await getColl(COLLS.inventory, { cid: d.cid });
+            if (exist.length) d._id = exist[0]._id;
+          } catch (e) {}
+        }
         writes.push(d);
       } else {
         if (!babyId) { console.log('[push] skip no babyId key=', key, 'd._id=', d._id); continue; }
@@ -319,7 +364,6 @@ async function doPush(openid, batches) {
     }
     console.log('[push] plan key=', key, 'docs=', docs.length, 'writes=', writes.length);
     const cf = await upsertChecked(coll, writes, force);
-    for (const c of cf) conflicts.push(c);
     for (const c of cf) conflicts.push(c);
   }
 
@@ -348,8 +392,9 @@ async function doPush(openid, batches) {
         if (!(await canWrite(t.babyId, openid, module))) continue; // 无删除权限跳过
       }
       // 同步墓碑到 panda_tombs，并删除对应文档
+      // 库存墓碑用 inv_cid 稳定键：成员之间删除同一条不会写出多个墓碑
+      const tombId = key === 'inventory' ? ('inv_' + t.cid) : (t.babyId + '_' + t.cid);
       try {
-        const tombId = key === 'inventory' ? (t._id || (openid + '_' + t.cid)) : (t.babyId + '_' + t.cid);
         await db.collection(COLLS.tombs).doc(tombId).set({
           _id: tombId,
           ownerOpenid: openid,
@@ -359,8 +404,15 @@ async function doPush(openid, batches) {
           updatedAt: t.updatedAt || Date.now()
         });
       } catch (e) {}
-      const docId = key === 'inventory' ? (t._id || (openid + '_' + t.cid)) : (t.babyId + '_' + t.cid);
-      ids.push(docId);
+      if (key === 'inventory') {
+        // 库存文档 _id 由创建者拼接（owner_cid），删除者 openid 可能不同
+        // → 按 cid 反查真实文档再删除（修复成员删除创建者库存无效）
+        const found = await getColl(COLLS.inventory, { cid: t.cid });
+        found.forEach(x => { if (x && x._id) ids.push(x._id); });
+        if (t._id) ids.push(t._id);
+      } else {
+        ids.push(t.babyId + '_' + t.cid);
+      }
     }
     await removeMany(coll, ids);
   }
@@ -404,8 +456,9 @@ exports.main = async (event) => {
       return ok({ data });
     }
     if (action === 'push') {
-      await doPush(openid, event.batches || {});
-      return ok({});
+      // 回传冲突：客户端据此弹出「保留本机 / 使用云端」
+      const r = await doPush(openid, event.batches || {});
+      return ok({ synced: (r && r.synced) || 0, conflicts: (r && r.conflicts) || [] });
     }
     if (action === 'wipe') {
       return await doWipe(openid, event.babyId);

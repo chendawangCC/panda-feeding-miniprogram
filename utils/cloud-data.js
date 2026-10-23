@@ -360,8 +360,20 @@ function mergeInto(app, data) {
         if (md.vaccine) local.vaccine = Object.assign({}, md.vaccine);
         if (md.foodAllergyMap) local.foodAllergyMap = md.foodAllergyMap;
         if (typeof md.diaperStock === 'number') local.diaperStock = md.diaperStock;
-        if (md.shelfWarnings) local.shelfWarnings = md.shelfWarnings;
-        if (md.vaccinePlan) local.vaccinePlan = md.vaccinePlan;
+        // 提醒按 id 并集：避免成员推送时把别人新加的开罐/母乳到期提醒整包抹掉
+        if (md.shelfWarnings) {
+          const map = {};
+          (local.shelfWarnings || []).forEach(w => { if (w && w.id) map[w.id] = w; });
+          (md.shelfWarnings || []).forEach(w => { if (w && w.id) map[w.id] = w; });
+          local.shelfWarnings = Object.keys(map).map(k => map[k]);
+        }
+        // 疫苗计划同样按 id/名称并集
+        if (md.vaccinePlan) {
+          const map = {};
+          (local.vaccinePlan || []).forEach(v => { if (v) map[v.id || v.name || JSON.stringify(v)] = v; });
+          (md.vaccinePlan || []).forEach(v => { if (v) map[v.id || v.name || JSON.stringify(v)] = v; });
+          local.vaccinePlan = Object.keys(map).map(k => map[k]);
+        }
         // 合并 acknowledgedMilks（取并集，只要有人点了知道了，所有人都消失）
         if (md.acknowledgedMilks) {
           const localAck = local.acknowledgedMilks || [];
@@ -415,7 +427,8 @@ function mergeInto(app, data) {
     local.measures = mergeList(local.measures, pick('measures'));
     local.vaccineDone = mergeList(local.vaccineDone, pick('vaccines'));
     // 墓碑删除
-    const cloudTombs = (data.tombs || []).filter(t => t && t.babyId === bid);
+    // 库存墓碑不带 babyId（库存按账号/家庭共享），必须按 kind 放行
+    const cloudTombs = (data.tombs || []).filter(t => t && (t.kind === 'inventory' || t.babyId === bid));
     const tombByKind = { records: {}, inventory: {}, measures: {}, vaccines: {} };
     cloudTombs.forEach(t => {
       if (tombByKind[t.kind]) tombByKind[t.kind][t.cid] = t.updatedAt || 0;

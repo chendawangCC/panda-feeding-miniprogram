@@ -295,9 +295,19 @@ function applyCloudData(pkg) {
     }
     g.babies = merged;
     // 2) 每宝宝数据写本地
+    // 降级包是「某一台设备的整包快照」，只允许用于空设备的首次恢复，
+    // 本地已有数据时不再整包覆盖（否则会把其他成员的记录冲掉）
     const bd = pkg.babiesData || {};
     Object.keys(bd).forEach(bid => {
-      try { wx.setStorageSync(BABY_KEY + bid, bd[bid] || {}); } catch (e) {}
+      try {
+        const cur = wx.getStorageSync(BABY_KEY + bid) || null;
+        const hasLocal = cur && ((cur.records && cur.records.length) || (cur.stockItems && cur.stockItems.length));
+        if (hasLocal) {
+          console.log('[applyCloudData] 本地已有数据，跳过整包覆盖 bid=', bid);
+          return;
+        }
+        wx.setStorageSync(BABY_KEY + bid, bd[bid] || {});
+      } catch (e) {}
     });
     // 3) 保持当前宝宝
     const cur = merged.find(b => b.id === g.currentBabyId) || merged[0];
