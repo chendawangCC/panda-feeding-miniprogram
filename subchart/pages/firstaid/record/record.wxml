@@ -5,14 +5,14 @@
   <view class="fa-nav">
     <view class="fa-back" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">紧急照护指引</text>
-      <view class="header-title header-title-sub">自学录制</view>
+      <text class="header-kicker">{{lang === 'en' ? 'Emergency care guide' : '紧急照护指引'}}</text>
+      <view class="header-title header-title-sub">{{lang === 'en' ? 'Record a demo' : '自学录制'}}</view>
     </view>
   </view>
 
 
   <view class="record-head">
-    <view class="record-sub">录制你的操作练习，或有经验的护士/医生上传规范急救、护理演示</view>
+    <view class="record-sub">{{lang === 'en' ? 'Record your own practice, or let an experienced nurse or doctor upload a proper first-aid demo' : '录制你的操作练习，或有经验的护士/医生上传规范急救、护理演示'}}</view>
   </view>
 
   <!-- 视频拍摄/选择 -->
@@ -20,18 +20,18 @@
     <video wx:if="{{videoPath}}" class="video-preview" src="{{videoPath}}" controls object-fit="contain"></video>
     <view wx:else class="pick-placeholder">
       <view class="pick-icon">📹</view>
-      <view class="pick-text">点击拍摄或从相册选择视频</view>
-      <view class="pick-tip">建议横屏拍摄，时长不超过 2 分钟</view>
+      <view class="pick-text">{{lang === 'en' ? 'Tap to film or pick a video from album' : '点击拍摄或从相册选择视频'}}</view>
+      <view class="pick-tip">{{lang === 'en' ? 'Film in landscape, up to 2 minutes' : '建议横屏拍摄，时长不超过 2 分钟'}}</view>
     </view>
   </view>
 
   <!-- 表单 -->
   <view class="form-card">
     <view class="form-item">
-      <text class="form-label">标题</text>
+      <text class="form-label">{{lang === 'en' ? 'Title' : '标题'}}</text>
       <input
         class="form-input"
-        placeholder="如：婴儿海姆立克·规范操作演示"
+        placeholder="{{lang === 'en' ? 'e.g. Infant Heimlich - standard demo' : '如：婴儿海姆立克·规范操作演示'}}"
         placeholder-class="form-placeholder"
         value="{{title}}"
         bindinput="onTitleInput"
@@ -40,7 +40,7 @@
     </view>
 
     <view class="form-item form-item-col">
-      <text class="form-label">类型</text>
+      <text class="form-label">{{lang === 'en' ? 'Type' : '类型'}}</text>
       <view class="chips">
         <view
           class="chip {{type === item.value ? 'active' : ''}}"
@@ -53,23 +53,23 @@
     </view>
 
     <view class="form-item form-item-col">
-      <text class="form-label">我的身份</text>
+      <text class="form-label">{{lang === 'en' ? 'I am a' : '我的身份'}}</text>
       <view class="chips">
         <view
-          class="chip {{role === item ? 'active' : ''}}"
+          class="chip {{role === item.value ? 'active' : ''}}"
           wx:for="{{roles}}"
-          wx:key="*this"
-          data-value="{{item}}"
+          wx:key="value"
+          data-value="{{item.value}}"
           bindtap="onRoleTap"
-        >{{item}}</view>
+        >{{item.label}}</view>
       </view>
     </view>
 
     <view class="form-item form-item-col">
-      <text class="form-label">说明</text>
+      <text class="form-label">{{lang === 'en' ? 'Notes' : '说明'}}</text>
       <textarea
         class="form-textarea"
-        placeholder="简述操作要点、适用人群、注意事项（选填）"
+        placeholder="{{lang === 'en' ? 'Key steps, who it suits, cautions (optional)' : '简述操作要点、适用人群、注意事项（选填）'}}"
         placeholder-class="form-placeholder"
         value="{{desc}}"
         bindinput="onDescInput"
@@ -78,10 +78,10 @@
     </view>
 
     <view class="form-item" wx:if="{{role === '护士' || role === '医生'}}">
-      <text class="form-label">资质证号</text>
+      <text class="form-label">{{lang === 'en' ? 'Licence number' : '资质证号'}}</text>
       <input
         class="form-input"
-        placeholder="护士/医生执业证号（选填）"
+        placeholder="{{lang === 'en' ? 'Practitioner licence no. (optional)' : '护士/医生执业证号（选填）'}}"
         placeholder-class="form-placeholder"
         type="number"
         value="{{license}}"
@@ -91,14 +91,14 @@
   </view>
 
   <view class="form-tip">
-    <text class="tip-line">• 本原型将视频保存在本机；正式版接入云存储后上传至服务器</text>
-    <text class="tip-line">• 上传内容请确保真实、规范，不涉及患者隐私与版权</text>
+    <text class="tip-line">• {{lang === 'en' ? 'In this prototype the video is kept on this device; the release build uploads it to cloud storage' : '本原型将视频保存在本机；正式版接入云存储后上传至服务器'}}</text>
+    <text class="tip-line">• {{lang === 'en' ? 'Keep uploads accurate and standard, with no patient privacy or copyright issues' : '上传内容请确保真实、规范，不涉及患者隐私与版权'}}</text>
   </view>
 
-  <button class="btn-primary btn-big" bindtap="onSubmit">保存并展示</button>
+  <button class="btn-primary btn-big" bindtap="onSubmit">{{lang === 'en' ? 'Save and publish' : '保存并展示'}}</button>
 
   <!-- 我的录制 -->
-  <view class="my-title">我的录制 / 上传</view>
+  <view class="my-title">{{lang === 'en' ? 'My recordings' : '我的录制 / 上传'}}</view>
   <block wx:if="{{myPosts.length}}">
     <view class="my-card" wx:for="{{myPosts}}" wx:key="id">
       <video class="my-video" src="{{item.videoPath}}" controls object-fit="contain"></video>
@@ -106,12 +106,12 @@
         <view class="my-name">{{item.title}}</view>
         <view class="my-meta">{{item.typeLabel}} · {{item.role}} · {{item.createTime}}</view>
       </view>
-      <view class="my-del" data-id="{{item.id}}" bindtap="onDelete">删除</view>
+      <view class="my-del" data-id="{{item.id}}" bindtap="onDelete">{{lang === 'en' ? 'Delete' : '删除'}}</view>
     </view>
   </block>
-  <view class="my-empty" wx:else>还没有录制内容</view>
+  <view class="my-empty" wx:else>{{lang === 'en' ? 'No recordings yet' : '还没有录制内容'}}</view>
 
   <view class="disclaimer">
-    上传内容仅供参考，急救处置请以正规培训与医生指导为准。
+    {{lang === 'en' ? 'Uploads are for reference only. For real emergencies follow formal training and your doctor.' : '上传内容仅供参考，急救处置请以正规培训与医生指导为准。'}}
   </view>
 </view>

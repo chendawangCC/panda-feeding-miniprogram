@@ -5,40 +5,40 @@
   <view class="fa-nav">
     <view class="fa-back" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">紧急照护指引</text>
-      <view class="header-title header-title-sub">家庭储备清单</view>
+      <text class="header-kicker">{{lang === 'en' ? 'Emergency care guide' : '紧急照护指引'}}</text>
+      <view class="header-title header-title-sub">{{lang === 'en' ? 'Family emergency supplies' : '家庭储备清单'}}</view>
     </view>
   </view>
 
 
   <!-- ============ 家庭急救包（上一页） ============ -->
-  <view class="kit-sec-title">家庭急救包</view>
+  <view class="kit-sec-title">{{lang === 'en' ? 'Family first-aid kit' : '家庭急救包'}}</view>
   <view class="kit-sec">
     <!-- 顶部进度卡 -->
     <view class="progress-card">
       <view class="progress-main">
         <view class="progress-num">{{progress}}<text class="percent">%</text></view>
-        <view class="progress-label">已备齐 {{checkedItems}} / {{totalItems}} 项</view>
+        <view class="progress-label">{{lang === 'en' ? 'Ready' : '已备齐'}} {{checkedItems}} / {{totalItems}} {{lang === 'en' ? 'items' : '项'}}</view>
       </view>
       <view class="progress-track">
         <view class="progress-fill" style="width: {{progress}}%;"></view>
       </view>
       <view class="essential-row">
-        <text class="essential-text">核心必备：{{essentialChecked}} / {{essentialTotal}} 已备齐</text>
-        <text class="essential-tip" wx:if="{{essentialChecked < essentialTotal}}">⚠ 核心项缺 {{essentialTotal - essentialChecked}} 项</text>
+        <text class="essential-text">{{lang === 'en' ? 'Essentials: ' : '核心必备：'}}{{essentialChecked}} / {{essentialTotal}} {{lang === 'en' ? 'ready' : '已备齐'}}</text>
+        <text class="essential-tip" wx:if="{{essentialChecked < essentialTotal}}">⚠ {{lang === 'en' ? essentialTotal - essentialChecked + ' essential items missing' : '核心项缺 ' + (essentialTotal - essentialChecked) + ' 项'}}</text>
       </view>
     </view>
 
     <!-- 操作按钮 -->
     <view class="op-row">
-      <button class="btn-ghost op-btn" bindtap="onReset">重置</button>
-      <button class="btn-primary op-btn" bindtap="onCheckAll">全部勾选</button>
+      <button class="btn-ghost op-btn" bindtap="onReset">{{lang === 'en' ? 'Reset' : '重置'}}</button>
+      <button class="btn-primary op-btn" bindtap="onCheckAll">{{lang === 'en' ? 'Check all' : '全部勾选'}}</button>
     </view>
 
     <!-- 分享 / 打印 -->
     <view class="share-row">
-      <button class="btn-ghost share-btn" bindtap="onShowActions">复制清单</button>
-      <button class="btn-primary share-btn" open-type="share">分享给家人</button>
+      <button class="btn-ghost share-btn" bindtap="onShowActions">{{lang === 'en' ? 'Copy list' : '复制清单'}}</button>
+      <button class="btn-primary share-btn" open-type="share">{{lang === 'en' ? 'Share with family' : '分享给家人'}}</button>
     </view>
 
     <!-- 分类列表 -->
@@ -70,10 +70,10 @@
             <view class="kit-item-info">
               <view class="kit-item-name-row">
                 <text class="kit-item-name">{{item.name}}</text>
-                <text class="kit-essential-badge" wx:if="{{item.essential}}">必备</text>
+                <text class="kit-essential-badge" wx:if="{{item.essential}}">{{lang === 'en' ? 'Essential' : '必备'}}</text>
               </view>
               <view class="kit-item-note">{{item.note}}</view>
-              <view class="kit-item-qty" wx:if="{{item.qty}}">建议：{{item.qty}}</view>
+              <view class="kit-item-qty" wx:if="{{item.qty}}">{{lang === 'en' ? 'Qty: ' : '建议：'}}{{item.qty}}</view>
             </view>
           </view>
         </view>
@@ -82,41 +82,41 @@
 
     <!-- 底部说明 -->
     <view class="kit-footer">
-      <view class="kit-footer-title">使用建议</view>
-      <view class="kit-footer-line">• 每 3-6 个月检查一次药品效期，及时替换过期物品</view>
-      <view class="kit-footer-line">• 家里有宝宝，记得按需补充儿童专用退烧药、退热贴等</view>
-      <view class="kit-footer-line">• 清单依据 GB/T 36750-2025《家用防灾应急包》及急诊医生建议整理，可按家庭情况增删</view>
+      <view class="kit-footer-title">{{lang === 'en' ? 'How to use' : '使用建议'}}</view>
+      <view class="kit-footer-line">• {{lang === 'en' ? 'Check medicine expiry every 3-6 months and replace anything expired' : '每 3-6 个月检查一次药品效期，及时替换过期物品'}}</view>
+      <view class="kit-footer-line">• {{lang === 'en' ? 'With a baby at home, add child fever medicine, cooling patches and similar as needed' : '家里有宝宝，记得按需补充儿童专用退烧药、退热贴等'}}</view>
+      <view class="kit-footer-line">• {{lang === 'en' ? 'Built on GB/T 36750-2025 household emergency kit standard and ER doctors advice; adjust to your family' : '清单依据 GB/T 36750-2025《家用防灾应急包》及急诊医生建议整理，可按家庭情况增删'}}</view>
     </view>
   </view>
 
   <!-- ============ 家庭常备药（下一页） ============ -->
-  <view class="kit-sec-title">家庭常备药</view>
+  <view class="kit-sec-title">{{lang === 'en' ? 'Home medicines' : '家庭常备药'}}</view>
   <view class="kit-sec">
     <!-- 顶部进度卡 -->
     <view class="progress-card">
       <view class="progress-main">
         <view class="progress-num">{{medProgress}}<text class="percent">%</text></view>
-        <view class="progress-label">已备齐 {{medChecked}} / {{medTotal}} 项</view>
+        <view class="progress-label">{{lang === 'en' ? 'Ready' : '已备齐'}} {{medChecked}} / {{medTotal}} {{lang === 'en' ? 'items' : '项'}}</view>
       </view>
       <view class="progress-track">
         <view class="progress-fill" style="width: {{medProgress}}%;"></view>
       </view>
       <view class="essential-row">
-        <text class="essential-text">核心必备：{{medEssentialChecked}} / {{medEssentialTotal}} 已备齐</text>
-        <text class="essential-tip" wx:if="{{medEssentialChecked < medEssentialTotal}}">⚠ 核心项缺 {{medEssentialTotal - medEssentialChecked}} 项</text>
+        <text class="essential-text">{{lang === 'en' ? 'Essentials: ' : '核心必备：'}}{{medEssentialChecked}} / {{medEssentialTotal}} {{lang === 'en' ? 'ready' : '已备齐'}}</text>
+        <text class="essential-tip" wx:if="{{medEssentialChecked < medEssentialTotal}}">⚠ {{lang === 'en' ? medEssentialTotal - medEssentialChecked + ' essential items missing' : '核心项缺 ' + (medEssentialTotal - medEssentialChecked) + ' 项'}}</text>
       </view>
     </view>
 
     <!-- 操作按钮 -->
     <view class="op-row">
-      <button class="btn-ghost op-btn" bindtap="onResetMed">重置</button>
-      <button class="btn-primary op-btn" bindtap="onCheckAllMed">全部勾选</button>
+      <button class="btn-ghost op-btn" bindtap="onResetMed">{{lang === 'en' ? 'Reset' : '重置'}}</button>
+      <button class="btn-primary op-btn" bindtap="onCheckAllMed">{{lang === 'en' ? 'Check all' : '全部勾选'}}</button>
     </view>
 
     <!-- 分享 / 打印 -->
     <view class="share-row">
-      <button class="btn-ghost share-btn" bindtap="onShowActions">复制清单</button>
-      <button class="btn-primary share-btn" open-type="share">分享给家人</button>
+      <button class="btn-ghost share-btn" bindtap="onShowActions">{{lang === 'en' ? 'Copy list' : '复制清单'}}</button>
+      <button class="btn-primary share-btn" open-type="share">{{lang === 'en' ? 'Share with family' : '分享给家人'}}</button>
     </view>
 
     <!-- 分类列表 -->
@@ -148,10 +148,10 @@
             <view class="kit-item-info">
               <view class="kit-item-name-row">
                 <text class="kit-item-name">{{item.name}}</text>
-                <text class="kit-essential-badge" wx:if="{{item.essential}}">必备</text>
+                <text class="kit-essential-badge" wx:if="{{item.essential}}">{{lang === 'en' ? 'Essential' : '必备'}}</text>
               </view>
               <view class="kit-item-note">{{item.note}}</view>
-              <view class="kit-item-qty" wx:if="{{item.type}}">适用：{{item.type}}</view>
+              <view class="kit-item-qty" wx:if="{{item.type}}">{{lang === 'en' ? 'For: ' : '适用：'}}{{item.type}}</view>
             </view>
           </view>
         </view>
@@ -160,10 +160,10 @@
 
     <!-- 底部说明 -->
     <view class="kit-footer">
-      <view class="kit-footer-title">用药安全提示</view>
-      <view class="kit-footer-line">• 本清单仅用于家庭日常储备核对，不构成用药建议；用药请遵医嘱或阅读说明书</view>
-      <view class="kit-footer-line">• 有 0-1 岁宝宝：退烧、腹泻用药务必选用儿童剂型，并按体重给药</view>
-      <view class="kit-footer-line">• 定期检查效期（每 3 个月一次），过期药品及时清理并妥善回收</view>
+      <view class="kit-footer-title">{{lang === 'en' ? 'Medicine safety' : '用药安全提示'}}</view>
+      <view class="kit-footer-line">• {{lang === 'en' ? 'This list is for checking household stock only, not medical advice. Follow your doctor or the label' : '本清单仅用于家庭日常储备核对，不构成用药建议；用药请遵医嘱或阅读说明书'}}</view>
+      <view class="kit-footer-line">• {{lang === 'en' ? 'With a baby aged 0-1: always use child formulas for fever and diarrhoea, dosed by weight' : '有 0-1 岁宝宝：退烧、腹泻用药务必选用儿童剂型，并按体重给药'}}</view>
+      <view class="kit-footer-line">• {{lang === 'en' ? 'Check expiry every 3 months and dispose of expired medicine properly' : '定期检查效期（每 3 个月一次），过期药品及时清理并妥善回收'}}</view>
     </view>
   </view>
 

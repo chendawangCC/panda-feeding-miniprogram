@@ -16,6 +16,7 @@ Page({
 
   data: {
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
+    lang: 'zh',
     loggedIn: false,
     user: null,
     babies: [],
@@ -23,6 +24,15 @@ Page({
     kitProgress: '',     // 如 "12/31"
     medProgress: '',
     contactCount: 0,
+  },
+
+  _en() { return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en'; },
+  _t(zh, en) { return this._en() ? en : zh; },
+
+  onLoad() {
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en'
+    this.setData({ lang: en ? 'en' : 'zh' })
+    wx.setNavigationBarTitle({ title: en ? 'Me' : '我的' })
   },
 
   onShow() {
@@ -92,13 +102,13 @@ Page({
   // 退出登录
   onLogout() {
     wx.showModal({
-      title: '退出登录',
-      content: '退出后本机保存的账号信息将被清除，确认退出？',
+      title: this._t('退出登录', 'Sign out'),
+      content: this._t('退出后本机保存的账号信息将被清除，确认退出？', 'Your saved account info will be cleared on this device. Sign out?'),
       success: (res) => {
         if (res.confirm) {
           wx.removeStorageSync(USER_KEY)
           this.refreshAll()
-          wx.showToast({ title: '已退出', icon: 'none' })
+          wx.showToast({ title: this._t('已退出', 'Signed out'), icon: 'none' })
         }
       }
     })
@@ -106,9 +116,9 @@ Page({
 
   onCall120() {
     wx.showModal({
-      title: '拨打急救电话',
-      content: '确认拨打 120 吗？',
-      confirmText: '拨打',
+      title: this._t('拨打急救电话', 'Call emergency'),
+      content: this._t('确认拨打 120 吗？', 'Call 120 now?'),
+      confirmText: this._t('拨打', 'Call'),
       confirmColor: '#C8102E',
       success(res) {
         if (res.confirm) {

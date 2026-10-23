@@ -58,7 +58,7 @@
           <text class="video-type {{item.typeClass}}">{{item.typeLabel}}</text>
         </view>
         <view class="video-meta">
-          <text class="role-badge {{item.role === '医生' ? 'role-doctor' : (item.role === '护士' ? 'role-nurse' : 'role-user')}}">{{item.role}}</text>
+          <text class="role-badge {{item.role === '医生' ? 'role-doctor' : (item.role === '护士' ? 'role-nurse' : 'role-user')}}">{{item.roleLabel || item.role}}</text>
           <text class="video-author">{{item.author}}</text>
           <text class="video-time">{{item.createTime}}</text>
         </view>

@@ -1,6 +1,29 @@
 // pages/kit/kit.js - 家庭储备清单（tab页：急救包 + 常备药）
 const { KIT_CATEGORIES } = require('../data/kit')
+const { KIT_CATEGORIES_EN } = require('../data/kit-en')
 const { MED_CATEGORIES } = require('../data/medicine')
+const { MED_CATEGORIES_EN } = require('../data/medicine-en')
+
+/** 按语言合并中英数据层（数据层仍保留中文，只换显示字段） */
+function localizeCats(zhList, enList, en) {
+  if (!en) return zhList
+  return zhList.map((cat, i) => {
+    const ec = (enList || [])[i] || {}
+    const eItems = ec.items || []
+    return Object.assign({}, cat, {
+      name: ec.name || cat.name,
+      items: cat.items.map((item, j) => {
+        const ei = eItems[j] || {}
+        return Object.assign({}, item, {
+          name: ei.name || item.name,
+          note: ei.note || item.note,
+          qty: ei.qty || item.qty,
+          type: ei.type || item.type
+        })
+      })
+    })
+  })
+}
 
 const STORAGE_KEY = 'firstaid_kit_checked'
 const MED_KEY = 'firstaid_med_checked'
@@ -31,12 +54,24 @@ Page({
     medProgress: 0,
     expanded: {},
     medExpanded: {},
+    lang: 'zh',
     titleMap: { kit: '急救包清单', med: '家庭常备药清单' }
   },
 
+  _en() { return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en'; },
+  _t(zh, en) { return this._en() ? en : zh; },
+
   onLoad() {
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en'
+    this.setData({
+      lang: en ? 'en' : 'zh',
+      titleMap: en
+        ? { kit: 'First-aid kit list', med: 'Home medicine list' }
+        : { kit: '急救包清单', med: '家庭常备药清单' }
+    })
     this.buildKit()
     this.buildMed()
+    wx.setNavigationBarTitle({ title: this.data.titleMap[this.data.tab] })
   },
 
   // 切换子 tab
@@ -50,7 +85,8 @@ Page({
   buildKit() {
     const checked = wx.getStorageSync(STORAGE_KEY) || {}
     let totalItems = 0, checkedItems = 0, essentialTotal = 0, essentialChecked = 0
-    const categories = KIT_CATEGORIES.map(cat => {
+    const cats = localizeCats(KIT_CATEGORIES, KIT_CATEGORIES_EN, this._en())
+    const categories = cats.map(cat => {
       const items = cat.items.map(item => {
         const isChecked = !!checked[item.id]
         totalItems++
@@ -77,7 +113,8 @@ Page({
   buildMed() {
     const checked = wx.getStorageSync(MED_KEY) || {}
     let medTotal = 0, medChecked = 0, medEssentialTotal = 0, medEssentialChecked = 0
-    const medCategories = MED_CATEGORIES.map(cat => {
+    const medCats = localizeCats(MED_CATEGORIES, MED_CATEGORIES_EN, this._en())
+    const medCategories = medCats.map(cat => {
       const items = cat.items.map(item => {
         const isChecked = !!checked[item.id]
         medTotal++
@@ -183,15 +220,15 @@ Page({
   /** 重置（急救包） */
   onReset() {
     wx.showModal({
-      title: '重置清单',
-      content: '确定将急救包清单全部重置为"未备齐"吗？',
-      confirmText: '重置',
+      title: this._t('重置清单', 'Reset list'),
+      content: this._t('确定将急救包清单全部重置为"未备齐"吗？', 'Reset every first-aid kit item back to unchecked?'),
+      confirmText: this._t('重置', 'Reset'),
       confirmColor: '#29281F',
       success: (res) => {
         if (!res.confirm) return
         wx.removeStorageSync(STORAGE_KEY)
         this.buildKit()
-        wx.showToast({ title: '已重置', icon: 'success' })
+        wx.showToast({ title: this._t('已重置', 'Reset done'), icon: 'success' })
       }
     })
   },
@@ -199,15 +236,15 @@ Page({
   /** 重置（常备药） */
   onResetMed() {
     wx.showModal({
-      title: '重置清单',
-      content: '确定将常备药清单全部重置为"未备齐"吗？',
-      confirmText: '重置',
+      title: this._t('重置清单', 'Reset list'),
+      content: this._t('确定将常备药清单全部重置为"未备齐"吗？', 'Reset every medicine item back to unchecked?'),
+      confirmText: this._t('重置', 'Reset'),
       confirmColor: '#29281F',
       success: (res) => {
         if (!res.confirm) return
         wx.removeStorageSync(MED_KEY)
         this.buildMed()
-        wx.showToast({ title: '已重置', icon: 'success' })
+        wx.showToast({ title: this._t('已重置', 'Reset done'), icon: 'success' })
       }
     })
   },
@@ -215,9 +252,9 @@ Page({
   /** 全部勾选（急救包） */
   onCheckAll() {
     wx.showModal({
-      title: '全部勾选',
-      content: '将清单所有物品标记为"已备齐"？',
-      confirmText: '勾选',
+      title: this._t('全部勾选', 'Check all'),
+      content: this._t('将清单所有物品标记为"已备齐"？', 'Mark every first-aid kit item as ready?'),
+      confirmText: this._t('勾选', 'Check'),
       confirmColor: '#29281F',
       success: (res) => {
         if (!res.confirm) return
@@ -225,7 +262,7 @@ Page({
         KIT_CATEGORIES.forEach(cat => cat.items.forEach(item => { checked[item.id] = true }))
         wx.setStorageSync(STORAGE_KEY, checked)
         this.buildKit()
-        wx.showToast({ title: '已全部勾选', icon: 'success' })
+        wx.showToast({ title: this._t('已全部勾选', 'All checked'), icon: 'success' })
       }
     })
   },
@@ -233,9 +270,9 @@ Page({
   /** 全部勾选（常备药） */
   onCheckAllMed() {
     wx.showModal({
-      title: '全部勾选',
-      content: '将清单所有药品标记为"已备齐"？',
-      confirmText: '勾选',
+      title: this._t('全部勾选', 'Check all'),
+      content: this._t('将清单所有药品标记为"已备齐"？', 'Mark every medicine as ready?'),
+      confirmText: this._t('勾选', 'Check'),
       confirmColor: '#29281F',
       success: (res) => {
         if (!res.confirm) return
@@ -243,80 +280,90 @@ Page({
         MED_CATEGORIES.forEach(cat => cat.items.forEach(item => { checked[item.id] = true }))
         wx.setStorageSync(MED_KEY, checked)
         this.buildMed()
-        wx.showToast({ title: '已全部勾选', icon: 'success' })
+        wx.showToast({ title: this._t('已全部勾选', 'All checked'), icon: 'success' })
       }
     })
   },
 
   /** 生成购物清单文本（急救包） */
   buildShoppingText(onlyUnchecked) {
-    const lines = ['家庭急救包 · 购物清单', '——————————————']
+    const en = this._en()
+    const lines = [en ? 'Family first-aid kit · Shopping list' : '家庭急救包 · 购物清单', '——————————————']
     let count = 0
     this.data.categories.forEach(cat => {
       const catItems = cat.items.filter(i => (onlyUnchecked ? !i.checked : true))
       if (!catItems.length) return
       lines.push('')
-      lines.push('【' + cat.name + '】')
+      lines.push(en ? ('[' + cat.name + ']') : ('【' + cat.name + '】'))
       catItems.forEach(item => {
-        lines.push('□ ' + item.name + (item.essential ? '（必备）' : ''))
+        lines.push('□ ' + item.name + (item.essential ? (en ? ' (essential)' : '（必备）') : ''))
         count++
       })
     })
     lines.push('')
-    lines.push('共 ' + count + ' 项，祝采购顺利！')
+    lines.push(en ? (count + ' items in total. Happy shopping!') : ('共 ' + count + ' 项，祝采购顺利！'))
     return lines.join('\n')
   },
 
   /** 生成常备药购物清单文本 */
   buildMedShoppingText(onlyUnchecked) {
-    const lines = ['家庭常备药 · 购物清单', '——————————————']
+    const en = this._en()
+    const lines = [en ? 'Family medicine kit · Shopping list' : '家庭常备药 · 购物清单', '——————————————']
     let count = 0
     this.data.medCategories.forEach(cat => {
       const catItems = cat.items.filter(i => (onlyUnchecked ? !i.checked : true))
       if (!catItems.length) return
       lines.push('')
-      lines.push('【' + cat.name + '】')
+      lines.push(en ? ('[' + cat.name + ']') : ('【' + cat.name + '】'))
       catItems.forEach(item => {
-        lines.push('□ ' + item.name + (item.essential ? '（必备）' : ''))
+        lines.push('□ ' + item.name + (item.essential ? (en ? ' (essential)' : '（必备）') : ''))
         count++
       })
     })
     lines.push('')
-    lines.push('共 ' + count + ' 项。请到正规药店购买，遵医嘱或说明书使用。')
+    lines.push(en
+      ? (count + ' items in total. Buy from a licensed pharmacy and follow the label or your doctor.')
+      : ('共 ' + count + ' 项。请到正规药店购买，遵医嘱或说明书使用。'))
     return lines.join('\n')
   },
 
   /** 生成打印核对单（急救包） */
   buildPrintText() {
+    const en = this._en()
     const date = new Date()
     const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
-    const lines = ['家庭急救包 · 核对单', '日期：' + dateStr, '（☑ = 已备齐   ☐ = 待补充）', '——————————————']
+    const lines = en
+      ? ['Family first-aid kit · Checklist', 'Date: ' + dateStr, '(☑ = ready   ☐ = to restock)', '——————————————']
+      : ['家庭急救包 · 核对单', '日期：' + dateStr, '（☑ = 已备齐   ☐ = 待补充）', '——————————————']
     this.data.categories.forEach(cat => {
       lines.push('')
-      lines.push('【' + cat.name + '】')
+      lines.push(en ? ('[' + cat.name + ']') : ('【' + cat.name + '】'))
       cat.items.forEach(item => {
-        lines.push((item.checked ? '☑' : '☐') + ' ' + item.name + (item.essential ? '（必备）' : '') + (item.qty ? ' | ' + item.qty : ''))
+        lines.push((item.checked ? '☑' : '☐') + ' ' + item.name + (item.essential ? (en ? ' (essential)' : '（必备）') : '') + (item.qty ? ' | ' + item.qty : ''))
       })
     })
     lines.push('')
-    lines.push('核对进度：' + this.data.checkedItems + '/' + this.data.totalItems)
+    lines.push((en ? 'Progress: ' : '核对进度：') + this.data.checkedItems + '/' + this.data.totalItems)
     return lines.join('\n')
   },
 
   /** 生成常备药打印核对单 */
   buildMedPrintText() {
+    const en = this._en()
     const date = new Date()
     const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
-    const lines = ['家庭常备药 · 核对单', '日期：' + dateStr, '（☑ = 已备齐   ☐ = 待补充）', '——————————————']
+    const lines = en
+      ? ['Family medicine kit · Checklist', 'Date: ' + dateStr, '(☑ = ready   ☐ = to restock)', '——————————————']
+      : ['家庭常备药 · 核对单', '日期：' + dateStr, '（☑ = 已备齐   ☐ = 待补充）', '——————————————']
     this.data.medCategories.forEach(cat => {
       lines.push('')
-      lines.push('【' + cat.name + '】')
+      lines.push(en ? ('[' + cat.name + ']') : ('【' + cat.name + '】'))
       cat.items.forEach(item => {
-        lines.push((item.checked ? '☑' : '☐') + ' ' + item.name + (item.essential ? '（必备）' : '') + (item.type ? ' | ' + item.type : ''))
+        lines.push((item.checked ? '☑' : '☐') + ' ' + item.name + (item.essential ? (en ? ' (essential)' : '（必备）') : '') + (item.type ? ' | ' + item.type : ''))
       })
     })
     lines.push('')
-    lines.push('核对进度：' + this.data.medChecked + '/' + this.data.medTotal)
+    lines.push((en ? 'Progress: ' : '核对进度：') + this.data.medChecked + '/' + this.data.medTotal)
     return lines.join('\n')
   },
 
@@ -324,23 +371,26 @@ Page({
   copyText(text, tip) {
     wx.setClipboardData({
       data: text,
-      success: () => wx.showToast({ title: tip || '已复制', icon: 'success' })
+      success: () => wx.showToast({ title: tip || (this._en() ? 'Copied' : '已复制'), icon: 'success' })
     })
   },
 
   /** 弹出操作面板 */
   onShowActions() {
     const isKit = this.data.tab === 'kit'
-    const actions = ['按分类分享购物清单（仅未备齐）', '按分类分享购物清单（全部）', '生成打印核对单']
+    const en = this._en()
+    const actions = en
+      ? ['Copy shopping list by category (unchecked only)', 'Copy shopping list by category (all items)', 'Copy a printable checklist']
+      : ['按分类分享购物清单（仅未备齐）', '按分类分享购物清单（全部）', '生成打印核对单']
     wx.showActionSheet({
       itemList: actions,
       success: (res) => {
         if (res.tapIndex === 0) {
-          this.copyText(isKit ? this.buildShoppingText(true) : this.buildMedShoppingText(true), '购物清单已复制')
+          this.copyText(isKit ? this.buildShoppingText(true) : this.buildMedShoppingText(true), en ? 'Shopping list copied' : '购物清单已复制')
         } else if (res.tapIndex === 1) {
-          this.copyText(isKit ? this.buildShoppingText(false) : this.buildMedShoppingText(false), '购物清单已复制')
+          this.copyText(isKit ? this.buildShoppingText(false) : this.buildMedShoppingText(false), en ? 'Shopping list copied' : '购物清单已复制')
         } else if (res.tapIndex === 2) {
-          this.copyText(isKit ? this.buildPrintText() : this.buildMedPrintText(), '核对单已复制')
+          this.copyText(isKit ? this.buildPrintText() : this.buildMedPrintText(), en ? 'Checklist copied' : '核对单已复制')
         }
       }
     })
@@ -350,7 +400,7 @@ Page({
   onShareAppMessage() {
     return {
         imageUrl: '/images/share-cover.png',
-      title: '我的家庭储备清单',
+      title: this._en() ? 'My family emergency supplies' : '我的家庭储备清单',
       path: '/subchart/pages/firstaid/kit/kit'
     }
   }

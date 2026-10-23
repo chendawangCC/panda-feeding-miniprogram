@@ -36,8 +36,12 @@ Page({
 
   refreshVideos() {
     const posts = wx.getStorageSync(POSTS_KEY) || []
-    // 新的在前
-    const videos = posts.slice().reverse()
+    const en = this._en()
+    const roleMap = { '医生': 'Doctor', '护士': 'Nurse', '普通用户': 'General user' }
+    // 新的在前；role 存中文，额外给 roleLabel 做本地化显示
+    const videos = posts.slice().reverse().map(v => Object.assign({}, v, {
+      roleLabel: en ? (roleMap[v.role] || v.role) : v.role
+    }))
     const user = wx.getStorageSync(USER_KEY)
     const userRole = user && user.role ? user.role : ''
     this.setData({ videos, userRole })

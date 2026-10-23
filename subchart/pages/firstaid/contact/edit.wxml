@@ -10,10 +10,10 @@
   <view class="form-card">
     <!-- 姓名 -->
     <view class="form-item">
-      <text class="form-label">姓名</text>
+      <text class="form-label">{{lang === 'en' ? 'Name' : '姓名'}}</text>
       <input
         class="form-input"
-        placeholder="请输入姓名"
+        placeholder="{{lang === 'en' ? 'Enter a name' : '请输入姓名'}}"
         placeholder-class="form-placeholder"
         value="{{name}}"
         bindinput="onNameInput"
@@ -23,10 +23,10 @@
 
     <!-- 关系 -->
     <view class="form-item">
-      <text class="form-label">关系</text>
+      <text class="form-label">{{lang === 'en' ? 'Relationship' : '关系'}}</text>
       <picker mode="selector" range="{{relations}}" value="{{relationIndex}}" bindchange="onRelationChange">
         <view class="form-picker">
-          <text class="form-picker-value">{{relation}}</text>
+          <text class="form-picker-value">{{relationLabel || relation}}</text>
           <text class="form-picker-arrow">▾</text>
         </view>
       </picker>
@@ -34,10 +34,10 @@
 
     <!-- 电话 -->
     <view class="form-item">
-      <text class="form-label">电话</text>
+      <text class="form-label">{{lang === 'en' ? 'Phone' : '电话'}}</text>
       <input
         class="form-input"
-        placeholder="请输入11位手机号"
+        placeholder="{{lang === 'en' ? 'Enter an 11-digit mobile number' : '请输入11位手机号'}}"
         placeholder-class="form-placeholder"
         type="number"
         value="{{phone}}"
@@ -49,14 +49,14 @@
 
   <!-- 说明 -->
   <view class="form-tip">
-    <text class="tip-line">• 电话仅保存在本机，不会上传</text>
-    <text class="tip-line">• 建议填家人 + 就近医院/社区医生电话</text>
+    <text class="tip-line">• {{lang === 'en' ? 'Phone numbers stay on this device and are never uploaded' : '电话仅保存在本机，不会上传'}}</text>
+    <text class="tip-line">• {{lang === 'en' ? 'Suggest one family member plus a nearby hospital or community doctor' : '建议填家人 + 就近医院/社区医生电话'}}</text>
   </view>
 
   <!-- 保存 -->
   <view class="bottom-bar">
     <button class="btn-primary btn-big" bindtap="onSave" disabled="{{saving}}">
-      {{saving ? '保存中...' : (isEdit ? '保存修改' : '添加联系人')}}
+      {{saving ? (lang === 'en' ? 'Saving...' : '保存中...') : (isEdit ? (lang === 'en' ? 'Save changes' : '保存修改') : (lang === 'en' ? 'Add contact' : '添加联系人'))}}
     </button>
   </view>
 

@@ -10,11 +10,21 @@ Page({
 
   data: {
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
+    lang: 'zh',
     loggedIn: false,
     nickname: '',
     phone: '',
     user: null,
     wechatLogging: false,
+  },
+
+  _en() { return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en'; },
+  _t(zh, en) { return this._en() ? en : zh; },
+
+  onLoad() {
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en'
+    this.setData({ lang: en ? 'en' : 'zh' })
+    wx.setNavigationBarTitle({ title: en ? 'Account' : '账号' })
   },
 
   onShow() {
@@ -60,10 +70,10 @@ Page({
 
   doGetUserProfile(code) {
     wx.getUserProfile({
-      desc: '用于完善账号信息，实现微信一键登录',
+      desc: this._t('用于完善账号信息，实现微信一键登录', 'Used to complete your profile and sign in with WeChat'),
       success: (res) => {
         const info = res.userInfo || {}
-        const nickname = (info.nickName || '').trim() || '微信用户'
+        const nickname = (info.nickName || '').trim() || this._t('微信用户', 'WeChat user')
         const avatarUrl = info.avatarUrl || ''
         // 头像取微信头像 URL；拿不到时用昵称首字兜底
         const avatarImg = avatarUrl && avatarUrl.indexOf('http') === 0 ? avatarUrl : ''
@@ -78,11 +88,11 @@ Page({
         }
         wx.setStorageSync(USER_KEY, user)
         this.setData({ loggedIn: true, user, wechatLogging: false })
-        wx.showToast({ title: '微信登录成功', icon: 'success' })
+        wx.showToast({ title: this._t('微信登录成功', 'Signed in with WeChat'), icon: 'success' })
       },
       fail: () => {
         this.setData({ wechatLogging: false })
-        wx.showToast({ title: '已取消微信授权，可用下方方式注册', icon: 'none' })
+        wx.showToast({ title: this._t('已取消微信授权，可用下方方式注册', 'WeChat authorisation cancelled - you can register below'), icon: 'none' })
       },
       complete: () => {
         this.setData({ wechatLogging: false })
@@ -95,11 +105,11 @@ Page({
     const nickname = this.data.nickname.trim()
     const phone = this.data.phone.trim()
     if (!nickname) {
-      wx.showToast({ title: '请输入昵称', icon: 'none' })
+      wx.showToast({ title: this._t('请输入昵称', 'Please enter a nickname'), icon: 'none' })
       return
     }
     if (phone && !/^1\d{10}$/.test(phone)) {
-      wx.showToast({ title: '手机号格式不正确', icon: 'none' })
+      wx.showToast({ title: this._t('手机号格式不正确', 'Phone number format is invalid'), icon: 'none' })
       return
     }
     const user = {
@@ -112,7 +122,7 @@ Page({
     }
     wx.setStorageSync(USER_KEY, user)
     this.setData({ loggedIn: true, user, nickname: '', phone: '' })
-    wx.showToast({ title: '注册成功', icon: 'success' })
+    wx.showToast({ title: this._t('注册成功', 'Registered'), icon: 'success' })
   },
 
   // 编辑账号信息
@@ -124,19 +134,19 @@ Page({
       nickname: user.nickname || '',
       phone: user.phone || '',
     })
-    wx.showToast({ title: '请修改后重新保存', icon: 'none' })
+    wx.showToast({ title: this._t('请修改后重新保存', 'Edit the fields, then save again'), icon: 'none' })
   },
 
   // 退出登录
   onLogout() {
     wx.showModal({
-      title: '退出登录',
-      content: '退出后本机保存的账号信息将被清除，确认退出？',
+      title: this._t('退出登录', 'Sign out'),
+      content: this._t('退出后本机保存的账号信息将被清除，确认退出？', 'Your saved account info will be cleared on this device. Sign out?'),
       success: (res) => {
         if (res.confirm) {
           wx.removeStorageSync(USER_KEY)
           this.setData({ loggedIn: false, user: null, nickname: '', phone: '' })
-          wx.showToast({ title: '已退出', icon: 'none' })
+          wx.showToast({ title: this._t('已退出', 'Signed out'), icon: 'none' })
         }
       }
     })

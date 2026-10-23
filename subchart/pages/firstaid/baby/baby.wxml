@@ -5,8 +5,8 @@
   <view class="fa-nav">
     <view class="fa-back" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">紧急照护指引</text>
-      <view class="header-title header-title-sub">宝宝信息</view>
+      <text class="header-kicker">{{lang === 'en' ? 'Emergency care guide' : '紧急照护指引'}}</text>
+      <view class="header-title header-title-sub">{{lang === 'en' ? 'Baby profiles' : '宝宝信息'}}</view>
     </view>
   </view>
 
@@ -17,15 +17,15 @@
     <!-- 空状态 -->
     <view class="empty-state" wx:if="{{!hasBabies}}">
       <image class="empty-logo" src="/subchart/pages/firstaid/images/firstaid-logo.png" mode="aspectFit"></image>
-      <view class="empty-title">还没有宝宝信息</view>
-      <view class="empty-sub">添加宝宝后，首页会按月龄自动推荐合适的护理与急救技能</view>
+      <view class="empty-title">{{lang === 'en' ? 'No baby profile yet' : '还没有宝宝信息'}}</view>
+      <view class="empty-sub">{{lang === 'en' ? 'Add a baby and the home page will suggest care and first-aid skills by age' : '添加宝宝后，首页会按月龄自动推荐合适的护理与急救技能'}}</view>
     </view>
 
     <!-- 宝宝列表 -->
     <block wx:else>
       <view class="list-head">
-        <view class="list-title">我的宝宝</view>
-        <view class="list-tip">月龄每天自动更新</view>
+        <view class="list-title">{{lang === 'en' ? 'My babies' : '我的宝宝'}}</view>
+        <view class="list-tip">{{lang === 'en' ? 'Age updates every day' : '月龄每天自动更新'}}</view>
       </view>
       <view
         class="baby-card {{item.id === activeId ? 'active' : ''}}"
@@ -38,43 +38,43 @@
         <view class="baby-info">
           <view class="baby-name-row">
             <text class="baby-name">{{item.name}}</text>
-            <text class="baby-current" wx:if="{{item.id === activeId}}">当前</text>
+            <text class="baby-current" wx:if="{{item.id === activeId}}">{{lang === 'en' ? 'Current' : '当前'}}</text>
           </view>
           <view class="baby-meta">{{item.genderLabel}} · {{item.birthDate}}</view>
           <view class="baby-age">{{item.ageText}}</view>
         </view>
         <view class="baby-ops">
-          <view class="baby-op edit" data-id="{{item.id}}" catchtap="onEdit">编辑</view>
-          <view class="baby-op del" data-id="{{item.id}}" catchtap="onDelete">删除</view>
+          <view class="baby-op edit" data-id="{{item.id}}" catchtap="onEdit">{{lang === 'en' ? 'Edit' : '编辑'}}</view>
+          <view class="baby-op del" data-id="{{item.id}}" catchtap="onDelete">{{lang === 'en' ? 'Delete' : '删除'}}</view>
         </view>
       </view>
     </block>
 
     <!-- 说明 -->
     <view class="form-tip">
-      <text class="tip-line">• 宝宝信息仅保存在本机，不会上传</text>
-      <text class="tip-line">• 月龄根据出生日期实时计算，首页推荐随之自动更新</text>
-      <text class="tip-line">• 可添加多个宝宝，点击卡片即可切换当前宝宝</text>
+      <text class="tip-line">• {{lang === 'en' ? 'Baby info stays on this device and is never uploaded' : '宝宝信息仅保存在本机，不会上传'}}</text>
+      <text class="tip-line">• {{lang === 'en' ? 'Age is calculated from the birth date, so home-page suggestions update automatically' : '月龄根据出生日期实时计算，首页推荐随之自动更新'}}</text>
+      <text class="tip-line">• {{lang === 'en' ? 'You can add several babies - tap a card to switch the current one' : '可添加多个宝宝，点击卡片即可切换当前宝宝'}}</text>
     </view>
 
     <!-- 添加按钮 -->
-    <button class="btn-primary btn-big" bindtap="onAdd">+ 添加宝宝</button>
+    <button class="btn-primary btn-big" bindtap="onAdd">{{lang === 'en' ? '+ Add a baby' : '+ 添加宝宝'}}</button>
   </block>
 
   <!-- ===== 表单模式 ===== -->
   <block wx:else>
     <view class="form-head">
-      <view class="form-title">{{isEdit ? '编辑宝宝' : '添加宝宝'}}</view>
-      <view class="form-sub">填写性别与出生日期，用于首页技能推荐</view>
+      <view class="form-title">{{isEdit ? (lang === 'en' ? 'Edit baby' : '编辑宝宝') : (lang === 'en' ? 'Add a baby' : '添加宝宝')}}</view>
+      <view class="form-sub">{{lang === 'en' ? 'Add gender and birth date so the home page can suggest skills' : '填写性别与出生日期，用于首页技能推荐'}}</view>
     </view>
 
     <view class="form-card">
       <!-- 宝宝昵称 -->
       <view class="form-item">
-        <text class="form-label">宝宝昵称</text>
+        <text class="form-label">{{lang === 'en' ? 'Baby nickname' : '宝宝昵称'}}</text>
         <input
           class="form-input"
-          placeholder="选填，默认叫宝宝"
+          placeholder="{{lang === 'en' ? 'Optional, defaults to Baby' : '选填，默认叫宝宝'}}"
           placeholder-class="form-placeholder"
           value="{{name}}"
           bindinput="onNameInput"
@@ -84,10 +84,10 @@
 
       <!-- 性别 -->
       <view class="form-item">
-        <text class="form-label">性别</text>
+        <text class="form-label">{{lang === 'en' ? 'Gender' : '性别'}}</text>
         <picker mode="selector" range="{{genders}}" value="{{genderIndex}}" bindchange="onGenderChange">
           <view class="form-picker {{genderIndex === -1 ? 'placeholder' : ''}}">
-            <text>{{genderIndex === -1 ? '请选择宝宝性别' : genders[genderIndex]}}</text>
+            <text>{{genderIndex === -1 ? (lang === 'en' ? 'Choose a gender' : '请选择宝宝性别') : genders[genderIndex]}}</text>
             <text class="form-picker-arrow">▾</text>
           </view>
         </picker>
@@ -95,10 +95,10 @@
 
       <!-- 出生日期 -->
       <view class="form-item">
-        <text class="form-label">出生日期</text>
+        <text class="form-label">{{lang === 'en' ? 'Birth date' : '出生日期'}}</text>
         <picker mode="date" value="{{birthDate}}" end="{{today}}" bindchange="onBirthDateChange">
           <view class="form-picker {{birthDate ? '' : 'placeholder'}}">
-            <text>{{birthDate || '请选择出生日期'}}</text>
+            <text>{{birthDate || (lang === 'en' ? 'Choose a birth date' : '请选择出生日期')}}</text>
             <text class="form-picker-arrow">▾</text>
           </view>
         </picker>
@@ -106,8 +106,8 @@
     </view>
 
     <!-- 操作 -->
-    <button class="btn-primary btn-big" bindtap="onSave">{{isEdit ? '保存修改' : '添加宝宝'}}</button>
-    <button class="btn-clear" bindtap="onBackToList">返回列表</button>
+    <button class="btn-primary btn-big" bindtap="onSave">{{isEdit ? (lang === 'en' ? 'Save changes' : '保存修改') : (lang === 'en' ? 'Add a baby' : '添加宝宝')}}</button>
+    <button class="btn-clear" bindtap="onBackToList">{{lang === 'en' ? 'Back to list' : '返回列表'}}</button>
   </block>
 
 </view>

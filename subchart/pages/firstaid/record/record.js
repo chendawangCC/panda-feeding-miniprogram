@@ -2,17 +2,21 @@
 const USER_KEY = 'firstaid_user'
 const POSTS_KEY = 'firstaid_video_posts'
 
-// 类型选项
+// 类型选项（value 仍用中文，保证历史数据与筛选一致；label 按语言显示）
 const TYPE_OPTIONS = [
-  { value: '宝宝护理', label: '宝宝护理', cls: 'bao' },
-  { value: '婴儿急救', label: '婴儿急救', cls: 'ji' },
-  { value: '妈妈护理', label: '妈妈护理', cls: 'ma' },
-  { value: '成人急救', label: '成人急救', cls: 'cheng' },
-  { value: '通用急救', label: '通用急救', cls: 'tong' },
+  { value: '宝宝护理', zh: '宝宝护理', en: 'Baby care', cls: 'bao' },
+  { value: '婴儿急救', zh: '婴儿急救', en: 'Infant first aid', cls: 'ji' },
+  { value: '妈妈护理', zh: '妈妈护理', en: 'Mum care', cls: 'ma' },
+  { value: '成人急救', zh: '成人急救', en: 'Adult first aid', cls: 'cheng' },
+  { value: '通用急救', zh: '通用急救', en: 'General first aid', cls: 'tong' },
 ]
 
-// 身份选项
-const ROLE_OPTIONS = ['普通用户', '护士', '医生']
+// 身份选项（同上：value 中文，label 双语）
+const ROLE_OPTIONS = [
+  { value: '普通用户', zh: '普通用户', en: 'General user' },
+  { value: '护士', zh: '护士', en: 'Nurse' },
+  { value: '医生', zh: '医生', en: 'Doctor' },
+]
 
 const app = getApp();
 
@@ -25,8 +29,9 @@ Page({
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     videoPath: '',        // 拍摄/选择的视频本地路径
     videoDuration: 0,
-    types: TYPE_OPTIONS,
-    roles: ROLE_OPTIONS,
+    lang: 'zh',
+    types: [],
+    roles: [],
     type: '宝宝护理',
     role: '普通用户',
     title: '',
@@ -34,6 +39,19 @@ Page({
     license: '',
     myPosts: [],          // 我的录制列表
     submitting: false,
+  },
+
+  _en() { return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en'; },
+  _t(zh, en) { return this._en() ? en : zh; },
+
+  onLoad() {
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en'
+    this.setData({
+      lang: en ? 'en' : 'zh',
+      types: TYPE_OPTIONS.map(t => ({ value: t.value, label: en ? t.en : t.zh, cls: t.cls })),
+      roles: ROLE_OPTIONS.map(r => ({ value: r.value, label: en ? r.en : r.zh }))
+    })
+    wx.setNavigationBarTitle({ title: en ? 'Record a demo' : '自学录制' })
   },
 
   onShow() {
@@ -92,20 +110,20 @@ Page({
     if (this.data.submitting) return
     const title = this.data.title.trim()
     if (!this.data.videoPath) {
-      wx.showToast({ title: '请先拍摄或选择视频', icon: 'none' })
+      wx.showToast({ title: this._t('请先拍摄或选择视频', 'Record or pick a video first'), icon: 'none' })
       return
     }
     if (!title) {
-      wx.showToast({ title: '请输入视频标题', icon: 'none' })
+      wx.showToast({ title: this._t('请输入视频标题', 'Please enter a title'), icon: 'none' })
       return
     }
     if ((this.data.role === '护士' || this.data.role === '医生') && !this.data.license.trim()) {
-      wx.showToast({ title: '护士/医生请填写资质证号', icon: 'none' })
+      wx.showToast({ title: this._t('护士/医生请填写资质证号', 'Nurses and doctors: please enter your licence number'), icon: 'none' })
       return
     }
 
     const user = wx.getStorageSync(USER_KEY) || {}
-    const typeObj = TYPE_OPTIONS.find(t => t.value === this.data.type) || TYPE_OPTIONS[0]
+    const typeObj = this.data.types.find(t => t.value === this.data.type) || this.data.types[0]
     const now = new Date()
     const pad = n => String(n).padStart(2, '0')
     const post = {
@@ -115,7 +133,7 @@ Page({
       typeLabel: typeObj.label,
       typeClass: typeObj.cls,
       role: this.data.role,
-      author: user.nickname || '匿名',
+      author: user.nickname || this._t('匿名', 'Anonymous'),
       desc: this.data.desc.trim(),
       license: this.data.license.trim(),
       videoPath: this.data.videoPath,
@@ -136,10 +154,11 @@ Page({
     })
     this.refreshMyPosts()
     wx.showModal({
-      title: '已保存',
-      content: '教学视频已保存，并自动加入所选类型的技能模块页，点击可观看并跟做。',
+      title: this._t('已保存', 'Saved'),
+      content: this._t('教学视频已保存，并自动加入所选类型的技能模块页，点击可观看并跟做。',
+        'Your demo is saved and added to the matching skill page; tap it to watch and follow along.'),
       showCancel: false,
-      confirmText: '知道了',
+      confirmText: this._t('知道了', 'Got it'),
       success: () => {
         this.setData({ submitting: false })
       }
@@ -150,8 +169,8 @@ Page({
   onDelete(e) {
     const id = e.currentTarget.dataset.id
     wx.showModal({
-      title: '删除这条教学视频？',
-      content: '删除后将从家庭急救页移除',
+      title: this._t('删除这条教学视频？', 'Delete this demo?'),
+      content: this._t('删除后将从家庭急救页移除', 'It will also disappear from the family first-aid page'),
       success: (res) => {
         if (!res.confirm) return
         const user = wx.getStorageSync(USER_KEY)
@@ -159,7 +178,7 @@ Page({
         const posts = (wx.getStorageSync(POSTS_KEY) || []).filter(p => !(p.id === id && p.author === myName))
         wx.setStorageSync(POSTS_KEY, posts)
         this.refreshMyPosts()
-        wx.showToast({ title: '已删除', icon: 'none' })
+        wx.showToast({ title: this._t('已删除', 'Deleted'), icon: 'none' })
       }
     })
   },
