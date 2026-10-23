@@ -779,6 +779,11 @@ Page({
     this.startSleepRunningSync();
     // 启动定时同步：每 10 秒拉取一次云端数据，实现家庭共享记录实时同步
     this.startPeriodicSync();
+    // 已登录且从未引导过麦克风：进入记录页时提示一次（避免首次长按语音键与系统授权弹窗叠加）
+    const overlayOpen = this.data.showQuick || this.data.showVoice || this.data.loginVisible || (this.data.record && this.data.record.visible);
+    if (!overlayOpen && app && app.maybeAskVoiceAuth) {
+      setTimeout(() => { try { app.maybeAskVoiceAuth(); } catch (e) {} }, 900);
+    }
   },
 
   onHide() {
@@ -1459,27 +1464,50 @@ Page({
     wx.switchTab({ url: '/pages/plan/plan' });
   },
 
-  /* 抽屉内语音按钮：长按开始录音 */
+  /* 抽屉内语音按钮：长按开始录音（麦克风授权已在首次登录时处理，这里不再叠加弹窗） */
   quickVoiceHoldStart() {
     const st = this.data.voiceState;
     if (st.recording || st.recognizing) return;
     const that = this;
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en';
+    const go = () => {
+      // 授权弹窗期间手指已松开，或停留过久：不再启动录音，避免语音面板卡住
+      if (!that._voiceHolding || (Date.now() - (that._voiceHoldAt || 0)) > 2200) {
+        that.setData({ 'voiceState.authDenied': false });
+        wx.showToast({ title: en ? 'Microphone ready, hold to speak again' : '麦克风已就绪，请重新按住说话', icon: 'none' });
+        return;
+      }
+      that.doVoiceRecord();
+    };
+    this._voiceHoldAt = this._voiceHoldAt || Date.now();
     wx.getSetting({
       success(res) {
-        const go = () => { that.startVoiceRecord(); };
-        if (res.authSetting['scope.record']) go();
-        else {
-          wx.authorize({
-            scope: 'scope.record',
-            success: go,
-            fail() {
-              that.setData({ 'voiceState.authDenied': true });
-              wx.showToast({ title: '未授权麦克风，无法录音', icon: 'none' });
-            }
-          });
-        }
+        const auth = (res && res.authSetting) || {};
+        if (auth['scope.record'] === true) { go(); return; }
+        if (auth['scope.record'] === false) { that.voiceAuthDeniedTip(); return; }
+        wx.authorize({
+          scope: 'scope.record',
+          success: go,
+          fail() { that.voiceAuthDeniedTip(); }
+        });
       },
-      fail() { that.startVoiceRecord(); }
+      fail() { go(); }
+    });
+  },
+
+  /* 麦克风被拒：引导去设置开启（不弹录音面板） */
+  voiceAuthDeniedTip() {
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en';
+    this.setData({ 'voiceState.authDenied': true, 'voiceState.recording': false });
+    wx.showModal({
+      title: en ? 'Microphone Not Enabled' : '麦克风未开启',
+      content: en
+        ? 'Voice input needs microphone access. Open settings to enable it, then hold the voice button again.'
+        : '语音录入需要麦克风权限。前往设置开启后，再按住语音键即可录音。',
+      confirmText: en ? 'Settings' : '去设置',
+      cancelText: en ? 'Cancel' : '取消',
+      confirmColor: '#c99a2e',
+      success: (m) => { if (m.confirm) this.openVoiceSetting(); }
     });
   },
 
@@ -2790,13 +2818,17 @@ Page({
   /* 语音录入按钮：按下启动长按判定（未满 400ms 松开 = 点击，不录音；按住才录、松开即停） */
   voiceTouchStart() {
     if (this._voicePressTimer) clearTimeout(this._voicePressTimer);
+    this._voiceHolding = true;
+    this._voiceHoldAt = 0;
     this._voicePressTimer = setTimeout(() => {
       this._voicePressTimer = null;
-      // 长按达成：走授权流程并开始录音
+      // 长按达成：记录按住起点，走权限判定后开始录音
+      this._voiceHoldAt = Date.now();
       this.quickVoiceHoldStart();
     }, 400);
   },
   voiceTouchEnd() {
+    this._voiceHolding = false;
     if (this._voicePressTimer) {
       clearTimeout(this._voicePressTimer);
       this._voicePressTimer = null;

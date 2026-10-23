@@ -885,9 +885,68 @@ App({
     // 首次登录成功：触发云端全量同步（拉取云端合并 + 推送本地）
     if (this.globalData.user.logged && !wasLogged) {
       this.syncCloudAfterLogin();
+      // 首次登录：先引导开启麦克风，避免首次长按语音键时系统授权弹窗与录音面板叠加卡住
+      setTimeout(() => { try { this.maybeAskVoiceAuth(); } catch (e) {} }, 1800);
     }
     return this.globalData.user;
   },
+  /* 首次登录引导开启麦克风：只在从未询问过时弹一次，
+     用户同意后直接调起系统授权，之后长按语音键不会再弹系统弹窗 */
+  maybeAskVoiceAuth(tries) {
+    const user = this.globalData.user || {};
+    if (!user.logged) return;
+    if (wx.getStorageSync('voiceAuthPrompted')) return;
+    if (this._voiceAuthPrompting) return;
+    // 页面上已有登录/资料/记录抽屉等弹层时先让位，避免两个弹窗叠加
+    const attempt = typeof tries === 'number' ? tries : 0;
+    let busy = false;
+    try {
+      const pages = (typeof getCurrentPages === 'function') ? getCurrentPages() : [];
+      const d = (pages.length && pages[pages.length - 1].data) || {};
+      busy = !!(d.loginVisible || d.profileVisible || d.showQuick || d.showVoice || d.showPolicy || (d.record && d.record.visible));
+    } catch (e) {}
+    if (busy) {
+      if (attempt < 3) setTimeout(() => { this.maybeAskVoiceAuth(attempt + 1); }, 2000);
+      return;
+    }
+    this._voiceAuthPrompting = true;
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en';
+    const done = () => { this._voiceAuthPrompting = false; };
+    wx.getSetting({
+      success: (res) => {
+        const st = (res && res.authSetting) || {};
+        if (st['scope.record'] === true) { done(); wx.setStorageSync('voiceAuthPrompted', true); return; }
+        if (st['scope.record'] === false) { done(); wx.setStorageSync('voiceAuthPrompted', true); return; }
+        wx.setStorageSync('voiceAuthPrompted', true);
+        wx.showModal({
+          title: en ? 'Enable Voice Input' : '开启语音录入',
+          content: en
+            ? 'Allow microphone access so one sentence can record a feed by voice. You can change it anytime in Settings - Permissions & Privacy.'
+            : '允许使用麦克风后，长按语音键一句话即可完成喂养记录。随时可在「我的 - 权限与隐私」中修改。',
+          confirmText: en ? 'Enable' : '去开启',
+          cancelText: en ? 'Not now' : '以后再说',
+          confirmColor: '#c99a2e',
+          success: (m) => {
+            if (!m.confirm) { done(); return; }
+            wx.authorize({
+              scope: 'scope.record',
+              success: () => {
+                done();
+                wx.showToast({ title: en ? 'Microphone enabled' : '麦克风已开启', icon: 'success' });
+              },
+              fail: () => {
+                done();
+                wx.showToast({ title: en ? 'You can enable it in Permissions & Privacy' : '可在「权限与隐私」中开启', icon: 'none' });
+              }
+            });
+          },
+          fail: done
+        });
+      },
+      fail: done
+    });
+  },
+
   loadUser() {
     const saved = wx.getStorageSync('panda_user');
     this.globalData.user = Object.assign({}, {
