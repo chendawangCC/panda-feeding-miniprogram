@@ -5,7 +5,7 @@
   <view class="fa-nav">
     <view class="fa-back" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">紧急照护指引</text>
+      <text class="header-kicker">{{lang === 'en' ? 'Emergency care guide' : '紧急照护指引'}}</text>
       <view class="header-title header-title-sub">{{module.name}}</view>
     </view>
   </view>
@@ -32,6 +32,6 @@
 
   <!-- 免责声明 -->
   <view class="disclaimer">
-    本应用用于日常学习与演练，不能替代专业急救培训与真实急救处置。遇紧急情况请立即拨打 120。
+    {{lang === 'en' ? 'This app is for daily learning and practice only. It cannot replace professional first aid training or real emergency care. Call 120 in an emergency.' : '本应用用于日常学习与演练，不能替代专业急救培训与真实急救处置。遇紧急情况请立即拨打 120。'}}
   </view>
 </view>

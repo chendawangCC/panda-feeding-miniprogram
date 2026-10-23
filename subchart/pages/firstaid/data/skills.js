@@ -1193,4 +1193,154 @@ const VIDEO_MAP = {
   postpartum_mood:      { url: '', title: '产后情绪关注·真人教学', source: '' },
 }
 
+/* =========================================================
+ * 英文显示层（中文数据层保持不变）
+ * 技能正文见 skills-en.js，按 SKILLS 的 index 一一对齐
+ * ========================================================= */
+const SKILLS_EN = require('./skills-en')
+
+const CATEGORY_EN = {
+  '宝宝护理': 'Baby Care',
+  '婴儿急救': 'Infant First Aid',
+  '成人急救': 'Adult First Aid',
+  '产后护理': 'Postpartum Care',
+  '通用急救': 'General First Aid',
+}
+
+const MODULE_EN = {
+  baby_care: { name: 'Baby Care', tagline: 'Daily care' },
+  baby_emergency: { name: 'Infant First Aid', tagline: 'Life-saving skills' },
+  mama: { name: 'Mom Care', tagline: 'Postpartum care & recovery' },
+  general: { name: 'General', tagline: 'Adult & general first aid' },
+}
+
+/** 当前语言（'zh' | 'en'） */
+function currentLang() {
+  try {
+    return (wx.getStorageSync('lang') || 'zh') === 'en' ? 'en' : 'zh'
+  } catch (e) {
+    return 'zh'
+  }
+}
+
+/** 技能在 SKILLS 中的下标（用户录制技能返回 -1） */
+function indexOfSkill(skill) {
+  return skill ? SKILLS.indexOf(skill) : -1
+}
+
+/** segments 按 index 对齐合并：节奏参数取中文层，文案取英文层 */
+function localizeSegments(zhSegs, enSegs) {
+  if (!enSegs) return zhSegs
+  return (zhSegs || []).map((seg, i) => {
+    const t = enSegs[i] || {}
+    const out = Object.assign({}, seg)
+    if (t.title) out.title = t.title
+    if (t.text) out.text = t.text
+    if (t.label) out.label = t.label
+    if (seg.children) out.children = localizeSegments(seg.children, t.children)
+    return out
+  })
+}
+
+/** 生成中英双通道搜索串，保证英文界面下中英文关键词都能搜到 */
+function buildSearchText(zhSkill, enT) {
+  const parts = [
+    zhSkill.name, zhSkill.short, zhSkill.category, zhSkill.id,
+    CATEGORY_EN[zhSkill.category] || '',
+    enT ? enT.name : '', enT ? enT.short : '',
+  ]
+  return parts.filter(Boolean).join(' ').toLowerCase()
+}
+
+/** 单条技能本地化 */
+function localizeSkill(skill, lang) {
+  const target = lang || currentLang()
+  if (!skill) return skill
+  const idx = indexOfSkill(skill)
+  const enT = idx >= 0 ? SKILLS_EN[idx] : null
+  const out = Object.assign({}, skill, {
+    searchText: buildSearchText(skill, enT),
+    categoryEn: CATEGORY_EN[skill.category] || skill.category,
+  })
+  if (target !== 'en' || !enT) return out
+  out.name = enT.name || skill.name
+  out.category = CATEGORY_EN[skill.category] || skill.category
+  out.short = enT.short || skill.short
+  out.description = enT.description || skill.description
+  out.keyPoints = enT.keyPoints || skill.keyPoints
+  out.warnings = enT.warnings || skill.warnings
+  out.segments = localizeSegments(skill.segments, enT.segments)
+  return out
+}
+
+/** 列表本地化 */
+function localizeSkills(list, lang) {
+  const target = lang || currentLang()
+  return (list || []).map(s => localizeSkill(s, target))
+}
+
+/** 全部技能（按语言） */
+function getSkills(lang) {
+  return localizeSkills(SKILLS, lang)
+}
+
+/** 模块卡片（按语言） */
+function getModules(lang) {
+  const target = lang || currentLang()
+  return MODULES.map(mod => {
+    const enT = MODULE_EN[mod.key] || {}
+    return Object.assign({}, mod, {
+      name: target === 'en' ? (enT.name || mod.name) : mod.name,
+      tagline: target === 'en' ? (enT.tagline || mod.tagline) : mod.tagline,
+    })
+  })
+}
+
+/** 分类名（按语言） */
+function categoryLabel(name, lang) {
+  const target = lang || currentLang()
+  return target === 'en' ? (CATEGORY_EN[name] || name) : name
+}
+
+/** 教学视频信息（按语言）：标题随技能英文名生成 */
+function getVideoInfo(skillId, lang) {
+  const target = lang || currentLang()
+  const v = VIDEO_MAP[skillId] || {}
+  if (target !== 'en') return Object.assign({}, v)
+  const idx = SKILLS.findIndex(s => s.id === skillId)
+  const enName = idx >= 0 && SKILLS_EN[idx] ? SKILLS_EN[idx].name : ''
+  const title = enName ? enName + ' · demo video' : 'Real-person demo'
+  return Object.assign({}, v, { title })
+}
+
+/** 模块内技能（按语言） */
+function getModuleSkillsLocalized(moduleKey, lang) {
+  const mod = MODULES.find(m => m.key === moduleKey)
+  if (!mod) return []
+  return localizeSkills(SKILLS.filter(s => mod.categories.indexOf(s.category) >= 0), lang)
+}
+
+/** 通过 id 查找技能（按语言，含用户录制技能） */
+function getSkillByIdLocalized(id, lang) {
+  const target = lang || currentLang()
+  const found = SKILLS.find(s => s.id === id)
+  if (found) return localizeSkill(found, target)
+  return id && id.indexOf('usr_') === 0 ? getUserSkillById(id) : null
+}
+
 module.exports = { SKILLS, CATEGORIES, MODULES, VIDEO_MAP, getModuleSkills, getSkillById, getUserSkills, getUserSkillById, flattenSkill }
+
+module.exports = Object.assign(module.exports, {
+  SKILLS_EN,
+  CATEGORY_EN,
+  MODULE_EN,
+  currentLang,
+  localizeSkill,
+  localizeSkills,
+  getSkills,
+  getModules,
+  categoryLabel,
+  getVideoInfo,
+  getModuleSkillsLocalized,
+  getSkillByIdLocalized,
+})

@@ -1,5 +1,5 @@
 // pages/train/train.js
-const { getSkillById, flattenSkill } = require('../data/skills')
+const { getSkillByIdLocalized, flattenSkill } = require('../data/skills')
 
 const app = getApp();
 
@@ -9,6 +9,7 @@ Page({
   },
 
   data: {
+    lang: 'zh',
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     skill: null,
     steps: [],          // 展开后的线性步骤
@@ -30,10 +31,15 @@ Page({
   },
 
   // ---- 生命周期 ----
+  _en() { return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en'; },
+
   onLoad(options) {
-    const skill = getSkillById(options.skill)
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en'
+    const lang = en ? 'en' : 'zh'
+    this.setData({ lang })
+    const skill = getSkillByIdLocalized(options.skill, lang)
     if (!skill) {
-      wx.showToast({ title: '技能不存在', icon: 'none' })
+      wx.showToast({ title: en ? 'Skill not found' : '技能不存在', icon: 'none' })
       setTimeout(() => wx.navigateBack(), 800)
       return
     }
@@ -77,7 +83,9 @@ Page({
     this._countRemain = step.seconds || 0
 
     const roundText = step.cycleRound
-      ? '第' + step.cycleRound + (step.cycleLabel || '轮') + ' / 共' + step.cycleTotal + (step.cycleLabel || '轮')
+      ? (this._en()
+        ? 'Round ' + step.cycleRound + ' of ' + step.cycleTotal
+        : '第' + step.cycleRound + (step.cycleLabel || '轮') + ' / 共' + step.cycleTotal + (step.cycleLabel || '轮'))
       : ''
 
     // 根据技能和步骤索引，匹配对应的步骤图示（跟随文案同步切换）
@@ -439,7 +447,7 @@ Page({
 
   finish() {
     this.clearAllTimers()
-    this.setData({ phase: 'done', percent: 100, beatOn: false, cheerText: '太棒了，动作完成得很标准！' })
+    this.setData({ phase: 'done', percent: 100, beatOn: false, cheerText: this._en() ? 'Great job — your technique looked solid!' : '太棒了，动作完成得很标准！' })
     wx.vibrateShort({ type: 'heavy' })
     // 记录"已掌握"（供首页成长足迹展示）
     try {

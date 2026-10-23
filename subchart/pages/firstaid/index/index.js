@@ -1,5 +1,5 @@
 // pages/index/index.js
-const { SKILLS, MODULES, getModuleSkills, getSkillById } = require('../data/skills')
+const { getSkills, getModules, getModuleSkillsLocalized, getSkillByIdLocalized } = require('../data/skills')
 const { getRecommendations } = require('../data/recommend')
 const { getActiveBaby, getBabies } = require('../data/babies')
 
@@ -39,34 +39,38 @@ Page({
 
   onLoad() {
     const en = (wx.getStorageSync('lang') || 'zh') === 'en';
-    this.setData({ lang: en ? 'en' : 'zh' });
+    const lang = en ? 'en' : 'zh';
+    this._skills = getSkills(lang);
+    this.setData({ lang });
     // 时间问候（对齐母 App"早上好，妈妈"）
     const h = new Date().getHours()
-    let greeting = '你好'
-    if (h < 5) greeting = '夜深了'
-    else if (h < 11) greeting = '早上好'
-    else if (h < 14) greeting = '中午好'
-    else if (h < 18) greeting = '下午好'
-    else greeting = '晚上好'
-    greeting = greeting + '，妈妈'
+    let greeting
+    if (en) {
+      greeting = 'Hello'
+      if (h < 5) greeting = 'Still up'
+      else if (h < 11) greeting = 'Good morning'
+      else if (h < 14) greeting = 'Good afternoon'
+      else if (h < 18) greeting = 'Good afternoon'
+      else greeting = 'Good evening'
+      greeting = greeting + ', Mom'
+    } else {
+      greeting = '你好'
+      if (h < 5) greeting = '夜深了'
+      else if (h < 11) greeting = '早上好'
+      else if (h < 14) greeting = '中午好'
+      else if (h < 18) greeting = '下午好'
+      else greeting = '晚上好'
+      greeting = greeting + '，妈妈'
+    }
 
     // 四大模块聚合卡片
-    const MODULE_EN = {
-      baby_care: { name: 'Baby Care', tagline: 'Daily care' },
-      baby_emergency: { name: 'Baby First Aid', tagline: 'Life-saving skills' },
-      mama: { name: 'Mom Care', tagline: 'Postpartum care & recovery' },
-      general: { name: 'General', tagline: 'Adult & general first aid' }
-    };
-    const modules = MODULES.map(mod => {
-      const enTxt = MODULE_EN[mod.key] || {};
-      return {
-        key: mod.key,
-        name: en ? (enTxt.name || mod.name) : mod.name,
-        icon: mod.icon,
-        tagline: en ? (enTxt.tagline || mod.tagline) : mod.tagline,
-        count: getModuleSkills(mod.key).length,
-      };
-    })
+    const modules = getModules(lang).map(mod => ({
+      key: mod.key,
+      name: mod.name,
+      icon: mod.icon,
+      tagline: mod.tagline,
+      count: getModuleSkillsLocalized(mod.key, lang).length,
+    }))
 
     // 工具 2×2 网格（聚焦 SOS 指导职责）
     // 工具网格：去掉「家庭急救」「紧急呼救」（家庭急救内容已并入通用急救模块）
@@ -81,7 +85,7 @@ Page({
       greeting,
       modules,
       tools,
-      totalSkills: SKILLS.length,
+      totalSkills: this._skills.length,
     })
   },
 
@@ -108,7 +112,7 @@ Page({
       babyCount = babies.length
       activeBaby = getActiveBaby()
       if (activeBaby && activeBaby.birthDate) {
-        recommendation = getRecommendations(activeBaby)
+        recommendation = getRecommendations(activeBaby, this.data.lang)
       } else {
         noBaby = true
       }
@@ -141,21 +145,22 @@ Page({
     if (loggedIn) {
       const baby = getActiveBaby()
       if (baby && baby.birthDate) {
-        const rec = getRecommendations(baby)
+        const rec = getRecommendations(baby, this.data.lang)
         if (rec && rec.items && rec.items.length) {
-          skill = getSkillById(rec.items[0].id)
+          skill = getSkillByIdLocalized(rec.items[0].id, this.data.lang)
         }
       }
     }
-    if (!skill) skill = getSkillById('adult_heimlich')
+    if (!skill) skill = getSkillByIdLocalized('adult_heimlich', this.data.lang)
 
     if (!skill) {
       this.setData({ remind: null })
       return
     }
+    const en = this._en()
     const remind = {
-      tag: '今日推荐',
-      title: '跟学 · ' + skill.name,
+      tag: en ? 'Today’s pick' : '今日推荐',
+      title: en ? 'Practice · ' + skill.name : '跟学 · ' + skill.name,
       sub: skill.description,
       skillId: skill.id,
     }
@@ -171,12 +176,8 @@ Page({
       return
     }
     const lower = keyword.toLowerCase()
-    const results = SKILLS.filter(s =>
-      s.name.toLowerCase().indexOf(lower) >= 0 ||
-      s.category.indexOf(keyword) >= 0 ||
-      s.short.indexOf(keyword) >= 0 ||
-      s.id.toLowerCase().indexOf(lower) >= 0
-    )
+    const pool = this._skills || getSkills(this.data.lang === 'en' ? 'en' : 'zh')
+    const results = pool.filter(s => (s.searchText || '').indexOf(lower) >= 0)
     this.setData({ searching: true, searchResults: results })
   },
 

@@ -1,5 +1,5 @@
 // pages/family/family.js - 家庭急救专题页（技能 + 规范教学视频 + 录制入口）
-const { SKILLS } = require('../data/skills')
+const { SKILLS, localizeSkills, currentLang } = require('../data/skills')
 const { getBabies, getActiveBaby } = require('../data/babies')
 
 const USER_KEY = 'firstaid_user'
@@ -13,16 +13,21 @@ Page({
   },
 
   data: {
+    lang: 'zh',
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     skills: [],        // 家庭急救技能（成人急救 + 通用急救）
     videos: [],        // 护士/医生上传的规范教学视频
     userRole: '',      // 当前用户身份（普通用户/护士/医生）
   },
 
+  _en() { return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en'; },
+
   onLoad() {
     // 家庭急救技能：成人急救 + 通用急救 两个分类
-    const skills = SKILLS.filter(s => s.category === '成人急救' || s.category === '通用急救')
-    this.setData({ skills })
+    const lang = currentLang()
+    const skills = localizeSkills(
+      SKILLS.filter(s => s.category === '成人急救' || s.category === '通用急救'), lang)
+    this.setData({ lang, skills })
   },
 
   onShow() {
@@ -50,9 +55,9 @@ Page({
 
   onCall120() {
     wx.showModal({
-      title: '拨打急救电话',
-      content: '确认拨打 120 吗？',
-      confirmText: '拨打',
+      title: this._en() ? 'Call emergency services' : '拨打急救电话',
+      content: this._en() ? 'Call 120 now?' : '确认拨打 120 吗？',
+      confirmText: this._en() ? 'Call' : '拨打',
       confirmColor: '#C8102E',
       success(res) {
         if (res.confirm) {

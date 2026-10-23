@@ -5,8 +5,8 @@
   <view class="fa-nav">
     <view class="fa-back" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">紧急照护指引</text>
-      <view class="header-title header-title-sub">家庭急救</view>
+      <text class="header-kicker">{{lang === 'en' ? 'Emergency care guide' : '紧急照护指引'}}</text>
+      <view class="header-title header-title-sub">{{lang === 'en' ? 'Home First Aid' : '家庭急救'}}</view>
     </view>
   </view>
 
@@ -15,13 +15,13 @@
   <view class="family-hero">
     <view class="family-hero-icon">🏠</view>
     <view class="family-hero-text">
-      <view class="family-hero-title">家庭急救</view>
-      <view class="family-hero-sub">成人家用急救与护理 · 跟着真人教学视频学</view>
+      <view class="family-hero-title">{{lang === 'en' ? 'Home First Aid' : '家庭急救'}}</view>
+      <view class="family-hero-sub">{{lang === 'en' ? 'Adult home first aid and care · learn with real-person demo videos' : '成人家用急救与护理 · 跟着真人教学视频学'}}</view>
     </view>
   </view>
 
   <!-- 家庭急救技能 -->
-  <view class="section-title">家庭急救技能</view>
+  <view class="section-title">{{lang === 'en' ? 'Home first aid skills' : '家庭急救技能'}}</view>
   <view
     class="skill-card"
     wx:for="{{skills}}"
@@ -39,8 +39,8 @@
 
   <!-- 规范教学视频（护士/医生上传） -->
   <view class="section-title video-title">
-    规范教学视频
-    <text class="video-title-tag">护士 · 医生上传</text>
+    {{lang === 'en' ? 'Verified demo videos' : '规范教学视频'}}
+    <text class="video-title-tag">{{lang === 'en' ? 'Uploaded by nurses · doctors' : '护士 · 医生上传'}}</text>
   </view>
 
   <block wx:if="{{videos.length}}">
@@ -63,7 +63,7 @@
           <text class="video-time">{{item.createTime}}</text>
         </view>
         <view class="video-desc" wx:if="{{item.desc}}">{{item.desc}}</view>
-        <view class="video-license" wx:if="{{item.license}}">资质证号：{{item.license}}</view>
+        <view class="video-license" wx:if="{{item.license}}">{{lang === 'en' ? 'Licence No.: ' : '资质证号：'}}{{item.license}}</view>
       </view>
     </view>
   </block>
@@ -71,26 +71,26 @@
   <!-- 空态 -->
   <view class="video-empty" wx:else>
     <view class="video-empty-icon">🎬</view>
-    <view class="video-empty-title">暂无教学视频</view>
-    <view class="video-empty-desc">欢迎有经验的护士、医生上传规范急救与护理操作演示</view>
+    <view class="video-empty-title">{{lang === 'en' ? 'No demo videos yet' : '暂无教学视频'}}</view>
+    <view class="video-empty-desc">{{lang === 'en' ? 'Experienced nurses and doctors are welcome to upload verified first aid and care demonstrations' : '欢迎有经验的护士、医生上传规范急救与护理操作演示'}}</view>
   </view>
 
   <!-- 录制/上传引导卡 -->
   <view class="record-guide">
     <view class="record-guide-icon">📹</view>
     <view class="record-guide-info">
-      <view class="record-guide-title">自学录制 · 上传规范教学</view>
-      <view class="record-guide-desc">录制你的操作视频，或由护士/医生上传规范急救、护理演示，帮助更多家庭</view>
+      <view class="record-guide-title">{{lang === 'en' ? 'Record your own · upload a demo' : '自学录制 · 上传规范教学'}}</view>
+      <view class="record-guide-desc">{{lang === 'en' ? 'Record your own technique, or let a nurse or doctor upload a verified first aid or care demonstration to help more families' : '录制你的操作视频，或由护士/医生上传规范急救、护理演示，帮助更多家庭'}}</view>
     </view>
   </view>
 
   <!-- 免责 -->
   <view class="disclaimer">
-    教学视频由用户上传，内容仅供参考；急救处置请以正规培训与医生指导为准。紧急情况请立即拨打 120。
+    {{lang === 'en' ? 'Demo videos are uploaded by users and for reference only; always follow formal training and medical advice. Call 120 in an emergency.' : '教学视频由用户上传，内容仅供参考；急救处置请以正规培训与医生指导为准。紧急情况请立即拨打 120。'}}
   </view>
 
   <!-- 底部按钮 -->
   <view class="bottom-bar">
-    <button class="btn-record" bindtap="onRecord">📹 自学录制 / 上传教学视频</button>
+    <button class="btn-record" bindtap="onRecord">{{lang === 'en' ? '📹 Record / upload a teaching video' : '📹 自学录制 / 上传教学视频'}}</button>
   </view>
 </view>

@@ -1,5 +1,5 @@
 // pages/prepare/prepare.js
-const { getSkillById, VIDEO_MAP } = require('../data/skills')
+const { getSkillByIdLocalized, getVideoInfo } = require('../data/skills')
 
 const app = getApp();
 
@@ -9,15 +9,21 @@ Page({
   },
 
   data: {
+    lang: 'zh',
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     skill: null,
     video: null,       // { url, title, source, hasVideo, isUploaded }
   },
 
+  _en() { return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en'; },
+
   onLoad(options) {
-    const skill = getSkillById(options.skill)
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en'
+    const lang = en ? 'en' : 'zh'
+    this.setData({ lang })
+    const skill = getSkillByIdLocalized(options.skill, lang)
     if (!skill) {
-      wx.showToast({ title: '技能不存在', icon: 'none' })
+      wx.showToast({ title: en ? 'Skill not found' : '技能不存在', icon: 'none' })
       return
     }
     const video = this.buildVideo(skill)
@@ -28,18 +34,18 @@ Page({
   // 组装视频：优先本地已上传教学视频，其次 VIDEO_MAP 直链
   buildVideo(skill) {
     if (skill.videoUrl) {
-      return { url: skill.videoUrl, title: skill.videoTitle || '我的教学视频', source: 'user', hasVideo: true, isUploaded: false }
+      return { url: skill.videoUrl, title: skill.videoTitle || (this._en() ? 'My teaching video' : '我的教学视频'), source: 'user', hasVideo: true, isUploaded: false }
     }
     const key = 'fa_video_' + skill.id
     const local = wx.getStorageSync(key) || ''
     if (local) {
-      return { url: local, title: '我的教学视频', source: 'uploaded', hasVideo: true, isUploaded: true }
+      return { url: local, title: this._en() ? 'My teaching video' : '我的教学视频', source: 'uploaded', hasVideo: true, isUploaded: true }
     }
-    const v = VIDEO_MAP[skill.id] || {}
+    const v = getVideoInfo(skill.id, this.data.lang) || {}
     const url = v.url || ''
     return {
       url: url,
-      title: v.title || '真人教学指导',
+      title: v.title || (this._en() ? 'Real-person demo' : '真人教学指导'),
       source: v.source || '',
       hasVideo: !!(url && url.indexOf('http') === 0),
       isUploaded: false,
@@ -69,14 +75,14 @@ Page({
         if (!f) return
         // 仅接受视频格式
         if (f.fileType && f.fileType !== 'video') {
-          wx.showToast({ title: '仅支持视频格式', icon: 'none' })
+          wx.showToast({ title: this._en() ? 'Video files only' : '仅支持视频格式', icon: 'none' })
           return
         }
         // 大小限制：不超过 50MB（云存储安全上限，避免上传失败）
         const sizeMB = (f.size || 0) / 1024 / 1024
         if (sizeMB > 50) {
           wx.showModal({
-            title: '视频过大',
+            title: this._en() ? 'Video too large' : '视频过大',
             content: '当前视频约 ' + sizeMB.toFixed(1) + ' MB，超过 50MB 限制，请压缩或重新录制后上传。',
             showCancel: false
           })
@@ -111,13 +117,13 @@ Page({
       fail: (err) => {
         // 用户取消不算错误
         if (err && err.errMsg && err.errMsg.indexOf('cancel') >= 0) return
-        wx.showToast({ title: '选择视频失败', icon: 'none' })
+        wx.showToast({ title: this._en() ? 'Could not select the video' : '选择视频失败', icon: 'none' })
       }
     })
   },
 
   doUpload(temp, skillId, isPortrait) {
-    wx.showLoading({ title: '上传中…' })
+    wx.showLoading({ title: this._en() ? 'Uploading…' : '上传中…' })
     this.uploadToCloud(temp, skillId, isPortrait)
   },
 
@@ -155,9 +161,9 @@ Page({
     wx.setStorageSync('fa_video_' + skillId, url)
     const skill = this.data.skill
     this.setData({
-      video: { url, title: '我的教学视频', source: 'uploaded', hasVideo: true, isUploaded: true }
+      video: { url, title: this._en() ? 'My teaching video' : '我的教学视频', source: 'uploaded', hasVideo: true, isUploaded: true }
     })
-    wx.showToast({ title: '教学视频已上传', icon: 'success' })
+    wx.showToast({ title: this._en() ? 'Teaching video uploaded' : '教学视频已上传', icon: 'success' })
   },
 
   // 移除已上传教学视频
@@ -165,15 +171,15 @@ Page({
     const skill = this.data.skill
     if (!skill) return
     wx.showModal({
-      title: '移除教学视频',
+      title: this._en() ? 'Remove teaching video' : '移除教学视频',
       content: '确定移除该技能的教学视频吗？',
       success: (r) => {
         if (!r.confirm) return
         wx.removeStorageSync('fa_video_' + skill.id)
         this.setData({
-          video: { url: '', title: '真人教学指导', source: '', hasVideo: false, isUploaded: false }
+          video: { url: '', title: this._en() ? 'Real-person demo' : '真人教学指导', source: '', hasVideo: false, isUploaded: false }
         })
-        wx.showToast({ title: '已移除', icon: 'none' })
+        wx.showToast({ title: this._en() ? 'Removed' : '已移除', icon: 'none' })
       }
     })
   }

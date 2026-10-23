@@ -5,7 +5,7 @@
   <view class="fa-nav">
     <view class="fa-back" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">紧急照护指引</text>
+      <text class="header-kicker">{{lang === 'en' ? 'Emergency care guide' : '紧急照护指引'}}</text>
       <view class="header-title header-title-sub">{{skill.name}}</view>
     </view>
   </view>
@@ -34,8 +34,8 @@
     <image wx:if="{{stepImage}}" class="step-image" src="{{stepImage}}" mode="aspectFit" />
     <view wx:else class="train-video-ph">
       <view class="tv-icon">📺</view>
-      <view class="tv-title">跟做视频</view>
-      <view class="tv-tip">专业团队统一制作 · 即将上线</view>
+      <view class="tv-title">{{lang === 'en' ? 'Follow-along video' : '跟做视频'}}</view>
+      <view class="tv-tip">{{lang === 'en' ? 'Produced by our team · coming soon' : '专业团队统一制作 · 即将上线'}}</view>
     </view>
 
     <!-- 计数/倒计时 数字叠加显示 -->
@@ -45,12 +45,12 @@
           <text class="beat-count">{{countText}}</text>
           <text class="beat-target">{{countTarget}}</text>
         </view>
-        <view class="beat-hint">按压节奏 · {{metronomeBpm}} 次/分</view>
+        <view class="beat-hint">{{lang === 'en' ? 'Press rhythm · ' + metronomeBpm + ' per min' : '按压节奏 · ' + metronomeBpm + ' 次/分'}}</view>
       </block>
       <block wx:elif="{{isCountdown}}">
         <view class="count-circle">
           <text class="count-num">{{countText}}</text>
-          <text class="count-unit">秒</text>
+          <text class="count-unit">{{lang === 'en' ? 's' : '秒'}}</text>
         </view>
       </block>
     </view>
@@ -66,17 +66,17 @@
   <view class="action-area">
     <!-- 手动步骤：下一步 -->
     <block wx:if="{{isManual}}">
-      <button class="btn-primary btn-big" bindtap="onNext" wx:if="{{phase !== 'done'}}">下一步</button>
+      <button class="btn-primary btn-big" bindtap="onNext" wx:if="{{phase !== 'done'}}">{{lang === 'en' ? 'Next' : '下一步'}}</button>
     </block>
 
     <!-- 计时步骤：运行控制 -->
     <block wx:elif="{{phase !== 'done'}}">
       <view class="ctrl-row">
-        <button class="btn-ghost" bindtap="onPrev" wx:if="{{stepIndex > 0}}">上一步</button>
+        <button class="btn-ghost" bindtap="onPrev" wx:if="{{stepIndex > 0}}">{{lang === 'en' ? 'Back' : '上一步'}}</button>
         <button class="btn-primary btn-big" bindtap="onNext" wx:if="{{phase === 'running' || phase === 'paused'}}">
-          下一步
+          {{lang === 'en' ? 'Next' : '下一步'}}
         </button>
-        <button class="btn-primary" bindtap="onStart" wx:elif="{{phase === 'idle'}}">开始</button>
+        <button class="btn-primary" bindtap="onStart" wx:elif="{{phase === 'idle'}}">{{lang === 'en' ? 'Start' : '开始'}}</button>
       </view>
     </block>
   </view>
@@ -85,17 +85,17 @@
   <view class="done-mask" wx:if="{{phase === 'done'}}">
     <view class="done-card">
       <view class="done-icon">🎉</view>
-      <view class="done-title">恭喜你做的很好！</view>
-      <view class="done-cheer">你已经完成了「{{skill.name}}」的全部跟做练习</view>
+      <view class="done-title">{{lang === 'en' ? 'Well done!' : '恭喜你做的很好！'}}</view>
+      <view class="done-cheer">{{lang === 'en' ? 'You have completed every practice step of “' + skill.name + '”' : '你已经完成了「' + skill.name + '」的全部跟做练习'}}</view>
       <view class="done-points">
-        <view class="done-point-title">核心要点回顾</view>
+        <view class="done-point-title">{{lang === 'en' ? 'Key points to remember' : '核心要点回顾'}}</view>
         <view class="done-point" wx:for="{{skill.keyPoints}}" wx:key="*this">{{item}}</view>
       </view>
       <view class="done-warn" wx:if="{{skill.warnings.length}}">
-        <view class="done-point-title">⚠ 后续需要注意</view>
+        <view class="done-point-title">{{lang === 'en' ? '⚠ Watch out for' : '⚠ 后续需要注意'}}</view>
         <view class="done-point warn" wx:for="{{skill.warnings}}" wx:key="*this">{{item}}</view>
       </view>
-      <button class="btn-primary" bindtap="onGoHome">完成</button>
+      <button class="btn-primary" bindtap="onGoHome">{{lang === 'en' ? 'Done' : '完成'}}</button>
     </view>
   </view>
 

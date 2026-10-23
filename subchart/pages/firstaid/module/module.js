@@ -1,5 +1,5 @@
 // pages/module/module.js - 模块细分页（显示某模块下的技能）
-const { SKILLS, MODULES, getModuleSkills, getUserSkills } = require('../data/skills')
+const { SKILLS, MODULES, getModuleSkillsLocalized, getUserSkills, localizeSkills, getModules, categoryLabel } = require('../data/skills')
 
 const app = getApp();
 
@@ -9,6 +9,7 @@ Page({
   },
 
   data: {
+    lang: 'zh',
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     module: null,
     groups: [],       // 按原分类分组的技能
@@ -16,9 +17,14 @@ Page({
     fromSearch: false,
   },
 
+  _en() { return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en'; },
+
   onLoad(options) {
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en'
+    const lang = en ? 'en' : 'zh'
+    this.setData({ lang })
     const key = options.key || ''
-    const mod = MODULES.find(m => m.key === key)
+    const mod = getModules(lang).find(m => m.key === key)
     if (!mod) {
       wx.showToast({ title: '模块不存在', icon: 'none' })
       return
@@ -27,11 +33,12 @@ Page({
     const usrSkills = getUserSkills()
     const groups = mod.categories
       .map(name => ({
-        name,
-        items: SKILLS.filter(s => s.category === name).concat(usrSkills.filter(u => u.category === name))
+        name: categoryLabel(name, lang),
+        items: localizeSkills(SKILLS.filter(s => s.category === name), lang)
+          .concat(usrSkills.filter(u => u.category === name))
       }))
       .filter(g => g.items.length > 0)
-    const total = getModuleSkills(key).length
+    const total = getModuleSkillsLocalized(key, lang).length
     this.setData({ module: mod, groups, total })
     wx.setNavigationBarTitle({ title: mod.name })
   },

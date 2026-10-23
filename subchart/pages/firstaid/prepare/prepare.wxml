@@ -5,8 +5,8 @@
   <view class="fa-nav">
     <view class="fa-back" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">紧急照护指引</text>
-      <view class="header-title header-title-sub">{{skill.name}} · 开始前准备</view>
+      <text class="header-kicker">{{lang === 'en' ? 'Emergency care guide' : '紧急照护指引'}}</text>
+      <view class="header-title header-title-sub">{{skill.name}}{{lang === 'en' ? ' · Before you start' : ' · 开始前准备'}}</view>
     </view>
   </view>
 
@@ -15,8 +15,8 @@
   <view class="video-section" wx:if="{{video.hasVideo}}">
     <view class="video-head">
       <text class="video-head-icon">📺</text>
-      <text class="video-head-title">真人教学指导</text>
-      <text class="video-head-badge">视频</text>
+      <text class="video-head-title">{{lang === 'en' ? 'Real-person demo' : '真人教学指导'}}</text>
+      <text class="video-head-badge">{{lang === 'en' ? 'Video' : '视频'}}</text>
     </view>
     <video
       class="video-player"
@@ -28,16 +28,16 @@
       enable-play-gesture="{{false}}"
     ></video>
     <view class="video-ops">
-      <view class="video-op" bindtap="onUploadVideo">重新上传</view>
-      <view class="video-op video-op-danger" bindtap="onRemoveVideo">移除视频</view>
+      <view class="video-op" bindtap="onUploadVideo">{{lang === 'en' ? 'Replace' : '重新上传'}}</view>
+      <view class="video-op video-op-danger" bindtap="onRemoveVideo">{{lang === 'en' ? 'Remove video' : '移除视频'}}</view>
     </view>
   </view>
 
   <!-- 无视频：与跟做页一致，显示跟做视频站位（开发统一制作上传） -->
   <view class="train-video-ph" wx:else>
     <view class="tv-icon">📺</view>
-    <view class="tv-title">跟做视频</view>
-    <view class="tv-tip">专业团队统一制作 · 即将上线</view>
+    <view class="tv-title">{{lang === 'en' ? 'Follow-along video' : '跟做视频'}}</view>
+    <view class="tv-tip">{{lang === 'en' ? 'Produced by our team · coming soon' : '专业团队统一制作 · 即将上线'}}</view>
   </view>
 
   <!-- 技能头部（标题 + 描述） -->
@@ -48,37 +48,37 @@
 
   <!-- 开始时间提示（产后护理等） -->
   <view class="card section start-card" wx:if="{{skill.startAfter}}">
-    <view class="section-title start-title">🕐 什么时候可以开始</view>
+    <view class="section-title start-title">{{lang === 'en' ? '🕐 When can you start' : '🕐 什么时候可以开始'}}</view>
     <view class="start-text">{{skill.startAfter}}</view>
   </view>
 
   <!-- 开始前准备 -->
   <view class="card section">
-    <view class="section-title">开始前准备</view>
-    <view class="check-item">✓ 确保环境安全，避免二次伤害</view>
-    <view class="check-item">✓ 明确是否需拨打120 / 取AED</view>
-    <view class="check-item">✓ 让身边人协助，分工呼救</view>
+    <view class="section-title">{{lang === 'en' ? 'Before you start' : '开始前准备'}}</view>
+    <view class="check-item">{{lang === 'en' ? '✓ Make sure the scene is safe to avoid further injury' : '✓ 确保环境安全，避免二次伤害'}}</view>
+    <view class="check-item">{{lang === 'en' ? '✓ Decide whether to call 120 / fetch an AED' : '✓ 明确是否需拨打120 / 取AED'}}</view>
+    <view class="check-item">{{lang === 'en' ? '✓ Ask people nearby to help and share the calling' : '✓ 让身边人协助，分工呼救'}}</view>
   </view>
 
   <!-- 关键要点 -->
   <view class="card section">
-    <view class="section-title">关键要点</view>
+    <view class="section-title">{{lang === 'en' ? 'Key points' : '关键要点'}}</view>
     <view class="point-item" wx:for="{{skill.keyPoints}}" wx:key="*this">{{index + 1}}. {{item}}</view>
   </view>
 
   <!-- 重要警示 -->
   <view class="card section warn-card">
-    <view class="section-title warn-title">⚠ 重要警示</view>
+    <view class="section-title warn-title">{{lang === 'en' ? '⚠ Important warnings' : '⚠ 重要警示'}}</view>
     <view class="warn-item" wx:for="{{skill.warnings}}" wx:key="*this">• {{item}}</view>
   </view>
 
   <!-- 免责声明 -->
   <view class="disclaimer">
-    本应用用于日常学习与演练，不替代专业急救培训。紧急情况请立即拨打 120。
+    {{lang === 'en' ? 'This app is for daily learning and practice and does not replace professional first aid training. Call 120 in an emergency.' : '本应用用于日常学习与演练，不替代专业急救培训。紧急情况请立即拨打 120。'}}
   </view>
 
   <!-- 底部开始按钮 -->
   <view class="bottom-bar">
-    <button class="btn-primary btn-big" bindtap="onStart">开始跟做</button>
+    <button class="btn-primary btn-big" bindtap="onStart">{{lang === 'en' ? 'Start practice' : '开始跟做'}}</button>
   </view>
 </view>
