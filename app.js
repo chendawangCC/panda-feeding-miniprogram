@@ -136,6 +136,9 @@ App({
 
     // 处理从聊天链接/扫码进入的邀请码
     if (options && options.query) {
+      // 分享卡片使用 ?invite=CODE；先保存邀请码，由首页 onLoad 统一走「登录后再申请」流程
+      const shareInvite = options.query.invite || '';
+      if (shareInvite) this.globalData.pendingInviteCode = shareInvite.toString().trim().toUpperCase();
       const inviteCode = options.query.inviteCode || options.query.scene || options.query.code || '';
       if (inviteCode) {
         this.globalData.pendingInviteCode = inviteCode.toString().trim().toUpperCase();
@@ -499,9 +502,10 @@ App({
 
         // 使用自定义弹窗（样式统一）
         const pages = getCurrentPages();
-        const targetPage = pages.find(p => 
-          p.route === 'pages/plan/plan' || p.route === 'pages/index/index'
-        );
+        // 只使用当前可见页面弹自定义窗；若当前在协作页/其他页，则走下面的原生弹窗，
+        // 避免把弹窗写到栈底不可见的计划页上。
+        const curPage = pages[pages.length - 1];
+        const targetPage = (curPage && (curPage.route === 'pages/plan/plan' || curPage.route === 'pages/index/index')) ? curPage : null;
         if (targetPage) {
           targetPage._globalAlertCallback = {
             confirm: () => {
@@ -594,9 +598,10 @@ App({
 
         // 使用自定义弹窗（样式统一）
         const pages = getCurrentPages();
-        const targetPage = pages.find(p => 
-          p.route === 'pages/plan/plan' || p.route === 'pages/index/index'
-        );
+        // 只使用当前可见页面弹自定义窗；若当前在协作页/其他页，则走下面的原生弹窗，
+        // 避免把弹窗写到栈底不可见的计划页上。
+        const curPage = pages[pages.length - 1];
+        const targetPage = (curPage && (curPage.route === 'pages/plan/plan' || curPage.route === 'pages/index/index')) ? curPage : null;
         if (targetPage) {
           targetPage._globalAlertCallback = {
             confirm: () => {
@@ -914,7 +919,30 @@ App({
       // 首次登录：先引导开启麦克风，避免首次长按语音键时系统授权弹窗与录音面板叠加卡住
       setTimeout(() => { try { this.maybeAskVoiceAuth(); } catch (e) {} }, 1800);
     }
+    // 从分享链接进入但尚未登录：等资料设置完成、真正登录后，自动打开协作页的申请弹窗
+    if (this.globalData.user.logged && this.globalData.pendingInviteCode) {
+      this.openPendingInvite();
+    }
     return this.globalData.user;
+  },
+
+  /* 登录完成后消费分享邀请码：打开协作页，由其 onShow 自动弹出加入申请弹窗 */
+  openPendingInvite() {
+    const code = this.globalData.pendingInviteCode;
+    const user = this.globalData.user || {};
+    if (!code || !user.logged || !user.openid || this._inviteOpening) return;
+    this._inviteOpening = true;
+    setTimeout(() => {
+      this._inviteOpening = false;
+      try {
+        const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : [];
+        const cur = pages[pages.length - 1];
+        if (cur && cur.route === 'subchart/pages/collaboration/collaboration') return;
+        wx.navigateTo({ url: '/subchart/pages/collaboration/collaboration' });
+      } catch (e) {
+        console.log('[openPendingInvite] navigate fail', e && e.message);
+      }
+    }, 650);
   },
   /* 首次登录引导开启麦克风：只在从未询问过时弹一次，
      用户同意后直接调起系统授权，之后长按语音键不会再弹系统弹窗 */

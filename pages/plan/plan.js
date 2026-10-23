@@ -3731,8 +3731,8 @@ Page({
                 this.buildTimeline();
                 wx.showToast({ title: '登录成功', icon: 'success' });
               });
-              // 无宝宝：引导添加宝宝
-              if (!((app.globalData && app.globalData.babies) || []).length) {
+              // 无宝宝：正常引导添加宝宝；从邀请链接进入时优先完成加入家庭，不叠加添加宝宝引导
+              if (!((app.globalData && app.globalData.babies) || []).length && !app.globalData.pendingInviteCode) {
                 setTimeout(() => {
                   this.setData({
                     guide: { visible: true, title: '添加宝宝', desc: '添加宝宝后即可开始记录喂养点滴', primary: '去添加', mode: 'baby' }
@@ -3864,8 +3864,8 @@ Page({
     this.syncUserToCloud(nickname, avatar, '');
     this.setData({ user: user, profileVisible: false });
     wx.showToast({ title: '资料已保存', icon: 'success' });
-    // 首次登录成功且无宝宝：自动跳转添加宝宝（完成引导闭环）
-    if (!((app.globalData && app.globalData.babies) || []).length) {
+    // 首次登录成功且无宝宝：正常跳转添加宝宝；从邀请链接进入时先完成加入家庭
+    if (!((app.globalData && app.globalData.babies) || []).length && !app.globalData.pendingInviteCode) {
       setTimeout(() => {
         wx.navigateTo({ url: '/pages/baby-edit/baby-edit?add=1' });
       }, 600);

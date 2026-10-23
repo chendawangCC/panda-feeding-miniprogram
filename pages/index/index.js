@@ -105,24 +105,22 @@ Page({
   },
 
 
-  // 处理分享邀请码：加入云端家庭并同步（多家庭并存：已有自己的家庭也能加入亲友家庭，join 云端幂等）
+  // 处理分享邀请码：不自动提交申请；先要求登录，登录后进入协作页弹出申请弹窗
   handleInvite(code) {
-    const cs = require('../../utils/cloud-sync.js');
-    const user = wx.getStorageSync('panda_user') || {};
-    cs.joinFamily(code, (user.logged && user.nickname) ? user.nickname : '去登录或注册', (user.logged && user.avatar) ? user.avatar : '/images/brand-logo.png').then(r => {
-      if (r.already) {
-        wx.showToast({ title: '你已在该家庭中', icon: 'none' });
-      } else if (r.applying) {
-        wx.showToast({ title: '已申请加入「' + (r.name || '家庭') + '」，等待主账户审核', icon: 'none' });
-      } else {
-        wx.showToast({ title: '已加入「' + (r.name || '家庭') + '」', icon: 'success' });
-      }
-      // 刷新家庭权限缓存与云端数据
-      cs.getMyFamily();
-      cs.pull();
-    }).catch(e => {
-      wx.showToast({ title: e.message || '加入失败，请确认邀请码', icon: 'none' });
-    });
+    code = String(code || '').trim().toUpperCase();
+    if (!code) return;
+    if (app.globalData) app.globalData.pendingInviteCode = code;
+    const user = app.getUser() || {};
+    if (!user.logged || !user.openid) {
+      app.globalData.pendingLogin = true;
+      wx.showToast({ title: '请先登录账号后再加入家庭', icon: 'none' });
+      wx.switchTab({ url: '/pages/plan/plan' });
+      return;
+    }
+    const pages = getCurrentPages();
+    const cur = pages[pages.length - 1];
+    if (cur && cur.route === 'subchart/pages/collaboration/collaboration') return;
+    wx.navigateTo({ url: '/subchart/pages/collaboration/collaboration' });
   },
   onUnload() {
     if (this.recorderTimer) clearInterval(this.recorderTimer);
@@ -239,6 +237,8 @@ Page({
   guideFirst() {
     const key = 'panda_guide_done';
     if (wx.getStorageSync(key)) return;
+    // 分享邀请进入时不要叠加登录/添加宝宝引导，先完成加入家庭流程
+    if (app.globalData && app.globalData.pendingInviteCode) return;
     wx.setStorageSync(key, true);
     const u = app.getUser() || {};
     if (u.logged) {

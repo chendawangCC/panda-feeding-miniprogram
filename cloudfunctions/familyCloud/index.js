@@ -237,8 +237,15 @@ exports.main = async (event) => {
         const mine = await db.collection(FAM).where({ ownerOpenid: openid }).get().catch(() => ({ data: [] }));
         const pending = [];
         (mine.data || []).forEach(fam => {
-          // pendingApplications 存储在 data 字段中，不是顶层
-          const pendingList = (fam.data && fam.data.pendingApplications) || fam.pendingApplications || [];
+          // 新申请写在顶层 pendingApplications；兼容旧的 data.pendingApplications 结构，两者合并去重
+          const topPending = Array.isArray(fam.pendingApplications) ? fam.pendingApplications : [];
+          const nestedPending = fam.data && Array.isArray(fam.data.pendingApplications) ? fam.data.pendingApplications : [];
+          const pendingList = [];
+          topPending.concat(nestedPending).forEach(m => {
+            if (m && !pendingList.some(x => x.openid === m.openid && (x.appliedAt || 0) === (m.appliedAt || 0))) {
+              pendingList.push(m);
+            }
+          });
           pendingList.forEach(m => {
             if (m && m.openid !== openid && (m.status || 'pending') !== 'rejected') {
               pending.push({
