@@ -14,19 +14,11 @@
  *   diagnose  仅做体检：返回订阅记录、当天命中的提醒、模板字段配置、发送结果或原始错误
  *   send      立即按当前数据推一次（调试用，同样的去重规则）
  *
- * 模板字段配置（关键）：
- *   字段名必须和小程序后台「订阅消息 → 我的模板」里的关键词一致（如 thing1 / time2 / phrase3）。
- *   在云开发控制台建集合 panda_push_config，新建文档 _id = 'templates'，内容示例：
- *   {
- *     "_id": "templates",
- *     "vaccine":    { "tmplId": "模板ID", "page": "pages/plan/plan",
- *                     "fields": { "thing1": "name", "time2": "date", "thing3": "note" } },
- *     "supplement": { "tmplId": "模板ID", "page": "pages/plan/plan",
- *                     "fields": { "thing1": "name", "time2": "date", "thing3": "note" } },
- *     "stock":      { "tmplId": "模板ID", "page": "pages/plan/plan",
- *                     "fields": { "thing1": "name", "number2": "value", "thing3": "note" } }
- *   }
- *   fields 的右值可用变量：name / date / note / value
+ * 模板字段配置：
+ *   字段名已按微信后台「订阅消息 → 我的模板 → 详情」逐条核对并内置在 DEFAULT_FIELDS，
+ *   正常情况下不需要额外建集合即可发送。若后台换过模板、字段名变了，再建集合
+ *   panda_push_config（_id = 'templates'）覆盖即可，格式见同目录 panda_push_config.json。
+ *   fields 的右值可用变量：name / date / note / value / extra / food / count
  *
  * 一次性订阅规则：用户每授权一次，对应模板只能推 1 条；发送成功后本函数会把该模板
  * 从 panda_subscriptions 的 templateIds 里移除，用户需再点一次「去开启」才会继续收到。
@@ -43,6 +35,7 @@ const METAS = 'panda_baby_meta';
 const RECORDS = 'panda_records';
 const LOG = 'panda_push_log';
 const CONF = 'panda_push_config';
+const INVENTORY = 'panda_inventory';
 
 /** 与小程序端 utils/cloud-sync.js 的 REMIND_TEMPLATES 保持一致 */
 const TMPL = {
@@ -52,14 +45,22 @@ const TMPL = {
   milk: '0HAU94XpzyNdezbODf77pPypaEeqyNFsiGwE4TWZmpM'
 };
 
-/** 默认字段映射（拿不准时先用这个跑 diagnose 看微信返回的真实报错） */
+/**
+ * 默认字段映射：全部按微信公众平台「订阅消息 → 我的模板 → 详情」里抄到的真实字段名
+ *  疫苗倒计时提醒   ：下次接种时间 {{time7}} · 还剩天数 {{number3}} · 疫苗 {{thing1}}
+ *  宝宝喂养提醒     ：温馨提示 {{thing5}} · 距离上次 {{thing6}}
+ *  库存不足提醒     ：库存信息 {{thing1}} · 物料名称 {{thing3}} · 当前库存数 {{number13}}
+ *  保质期到期提醒   ：过期日期 {{time16}} · 食物名称 {{thing6}} · 物品名称 {{thing5}} · 剩余天数 {{number2}}
+ * 如后台模板被删除重选导致字段变化，改这个对象或在 panda_push_config 里覆盖即可。
+ */
 const DEFAULT_FIELDS = {
-  vaccine: { thing1: 'name', time2: 'date', thing3: 'note' },
-  supplement: { thing1: 'name', time2: 'date', thing3: 'note' },
-  stock: { thing1: 'name', number2: 'value', thing3: 'note' }
+  vaccine: { time7: 'date', number3: 'value', thing1: 'name' },
+  supplement: { thing5: 'note', thing6: 'extra' },
+  stock: { thing1: 'note', thing3: 'name', number13: 'value' },
+  milk: { time16: 'date', thing6: 'food', thing5: 'name', number2: 'value' }
 };
 
-const TYPE_CN = { vaccine: '疫苗提醒', supplement: '营养品提醒', stock: '库存/保质期提醒', milk: '母乳到期提醒' };
+const TYPE_CN = { vaccine: '疫苗提醒', supplement: '营养品提醒', stock: '库存不足提醒', milk: '保质期到期提醒' };
 
 const FREQ_DAYS = { '每日': 1, '每2天': 2, '每3天': 3, '每周': 7, '每两周': 14 };
 
@@ -118,9 +119,10 @@ function buildData(fields, vars) {
     if (prefix === 'number') {
       const n = Number(raw);
       out[key] = isNaN(n) ? 0 : n;
-    } else if (prefix === 'time') {
-      const s = String(raw);
-      out[key] = /^\d{4}-\d{2}-\d{2}$/.test(s) ? s + ' 08:00' : s;
+    } else if (prefix === 'time' || prefix === 'date') {
+      // 微信 time/date 类型要求「年月日」，例：2026年11月5日
+      const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(String(raw));
+      out[key] = m ? (Number(m[1]) + '年' + Number(m[2]) + '月' + Number(m[3]) + '日') : String(raw);
     } else if (prefix === 'phrase') {
       out[key] = String(raw).slice(0, 5);
     } else if (prefix === 'amount' || prefix === 'money') {
@@ -147,13 +149,12 @@ async function collectReminders(openid, familyId) {
   const babies = [];
   const metas = [];
   const records = [];
+  const inventory = [];
   for (const owner of owners) {
-    const b = await safeGet(BABIES, { ownerOpenid: owner });
-    babies.push(...b);
-    const m = await safeGet(METAS, { ownerOpenid: owner });
-    metas.push(...m);
-    const r = await safeGet(RECORDS, { ownerOpenid: owner });
-    records.push(...r);
+    babies.push(...(await safeGet(BABIES, { ownerOpenid: owner })));
+    metas.push(...(await safeGet(METAS, { ownerOpenid: owner })));
+    records.push(...(await safeGet(RECORDS, { ownerOpenid: owner })));
+    inventory.push(...(await safeGet(INVENTORY, { ownerOpenid: owner })));
   }
 
   const babyNameOf = (id) => {
@@ -161,38 +162,45 @@ async function collectReminders(openid, familyId) {
     return (b && b.data && b.data.name) || '宝宝';
   };
 
-  const vaccine = [];
-  const supplement = [];
-  const stock = [];
+  const vaccine = [];    // 疫苗倒计时提醒
+  const supplement = []; // 宝宝喂养提醒（温馨提示/距离上次）
+  const stock = [];      // 库存不足提醒
+  const milk = [];       // 保质期到期提醒
 
+  // 1) 疫苗：待接种，今天或未来 3 天内到期
   metas.forEach(meta => {
     const d = meta.data || {};
-    const baby = babyNameOf(meta._id);
-    // 1) 疫苗：待接种，且今天或未来 3 天内到期
     (d.vaccinePlan || []).forEach(v => {
       if (!v || v.status !== 'pending') return;
-      const due = v.doneDate || v.dueDate;
+      const due = v.dueDate || v.doneDate;
       if (!due) return;
       const gap = diffDays(today, due);
       if (gap < 0 || gap > 3) return;
-      const dose = v.dose ? v.dose + '剂' : '';
+      const dose = v.dose ? (' 第' + v.dose + '剂') : '';
       vaccine.push({
-        name: (v.group || v.short || '疫苗') + dose + ' 应种',
+        name: String((v.group || v.short || '疫苗') + dose).slice(0, 20),
         date: due,
         note: gap === 0 ? '今天应接种' : ('还有 ' + gap + ' 天'),
         value: gap
       });
     });
-    // 2) 库存 / 保质期 / 保修期：shelfWarnings 里今天到期的
+  });
+
+  // 2) 保质期 / 保修期：今天到期，或已过期 3 天内
+  metas.forEach(meta => {
+    const d = meta.data || {};
+    const baby = babyNameOf(meta._id);
     (d.shelfWarnings || []).forEach(w => {
       if (!w || !w.date) return;
-      const gap = diffDays(today, w.date);
-      if (gap !== 0) return;
-      stock.push({
-        name: String(w.name || '物品').slice(0, 20),
+      const gap = diffDays(today, w.date); // date - 今天
+      if (gap > 0 || gap < -3) return;
+      const nm = String(w.name || '物品');
+      milk.push({
+        name: nm.slice(0, 20),
+        food: nm.slice(0, 20),
         date: w.date,
-        note: (w.tip ? String(w.tip) : (baby + ' 今天到期')).slice(0, 20),
-        value: 1
+        note: gap === 0 ? (baby + ' 今天到期') : ('已过期 ' + Math.abs(gap) + ' 天'),
+        value: Math.max(0, gap)
       });
     });
   });
@@ -208,15 +216,47 @@ async function collectReminders(openid, familyId) {
       next = addDays(r.date, days);
     }
     if (next !== today) return;
+    const nm = String(r.suppName || r.supplement || '营养品');
+    const lastDate = r.suppLastDate || r.date || '';
+    const gap = lastDate ? Math.max(0, diffDays(lastDate, today)) : 0;
     supplement.push({
-      name: String(r.suppName || r.supplement || '营养品').slice(0, 20),
+      name: nm.slice(0, 20),
       date: today,
-      note: '今天需要补充',
+      note: ('该补充 ' + nm).slice(0, 20),
+      extra: lastDate ? ('距上次 ' + gap + ' 天') : '今天该补充了',
       value: 1
     });
   });
 
-  return { vaccine, supplement, stock, babies: babies.length, records: records.length };
+  // 4) 库存不足：奶粉（配方奶）低于 2 罐；其他耗材低于等于 10 件
+  const DEVICE_RE = /吸奶器|消毒器|温奶器|摇奶器|辅食机|料理机|恒温壶|烘干机|暖奶器/;
+  const groups = {};
+  inventory.forEach(doc => {
+    const it = (doc && doc.data) || {};
+    if (!it.name) return;
+    const key = it.name + '|' + (it.size || '');
+    if (!groups[key]) groups[key] = { name: it.name, size: it.size || '', unit: it.unit || '件', count: 0 };
+    groups[key].count += Number(it.count) || 0;
+  });
+  Object.keys(groups).forEach(k => {
+    const g = groups[k];
+    const isFormula = /奶粉|配方奶|配方牛奶/.test(g.name) && !DEVICE_RE.test(g.name);
+    const th = isFormula ? 2 : 10;
+    if (g.count >= th) return;
+    const label = g.name + (g.size ? '（' + g.size + '）' : '');
+    stock.push({
+      name: label.slice(0, 20),
+      note: (isFormula
+        ? ('仅剩 ' + g.count + ' 罐 · 低于 ' + th + ' 罐')
+        : ('仅剩 ' + g.count + g.unit + ' · 低于 ' + th + g.unit)).slice(0, 20),
+      value: g.count
+    });
+  });
+
+  return {
+    vaccine, supplement, stock, milk,
+    stat: { babies: babies.length, records: records.length, inventory: inventory.length }
+  };
 }
 
 async function alreadySent(openid, type, dedupeKey) {
@@ -286,14 +326,19 @@ async function pushForSubscription(sub, cfg, opts) {
 
   const rem = await collectReminders(openid, familyId);
   if (opts && opts.diagnose) {
-    detail.hit = { vaccine: rem.vaccine.length, supplement: rem.supplement.length, stock: rem.stock.length };
-    detail.sample = {
-      vaccine: rem.vaccine[0], supplement: rem.supplement[0], stock: rem.stock[0]
+    detail.hit = {
+      vaccine: rem.vaccine.length, supplement: rem.supplement.length,
+      stock: rem.stock.length, milk: rem.milk.length
     };
+    detail.sample = {
+      vaccine: rem.vaccine[0] || null, supplement: rem.supplement[0] || null,
+      stock: rem.stock[0] || null, milk: rem.milk[0] || null
+    };
+    detail.stat = rem.stat;
     detail.authorizedTemplates = sub.templateIds || [];
   }
 
-  const types = ['vaccine', 'supplement', 'stock'];
+  const types = ['vaccine', 'supplement', 'stock', 'milk'];
   for (const type of types) {
     const list = rem[type] || [];
     if (!list.length) continue;
@@ -308,7 +353,9 @@ async function pushForSubscription(sub, cfg, opts) {
 
     const vars = Object.assign({}, first, {
       name: first.name,
-      note: list.length > 1 ? (first.note + '，共 ' + list.length + ' 项') : first.note,
+      note: list.length > 1 ? (first.note + '，共 ' + list.length + ' 项').slice(0, 20) : first.note,
+      food: first.food || first.name || '',
+      extra: first.extra || '',
       count: list.length
     });
     const data = buildData(t.fields, vars);

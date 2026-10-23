@@ -1,0 +1,39 @@
+{
+  "_id": "templates",
+  "vaccine": {
+    "tmplId": "gRiBoOCq_rVNKHiPHNbBSO4vfJIOAgh9Rdoj2prJeDE",
+    "page": "pages/plan/plan",
+    "fields": {
+      "time7": "date",
+      "number3": "value",
+      "thing1": "name"
+    }
+  },
+  "supplement": {
+    "tmplId": "j5ugla1ONKIwJmm0WJaOUO6BYT7Lvn5cv880cJmjRKc",
+    "page": "pages/plan/plan",
+    "fields": {
+      "thing5": "note",
+      "thing6": "extra"
+    }
+  },
+  "stock": {
+    "tmplId": "Ed2TJf1e7tw2iTQLZM0zPVvZnJvTO48TxqwTngYzxug",
+    "page": "pages/plan/plan",
+    "fields": {
+      "thing1": "note",
+      "thing3": "name",
+      "number13": "value"
+    }
+  },
+  "milk": {
+    "tmplId": "0HAU94XpzyNdezbODf77pPypaEeqyNFsiGwE4TWZmpM",
+    "page": "pages/plan/plan",
+    "fields": {
+      "time16": "date",
+      "thing6": "food",
+      "thing5": "name",
+      "number2": "value"
+    }
+  }
+}
