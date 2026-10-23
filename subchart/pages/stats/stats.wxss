@@ -238,6 +238,15 @@
   border-radius: 8rpx;
   opacity: 0.85; /* 重叠时半透明叠放，仍可分辨 */
 }
+/* 单点记录渲染成细线，加透明热区保证可点（视觉不变） */
+.tl-bar::after {
+  content: '';
+  position: absolute;
+  left: -4rpx;
+  right: -4rpx;
+  top: -14rpx;
+  bottom: -14rpx;
+}
 .tl-bar-hover {
   opacity: 1;
 }

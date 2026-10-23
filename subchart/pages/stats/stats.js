@@ -527,7 +527,7 @@ Page({
       if (di < 0) return;
       const meta = this.typeMeta(r);
       if (!meta) return;
-      // 时间段记录 → 色块；仅时间点记录 → 圆点
+      // 时间段记录 → 按实际时长的圆角块；仅时间点的记录 → 圆角细线
       const seg = this.recordSegment(r);
       const slot = 100 / Math.max(1, days.length)
       const barW = 8
@@ -549,7 +549,7 @@ Page({
     return bars;
   },
 
-  /* 记录时间段：睡眠/亲喂/吸奶/洗澡有起止 → 色块；其他仅时间点 → 圆点 */
+  /* 记录时间段：睡眠/亲喂/吸奶/洗澡有起止 → 按实际时长的圆角块；其他仅时间点 → 圆角细线 */
   recordSegment(r) {
     const toM = (t) => {
       const p = String(t || '').split(':');
@@ -568,20 +568,26 @@ Page({
     return { start: s, min };
   },
 
-  /* 竖轴拉伸：按 hourUnit（每小时rpx）计算圆角时间块位置，横向不缩放 */
+  /* 竖轴拉伸：按 hourUnit（每小时 rpx）计算位置与高度，横向不缩放
+   *  - 有起止时间的记录（亲喂/吸奶/睡眠/洗澡）：圆角块高度 = 实际时长 × 每小时高度，不再设固定高度
+   *  - 单点记录（喂养/换尿布/体温/喝水/辅食等）：在该时间刻度上画一条圆角细线
+   */
   applyBarLayout(bars, unit) {
     const u = unit || this.data.hourUnit || 25;
+    const LINE_H = 8;   // 单点记录的圆角线厚度（rpx）
+    const MIN_SEG = 4;  // 极短时长（如 1 分钟）也保留最小可见厚度
     bars.forEach(b => {
       if (b.isPoint) {
-        // 单点记录也做成圆角时间块（固定高度，居中于该时间刻度）
         const m = this.toMinutes(b.time);
-        b.hRpx = 26;
-        b.bottomRpx = Math.round(m / 60 * u + u / 2 - 13);
+        b.hRpx = LINE_H;
+        b.bottomRpx = Math.round(m / 60 * u + u / 2 - LINE_H / 2);
+        b.isLine = true;
       } else {
         b.bottomRpx = Math.round(b.startMin / 60 * u + u / 2);
-        b.hRpx = Math.max(14, Math.round(b.hMin / 60 * u));
+        // 高度完全由实际时长决定：时长越长块越高，随双指放大同步变高
+        b.hRpx = Math.max(MIN_SEG, Math.round(b.hMin / 60 * u));
+        b.isLine = b.hRpx <= 10;
       }
-      b.circle = false;
     });
   },
 
