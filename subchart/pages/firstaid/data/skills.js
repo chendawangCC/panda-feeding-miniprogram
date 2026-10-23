@@ -644,7 +644,7 @@ const SKILLS = [
     ],
   },
   {
-    id: 'baby_fever',
+    id: 'baby_fever_guide',
     name: '发烧降温处理',
     icon: '/subchart/pages/firstaid/icons/fever_seizure.png',
     category: '宝宝护理',
@@ -1184,6 +1184,7 @@ const VIDEO_MAP = {
   baby_burp:            { url: '', title: '婴儿拍嗝/吐奶护理·真人教学', source: '' },
   baby_bath:            { url: '', title: '婴儿洗澡护理·真人教学', source: '' },
   baby_fever:           { url: '', title: '婴儿发热护理·真人教学', source: '' },
+  baby_fever_guide:     { url: '', title: '发烧降温处理·真人教学', source: '' },
   postpartum_kegel:     { url: '', title: '家庭凯格尔训练·真人教学', source: '' },
   postpartum_glute:     { url: '', title: '产后提臀训练·真人教学', source: '' },
   postpartum_abs:       { url: '', title: '产后收腹训练·真人教学', source: '' },

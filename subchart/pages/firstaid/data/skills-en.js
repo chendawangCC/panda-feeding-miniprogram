@@ -594,7 +594,7 @@ module.exports = [
     ]
   },
   {
-    id: 'baby_fever',
+    id: 'baby_fever_guide',
     name: 'Fever Management',
     short: 'Low & High Fever',
     description: 'Physical cooling for low fever, antipyretics for high fever with a dosing guide, plus warning signs — cool safely, never bundle up.',
