@@ -481,7 +481,16 @@ exports.main = async (event) => {
           return ok({ dissolved: true });
         }
         fam.members = (fam.members || []).filter(m => m.openid !== openid);
-        await db.collection(FAM).doc(familyId).update({ data: { members: fam.members, updatedAt: Date.now() } });
+        // 同时撤销该成员可能遗留的待审核申请，避免创建者侧留下鬼影申请
+        const pendingApplications = (fam.pendingApplications || []).filter(m => !m || m.openid !== openid);
+        const patch = { members: fam.members, pendingApplications, updatedAt: Date.now() };
+        const nestedPending = fam.data && fam.data.pendingApplications;
+        if (Array.isArray(nestedPending)) {
+          patch.data = Object.assign({}, fam.data, {
+            pendingApplications: nestedPending.filter(m => !m || m.openid !== openid)
+          });
+        }
+        await db.collection(FAM).doc(familyId).update({ data: patch });
         // 清理该成员的订阅登记
         await db.collection(SUB).where({ familyId, openid }).remove().catch(() => {});
         return ok({});

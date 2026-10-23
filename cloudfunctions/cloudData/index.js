@@ -249,8 +249,12 @@ async function doPull(openid) {
     data.measures = data.measures.concat(await getColl(COLLS.measures, { babyId: bid }));
     data.tombs = data.tombs.concat(await getColl(COLLS.tombs, { babyId: bid }));
   }
-  data.records = data.records.concat(await getColl(COLLS.records, { ownerOpenid: openid }));
-  data.measures = data.measures.concat(await getColl(COLLS.measures, { ownerOpenid: openid }));
+  // 仅补拉历史无 babyId 的本人数据；有 babyId 的共享记录必须按可见宝宝授权返回，
+  // 否则亲友退出家庭后仍能通过 ownerOpenid 看到自己曾在共享宝宝下录入的记录。
+  const legacyRecords = await getColl(COLLS.records, { ownerOpenid: openid });
+  const legacyMeasures = await getColl(COLLS.measures, { ownerOpenid: openid });
+  data.records = data.records.concat((legacyRecords || []).filter(r => r && !r.babyId));
+  data.measures = data.measures.concat((legacyMeasures || []).filter(m => m && !m.babyId));
   // 库存耗材：按宝宝分账；同一宝宝的库存由家庭成员共享
   const fams = await myFamilies(openid);
   const invOwners = [openid];
@@ -503,32 +507,77 @@ exports.main = async (event) => {
       return ok({ deleted: result });
     }
 
-    // ---- 注销账号：永久删除本人全部云端数据，再登录即全新账号 ----
+    // ---- 注销账号：永久删除本人账号与本人宝宝的云端数据，再登录即全新账号 ----
+    // 注意：亲友在「创建者的宝宝」下录入的喂养记录、库存、疫苗、测量属于共享数据，
+    // 必须保留给创建者；不能按 ownerOpenid 一刀切删除。
     if (action === 'deleteAccount') {
-      // 1) 删除本人名下所有业务集合数据（分页逐条删）
-      for (const name of COLLECTION_NAMES) {
-        let guard = 0;
-        while (guard++ < 50) {
-          const r = await db.collection(name).where({ ownerOpenid: openid }).limit(100).get().catch(() => ({ data: [] }));
-          if (!r.data || !r.data.length) break;
-          for (const d of r.data) { await db.collection(name).doc(d._id).remove().catch(() => {}); }
-          if (r.data.length < 100) break;
+      // 1) 先找出本人创建的宝宝；只删除这些宝宝名下的业务数据
+      const ownBabies = await getColl(COLLS.babies, { ownerOpenid: openid });
+      const ownBabyIds = {};
+      (ownBabies || []).forEach(b => { if (b && b._id) ownBabyIds[b._id] = 1; });
+
+      const businessCols = [COLLS.metas, COLLS.records, COLLS.inventory, COLLS.measures, COLLS.vaccines, COLLS.tombs];
+      const ownIds = Object.keys(ownBabyIds);
+      for (const name of businessCols) {
+        // 本人宝宝名下的数据全部删除（包括其他家庭成员写入的），避免留下孤儿数据
+        for (const bed of ownIds) {
+          const docs = await getColl(name, { babyId: bed });
+          for (const d of (docs || [])) {
+            if (d && d._id) await db.collection(name).doc(d._id).remove().catch(() => {});
+          }
+          // baby_meta 旧结构可能没有 babyId，再用 _id 删除一次
+          if (name === COLLS.metas) await db.collection(name).doc(bed).remove().catch(() => {});
+        }
+        // 历史无 babyId 的本人数据
+        const legacy = await getColl(name, { ownerOpenid: openid });
+        for (const d of (legacy || [])) {
+          if (!d || !d._id || d.babyId) continue;
+          // 旧 meta 没有 babyId 时，_id 就是宝宝 id；共享宝宝的 meta 必须保留
+          if (name === COLLS.metas && !ownBabyIds[d._id]) continue;
+          await db.collection(name).doc(d._id).remove().catch(() => {});
         }
       }
-      // 2) 家庭：本人是创建者 → 解散家庭（closed）；本人是成员 → 从成员列表移除
+
+      // 2) 删除本人创建的宝宝档案
+      for (const b of (ownBabies || [])) {
+        if (b && b._id) await db.collection(COLLS.babies).doc(b._id).remove().catch(() => {});
+      }
+
+      // 3) 家庭：创建者 → 解散；成员 → 移除；待审核申请 → 一并撤销
+      // 直接把家庭集合读一遍再判断，避免 members 数组索引缺失时漏掉成员/申请。
       const famCol = db.collection('panda_families');
-      const mineAsOwner = await famCol.where({ ownerOpenid: openid }).get().catch(() => ({ data: [] }));
-      for (const f of (mineAsOwner.data || [])) {
-        await famCol.doc(f._id).update({ data: { closed: true }, closed: true }).catch(() => {});
+      const allFams = await getColl('panda_families', { _id: _.exists(true) }).catch(() => []);
+      for (const f of (allFams || [])) {
+        if (!f || !f._id) continue;
+        if (f.ownerOpenid === openid) {
+          // 创建者注销 = 解散家庭；成员和订阅一起清理
+          await famCol.doc(f._id).remove().catch(() => {});
+          await db.collection('panda_subscriptions').where({ familyId: f._id }).remove().catch(() => {});
+          continue;
+        }
+        const topPending = f.pendingApplications || [];
+        const nestedPending = (f.data && f.data.pendingApplications) || [];
+        const isMember = (f.members || []).some(m => m && m.openid === openid);
+        const inTopPending = topPending.some(m => m && m.openid === openid);
+        const inNestedPending = nestedPending.some(m => m && m.openid === openid);
+        if (!isMember && !inTopPending && !inNestedPending) continue;
+        const patch = {};
+        if (isMember) patch.members = (f.members || []).filter(m => !m || m.openid !== openid);
+        if (inTopPending) patch.pendingApplications = topPending.filter(m => !m || m.openid !== openid);
+        if (inNestedPending) {
+          patch.data = Object.assign({}, f.data, {
+            pendingApplications: nestedPending.filter(m => !m || m.openid !== openid)
+          });
+        }
+        await famCol.doc(f._id).update({ data: patch }).catch(() => {});
       }
-      const mineAsMember = await famCol.where({ members: _.elemMatch({ openid }) }).get().catch(() => ({ data: [] }));
-      for (const f of (mineAsMember.data || [])) {
-        const members = (f.members || []).filter(m => m.openid !== openid);
-        await famCol.doc(f._id).update({ data: { members }, members }).catch(() => {});
-      }
-      // 3) 删除 users 集合里的用户记录（重新登录 = 新用户）
+
+      // 4) 清理本人订阅登记、推送日志、用户资料
+      await db.collection('panda_subscriptions').where({ openid }).remove().catch(() => {});
+      await db.collection('panda_push_log').where({ openid }).remove().catch(() => {});
+      await db.collection('panda_users').where({ openid }).remove().catch(() => {});
       await db.collection('users').where({ openid }).remove().catch(() => {});
-      return ok({ deleted: true });
+      return ok({ deleted: true, ownBabies: Object.keys(ownBabyIds).length });
     }
     return fail('未知 action: ' + action);
   } catch (e) {
