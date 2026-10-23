@@ -5,7 +5,7 @@
   <view class="page-header-back">
     <view class="back-btn" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">{{lang === 'en' ? ((baby.name || 'Unnamed baby') + "'s feeding stock") : ((baby.name || '未命名宝宝') + '的喂养库存管理')}}</text>
+      <text class="header-kicker">{{lang === 'en' ? ((baby.name || 'Unnamed baby') + '\u2019s feeding stock') : ((baby.name || '未命名宝宝') + '的喂养库存管理')}}</text>
       <view class="header-title header-title-sub">{{lang === 'en' ? 'Feeding Station' : '喂养台'}}</view>
     </view>
   </view>
@@ -182,10 +182,10 @@
       <view class="gd-reason">💡 {{goodsDetail.reasonText}}</view>
       <view class="gd-price">
         <text class="gd-price-label">{{lang === 'en' ? 'Reference price' : '参考价格'}}</text>
-        <text class="gd-price-val">{{goodsDetail.price || {{lang === 'en' ? 'Coming soon' : '待上架'}}}}</text>
+        <text class="gd-price-val">{{goodsDetail.price || (lang === 'en' ? 'Coming soon' : '待上架')}}</text>
       </view>
       <view class="gd-actions">
-        <view class="gd-btn ghost {{goodsDetail.faved ? 'on' : ''}}" bindtap="toggleGoodsFav">{{goodsDetail.faved ? {{lang === 'en' ? 'Following' : '已关注'}} : {{lang === 'en' ? 'Follow' : '加入关注'}}}}</view>
+        <view class="gd-btn ghost {{goodsDetail.faved ? 'on' : ''}}" bindtap="toggleGoodsFav">{{goodsDetail.faved ? (lang === 'en' ? 'Following' : '已关注') : (lang === 'en' ? 'Follow' : '加入关注')}}</view>
         <view class="gd-btn solid" bindtap="toggleGoodsFav">{{lang === 'en' ? 'Buy now' : '前往购买'}}</view>
       </view>
       <text class="gd-tip">{{lang === 'en' ? 'The shop is coming soon — you will be able to buy directly here' : '橱窗功能即将上线，届时可直接购买，敬请期待'}}</text>
@@ -195,7 +195,7 @@
   <view class="bottom-space"></view>
 
   <!-- ==================== 耗材 新增/编辑 弹窗 ==================== -->
-  <dialog visible="{{stockDialog.visible}}" title="{{stockDialog.id ? {{lang === 'en' ? 'Edit Item' : '编辑物品'}} : {{lang === 'en' ? 'Add Item' : '新增物品'}}}}" kicker="{{lang === 'en' ? 'Manage baby item stock' : '管理宝宝用品库存'}}" bind:close="closeStockDialog">
+  <dialog visible="{{stockDialog.visible}}" title="{{stockDialog.id ? (lang === 'en' ? 'Edit Item' : '编辑物品') : (lang === 'en' ? 'Add Item' : '新增物品')}}" kicker="{{lang === 'en' ? 'Manage baby item stock' : '管理宝宝用品库存'}}" bind:close="closeStockDialog">
     <view class="form-body">
       <view class="form-row">
         <text class="form-label">{{lang === 'en' ? 'Name' : '名称'}}</text>
@@ -212,7 +212,7 @@
       <view class="form-row">
         <text class="form-label">{{lang === 'en' ? 'Unit' : '单位'}}</text>
         <picker mode="selector" range="{{unitLabelOptions}}" value="{{unitIndex}}" bindchange="onStockUnit">
-          <view class="form-input picker">{{stockDialog.unit ? (lang === 'en' ? unitMap[stockDialog.unit] || stockDialog.unit : stockDialog.unit) : {{lang === 'en' ? 'Select unit' : '选择单位'}}}} ▾</view>
+          <view class="form-input picker">{{stockDialog.unit ? (lang === 'en' ? unitMap[stockDialog.unit] || stockDialog.unit : stockDialog.unit) : (lang === 'en' ? 'Select unit' : '选择单位')}} ▾</view>
         </picker>
       </view>
       <!-- 奶粉：克数滑动选择 -->
@@ -227,23 +227,23 @@
       <view class="form-row" wx:elif="{{stockKind === 'appliance'}}">
         <text class="form-label">{{lang === 'en' ? 'Warranty' : '保修期'}}</text>
         <picker mode="selector" range="{{warrantyOptions}}" value="{{stockDialog.warrantyMonths ? Math.max(0, warrantyOptions.indexOf(String(stockDialog.warrantyMonths))) : 1}}" bindchange="onWarranty">
-          <view class="form-input picker">{{(stockDialog.warrantyMonths || 12) + {{lang === 'en' ? ' months warranty' : ' 个月保修'}}}} ▾</view>
+          <view class="form-input picker">{{(stockDialog.warrantyMonths || 12) + (lang === 'en' ? ' months warranty' : ' 个月保修')}} ▾</view>
         </picker>
       </view>
       <!-- 其他：尺码选择（纸尿裤 NB/S…、衣物 52/59…、纸巾 S/M…） -->
       <view class="form-row" wx:else>
         <text class="form-label">{{lang === 'en' ? 'Size' : '尺码'}}</text>
         <picker mode="selector" range="{{sizeLabelOptions}}" value="{{stockDialog.sizeIndex}}" bindchange="onStockSize">
-          <view class="form-input picker">{{stockDialog.size ? (lang === 'en' && stockDialog.size === '通用' ? 'Universal' : stockDialog.size) : {{lang === 'en' ? 'Universal' : '通用'}}}} ▾</view>
+          <view class="form-input picker">{{stockDialog.size ? (lang === 'en' && stockDialog.size === '通用' ? 'Universal' : stockDialog.size) : (lang === 'en' ? 'Universal' : '通用')}} ▾</view>
         </picker>
       </view>
       <view class="form-row" wx:if="{{stockKind !== 'appliance'}}">
         <text class="form-label">{{lang === 'en' ? 'Production date' : '生产日期'}}</text>
-        <view class="form-input picker" bindtap="openProduceDatePicker">{{stockDialog.produceDate || {{lang === 'en' ? 'Select production date' : '选择生产日期'}}}} ▾</view>
+        <view class="form-input picker" bindtap="openProduceDatePicker">{{stockDialog.produceDate || (lang === 'en' ? 'Select production date' : '选择生产日期')}} ▾</view>
       </view>
       <view class="form-row" wx:if="{{stockKind === 'appliance'}}">
         <text class="form-label">{{lang === 'en' ? 'Purchase date' : '购买日期'}}</text>
-        <view class="form-input picker" bindtap="openProduceDatePicker">{{stockDialog.produceDate || {{lang === 'en' ? 'Select purchase date' : '选择购买日期'}}}} ▾</view>
+        <view class="form-input picker" bindtap="openProduceDatePicker">{{stockDialog.produceDate || (lang === 'en' ? 'Select purchase date' : '选择购买日期')}} ▾</view>
       </view>
       <view class="form-row" wx:if="{{stockKind !== 'appliance'}}">
         <text class="form-label">{{lang === 'en' ? 'Shelf life' : '保质期'}}</text>
@@ -267,7 +267,7 @@
   </dialog>
 
   <!-- ==================== 保质期 新增/编辑 弹窗 ==================== -->
-  <dialog visible="{{warnDialog.visible}}" title="{{warnDialog.id ? {{lang === 'en' ? 'Edit Alert' : '编辑提醒'}} : {{lang === 'en' ? 'Add Alert' : '添加提醒'}}}}" kicker="{{lang === 'en' ? 'Manage expiry alerts' : '管理保质期到期提醒'}}" bind:close="closeWarnDialog">
+  <dialog visible="{{warnDialog.visible}}" title="{{warnDialog.id ? (lang === 'en' ? 'Edit Alert' : '编辑提醒') : (lang === 'en' ? 'Add Alert' : '添加提醒')}}" kicker="{{lang === 'en' ? 'Manage expiry alerts' : '管理保质期到期提醒'}}" bind:close="closeWarnDialog">
     <view class="form-body">
       <view class="form-row">
         <text class="form-label">{{lang === 'en' ? 'Name' : '名称'}}</text>
