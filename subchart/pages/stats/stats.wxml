@@ -5,14 +5,14 @@
   <view class="page-header-back">
     <view class="back-btn" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">{{babyName ? (babyName + '的成长记录') : '成长记录'}}</text>
-      <view class="header-title">喂养统计</view>
+      <text class="header-kicker">{{babyName ? (babyName + (lang === 'en' ? '’s Growth Record' : '的成长记录')) : (lang === 'en' ? 'Growth Record' : '成长记录')}}</text>
+      <view class="header-title">{{lang === 'en' ? 'Feeding Stats' : '喂养统计'}}</view>
     </view>
   </view>
 
   <!-- 每日喂养小结（可勾选显示项，真实统计） -->
   <view class="summary-head">
-    <text class="summary-title">每日喂养小结</text>
+    <text class="summary-title">{{lang === 'en' ? 'Today’s Summary' : '每日喂养小结'}}</text>
     <view class="summary-set" bindtap="toggleSummarySettings">
       <image class="summary-set-ico" src="/images/icons/settings-gear.png" mode="aspectFit" />
     </view>
@@ -23,26 +23,26 @@
       <view class="sc-value"><text>{{item.value}}</text><text class="sc-unit">{{item.unit}}</text></view>
     </view>
     <view class="summary-memo" wx:if="{{summaryOpts.memo}}" bindtap="openMemoEdit">
-      <text class="sm-label">今日小记</text>
-      <text class="sm-text {{memoText ? '' : 'sm-empty'}}">{{memoText || '点击写下今天的点滴…'}}</text>
+      <text class="sm-label">{{lang === 'en' ? 'Today’s Note' : '今日小记'}}</text>
+      <text class="sm-text {{memoText ? '' : 'sm-empty'}}">{{memoText || (lang === 'en' ? 'Tap to add today’s moments…' : '点击写下今天的点滴…')}}</text>
     </view>
   </view>
 
   <!-- 小结设置弹窗 -->
-  <dialog visible="{{summarySettingsVisible}}" title="设置喂养小结" kicker="勾选要显示的统计项" bind:close="closeSummarySettings">
+  <dialog visible="{{summarySettingsVisible}}" title="{{lang === 'en' ? 'Summary Settings' : '设置喂养小结'}}" kicker="{{lang === 'en' ? 'Choose which stats to show' : '勾选要显示的统计项'}}" bind:close="closeSummarySettings">
     <view class="ss-list">
-      <view class="ss-item" wx:for="{{['feeds','milkPowder','milkBreast','pee','poop','sleep','memo']}}" wx:key="*this" data-key="{{item}}" bindtap="onSummaryOptToggle">
-        <text class="ss-name">{{['今日喂奶次数','总奶粉量','总瓶喂母乳量','小便次数','大便次数','总睡眠时长','今日小记'][index]}}</text>
-        <view class="ss-check {{summaryOpts[item] ? 'on' : ''}}">{{summaryOpts[item] ? '✓' : ''}}</view>
+      <view class="ss-item" wx:for="{{summaryOptRows}}" wx:key="key" data-key="{{item.key}}" bindtap="onSummaryOptToggle">
+        <text class="ss-name">{{item.label}}</text>
+        <view class="ss-check {{summaryOpts[item.key] ? 'on' : ''}}">{{summaryOpts[item.key] ? '✓' : ''}}</view>
       </view>
     </view>
   </dialog>
 
   <!-- 今日小记编辑 -->
-  <dialog visible="{{memoEditVisible}}" title="今日小记" kicker="记录今天宝宝的点滴" bind:close="closeMemoEdit">
+  <dialog visible="{{memoEditVisible}}" title="{{lang === 'en' ? 'Today’s Note' : '今日小记'}}" kicker="{{lang === 'en' ? 'Capture today’s little moments' : '记录今天宝宝的点滴'}}" bind:close="closeMemoEdit">
     <view class="memo-edit-body">
-      <textarea class="memo-edit-ta" value="{{memoText}}" bindinput="onMemoEditInput" placeholder="记录今天宝宝的小变化、趣事或心情…" maxlength="500" auto-height cursor-spacing="20" />
-      <view class="memo-edit-save {{memoText ? '' : 'disabled'}}" bindtap="saveMemoEdit">保存</view>
+      <textarea class="memo-edit-ta" value="{{memoText}}" bindinput="onMemoEditInput" placeholder="{{lang === 'en' ? 'Record a small change, a funny moment or how you feel today…' : '记录今天宝宝的小变化、趣事或心情…'}}" maxlength="500" auto-height cursor-spacing="20" />
+      <view class="memo-edit-save {{memoText ? '' : 'disabled'}}" bindtap="saveMemoEdit">{{lang === 'en' ? 'Save' : '保存'}}</view>
     </view>
   </dialog>
 
@@ -50,14 +50,14 @@
   <view class="card chart-card">
     <view class="chart-head">
       <view>
-        <view class="chart-title">近期</view>
+        <view class="chart-title">{{lang === 'en' ? 'Recent' : '近期'}}</view>
         <view class="chart-sub">{{chartSub}}</view>
       </view>
-      <view class="chart-action" bindtap="genReport">生成周报</view>
+      <view class="chart-action" bindtap="genReport">{{lang === 'en' ? 'Weekly Report' : '生成周报'}}</view>
     </view>
     <view class="chart-modes">
-      <view class="cm {{chartMode === 0 ? 'on' : ''}}" data-mode="0" bindtap="onChartMode">瓶喂</view>
-      <view class="cm {{chartMode === 1 ? 'on' : ''}}" data-mode="1" bindtap="onChartMode">亲喂</view>
+      <view class="cm {{chartMode === 0 ? 'on' : ''}}" data-mode="0" bindtap="onChartMode">{{lang === 'en' ? 'Bottle' : '瓶喂'}}</view>
+      <view class="cm {{chartMode === 1 ? 'on' : ''}}" data-mode="1" bindtap="onChartMode">{{lang === 'en' ? 'Nursing' : '亲喂'}}</view>
     </view>
     <scroll-view class="feed-scroll" scroll-x enhanced show-scrollbar="{{false}}">
       <view class="feed-chart">
@@ -78,10 +78,10 @@
   <view class="card timeline-card">
     <view class="chart-head">
       <view>
-        <view class="chart-title">喂养时间分布</view>
-        <view class="chart-sub">横向日期 · 纵向每小时一格</view>
+        <view class="chart-title">{{lang === 'en' ? 'Feeding Timeline' : '喂养时间分布'}}</view>
+        <view class="chart-sub">{{lang === 'en' ? 'Dates across · one row per hour' : '横向日期 · 纵向每小时一格'}}</view>
       </view>
-      <view class="ref-btn" bindtap="toggleReference">喂养参考表</view>
+      <view class="ref-btn" bindtap="toggleReference">{{lang === 'en' ? 'Reference Guide' : '喂养参考表'}}</view>
     </view>
 
     <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
@@ -93,7 +93,7 @@
           style="{{item.active ? 'background:#29281f;color:#fff' : 'background:' + item.bg + ';color:' + item.color}}"
           data-name="{{item.name}}"
           bindtap="onFilter"
-        >{{item.name}}</view>
+        >{{item.label || item.name}}</view>
       </view>
     </scroll-view>
 
@@ -119,7 +119,7 @@
       </view>
     </scroll-view>
     <view class="tl-days">
-      <text wx:for="{{days}}" wx:key="*this" class="{{item === '今天' ? 'today' : ''}}">{{item}}</text>
+      <text wx:for="{{days}}" wx:key="label" class="{{item.isToday ? 'today' : ''}}">{{item.label}}</text>
     </view>
 
     <view class="legend">
@@ -134,20 +134,20 @@
       <view class="tl-detail-card" catchtap="noop">
         <text class="tld-title">{{tlDetail.title}}</text>
         <text class="tld-desc" wx:if="{{tlDetail.desc}}">{{tlDetail.desc}}</text>
-        <text class="tld-tip">点击空白处关闭</text>
+        <text class="tld-tip">{{lang === 'en' ? 'Tap outside to close' : '点击空白处关闭'}}</text>
       </view>
     </view>
   </view>
 
 <!-- 喂养参考表 -->
-<dialog visible="{{showReference}}" title="喂养参考表" kicker="按宝宝月龄自动匹配 · 国标推荐" bind:close="toggleReference">
+<dialog visible="{{showReference}}" title="{{lang === 'en' ? 'Feeding Reference' : '喂养参考表'}}" kicker="{{lang === 'en' ? 'Auto-matched by age · national guidelines' : '按宝宝月龄自动匹配 · 国标推荐'}}" bind:close="toggleReference">
     <view class="ref-stage">
       <view class="ref-stage-label">{{feedStage.label}}</view>
-      <view class="ref-stage-age">宝宝当前 {{feedStage.monthText}}</view>
+      <view class="ref-stage-age">{{lang === 'en' ? 'Baby is ' + feedStage.monthText : '宝宝当前 ' + feedStage.monthText}}</view>
     </view>
     <view class="ref-table">
       <view class="ref-row ref-head">
-        <text>项目</text><text>建议频次</text><text>参考量</text>
+        <text>{{lang === 'en' ? 'Item' : '项目'}}</text><text>{{lang === 'en' ? 'Suggested' : '建议频次'}}</text><text>{{lang === 'en' ? 'Amount' : '参考量'}}</text>
       </view>
       <view class="ref-row" wx:for="{{feedStage.rows}}" wx:key="item">
         <text class="ref-bold">{{item.item}}</text>
@@ -156,7 +156,7 @@
       </view>
     </view>
     <view class="ref-note">{{feedStage.note}}</view>
-    <view class="ref-tip">依据《中国居民膳食指南（2022）》及 7—24 月龄婴幼儿喂养指南整理，仅供参考；个体情况差异较大，特殊喂养需求请咨询儿科医生或专业人士。</view>
+    <view class="ref-tip">{{lang === 'en' ? 'Based on the Chinese Dietary Guidelines (2022) and the feeding guidelines for infants and toddlers aged 7–24 months. For reference only; individual needs vary — consult a paediatrician for special feeding requirements.' : '依据《中国居民膳食指南（2022）》及 7—24 月龄婴幼儿喂养指南整理，仅供参考；个体情况差异较大，特殊喂养需求请咨询儿科医生或专业人士。'}}</view>
 </dialog>
 </view>
 

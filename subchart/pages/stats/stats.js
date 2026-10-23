@@ -34,6 +34,15 @@ const LEGEND = [
 
 const FILTER_NAMES = ['全部', '吸奶', '母乳亲喂', '瓶喂奶粉', '瓶喂母乳', '睡觉', '嘘嘘', '臭臭', '嘘嘘+臭臭', '吃辅食', '营养补剂', '喝水', '体温', '洗澡'];
 
+/* 英文显示名（数据层仍使用中文 key，仅在展示时映射） */
+const EN_LABEL = {
+  '全部': 'All', '吸奶': 'Pumping', '母乳亲喂': 'Nursing', '瓶喂奶粉': 'Formula Bottle',
+  '瓶喂母乳': 'Bottle Breastmilk', '睡觉': 'Sleep', '嘘嘘': 'Wet', '臭臭': 'Dirty',
+  '嘘嘘+臭臭': 'Wet + Dirty', '吃辅食': 'Solids', '营养补剂': 'Supplements',
+  '喝水': 'Water', '体温': 'Temperature', '洗澡': 'Bath',
+  '亲喂': 'Nursing', '配方奶': 'Formula', '母乳': 'Breast milk'
+};
+
 /* ==================== 喂养参考表（国标 · 按月龄自动匹配） ====================
    依据《中国居民膳食指南（2022）》及《7—24 月龄婴幼儿喂养指南》整理 */
 const FEED_STAGES = [
@@ -119,16 +128,121 @@ const FEED_STAGES = [
   }
 ];
 
+/* 每日小结设置项 */
+const SUMMARY_OPT_KEYS = ['feeds', 'milkPowder', 'milkBreast', 'pee', 'poop', 'sleep', 'memo'];
+const SUMMARY_LABEL_ZH = {
+  feeds: '今日喂奶次数', milkPowder: '总奶粉量', milkBreast: '总瓶喂母乳量',
+  pee: '小便次数', poop: '大便次数', sleep: '总睡眠时长', memo: '今日小记'
+};
+const SUMMARY_LABEL_EN = {
+  feeds: "Today's Feeds", milkPowder: 'Total Formula', milkBreast: 'Total Expressed Milk',
+  pee: 'Wet Diapers', poop: 'Dirty Diapers', sleep: 'Total Sleep', memo: "Today's Note"
+};
+
+/* 喂养参考表 · 英文版（与 FEED_STAGES 顺序一致） */
+const FEED_STAGES_EN = [
+  {
+    label: '0–1 month · Newborn',
+    rows: [
+      { item: 'Breast milk', freq: 'On demand', qty: '8–12 feeds/day' },
+      { item: 'Formula', freq: 'On demand', qty: '30–90 ml per feed' },
+      { item: 'Daily milk intake', freq: '—', qty: 'about 100–150 ml/kg' },
+      { item: 'Vitamin D', freq: 'Daily', qty: '400 IU' }
+    ],
+    note: 'Feed on demand. At least 6 wet diapers a day suggests enough intake. Start vitamin D soon after birth.'
+  },
+  {
+    label: '1–3 months · Rapid growth',
+    rows: [
+      { item: 'Breast milk', freq: 'On demand', qty: 'about 8 feeds/day' },
+      { item: 'Formula', freq: '5–7 feeds/day', qty: '90–150 ml per feed' },
+      { item: 'Daily milk intake', freq: '—', qty: 'about 150 ml/kg' },
+      { item: 'Vitamin D', freq: 'Daily', qty: '400 IU' }
+    ],
+    note: 'Build a day-night rhythm and gradually lengthen night intervals. On demand does not mean feeding at every cry — check hunger cues first.'
+  },
+  {
+    label: '4–6 months · Peak milk intake',
+    rows: [
+      { item: 'Breast milk', freq: 'On demand', qty: '6–8 feeds/day' },
+      { item: 'Formula', freq: '4–5 feeds/day', qty: '150–180 ml per feed' },
+      { item: 'Daily milk intake', freq: '—', qty: 'about 800–1000 ml' },
+      { item: 'Vitamin D', freq: 'Daily', qty: '400 IU' }
+    ],
+    note: 'Iron stores start to run low; watch for the right time to introduce iron-rich solids. Until readiness signs appear, milk stays the main food.'
+  },
+  {
+    label: '6–8 months · First solids',
+    rows: [
+      { item: 'Breast milk / Formula', freq: '4–5 feeds/day', qty: '600–800 ml/day' },
+      { item: 'Solids', freq: '1–2 times/day', qty: 'Iron-fortified cereal → veg purée → meat purée' },
+      { item: 'Vitamin D', freq: 'Daily', qty: '400 IU' },
+      { item: 'Iron', freq: 'Daily', qty: 'Iron-fortified solids first' }
+    ],
+    note: 'Start solids at 6 months with iron-fortified cereal. One new food at a time, observe for 3 days. No salt or sugar before 1 year.'
+  },
+  {
+    label: '8–10 months · Building solids',
+    rows: [
+      { item: 'Breast milk / Formula', freq: '3–4 feeds/day', qty: 'about 600 ml/day' },
+      { item: 'Solids', freq: '2–3 times/day', qty: 'Thick purée → minced → finger food' },
+      { item: 'Vitamin D', freq: 'Daily', qty: '400 IU' },
+      { item: 'Iron', freq: '2–3 times/week', qty: 'Liver or red meat purée' }
+    ],
+    note: 'Practise finger foods and chewing; move from thick purée to minced and finger foods. Keep iron-rich foods in the daily menu.'
+  },
+  {
+    label: '10–12 months · Varied solids',
+    rows: [
+      { item: 'Breast milk / Formula', freq: '3 feeds/day', qty: 'about 600 ml/day' },
+      { item: 'Solids', freq: '3 meals + 1 snack', qty: 'Close to lightly seasoned family food' },
+      { item: 'Vitamin D', freq: 'Daily', qty: '400 IU' },
+      { item: 'Food variety', freq: 'Daily', qty: 'Grains, veg, fruit, meat, eggs, fish' }
+    ],
+    note: 'Move towards three meals and two snacks. Keep total milk at or below 800 ml so it does not crowd out solids.'
+  },
+  {
+    label: '12–24 months · Toddler',
+    rows: [
+      { item: 'Breast milk / Dairy', freq: '2–3 times/day', qty: 'about 500 ml/day' },
+      { item: 'Meals', freq: '3 meals + 2 snacks', qty: 'Lightly seasoned family food' },
+      { item: 'Vitamin D', freq: 'Daily', qty: '400 IU' },
+      { item: 'Salt', freq: 'Daily', qty: 'Under 2 g (ages 1–3)' }
+    ],
+    note: 'Three meals and two snacks with variety; encourage self-feeding. Whole milk is fine after 1 year. Less oil and salt, no sugary drinks.'
+  },
+  {
+    label: '24 months+ · Preschooler',
+    rows: [
+      { item: 'Dairy', freq: 'Daily', qty: '300–500 ml' },
+      { item: 'Meals', freq: '3 meals + 2 snacks', qty: 'Balanced diet' },
+      { item: 'Snacks', freq: 'Moderate', qty: 'Mostly fruit and dairy' },
+      { item: 'Salt', freq: 'Daily', qty: 'Under 2 g' }
+    ],
+    note: 'Based on the Chinese Dietary Guidelines for preschoolers; ensure calcium, iron and zinc. For special feeding needs, consult a paediatrician.'
+  }
+];
+
 Page({
+
+  /* 当前语言 */
+  _en() {
+    return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en';
+  },
 
   onShareAppMessage() {
     return {
-        imageUrl: '/images/share-cover.png', title: '熊宝喂养 · 宝宝喂养统计分析', path: 'pages/stats/stats' };
+        imageUrl: '/images/share-cover.png',
+        title: this._en() ? 'Panda Feeding · Feeding Stats' : '熊宝喂养 · 宝宝喂养统计分析',
+        path: 'pages/stats/stats' };
   },
   onShareTimeline() {
-    return { title: '熊宝喂养 · 宝宝喂养统计分析' };
+    return { title: this._en() ? 'Panda Feeding · Feeding Stats' : '熊宝喂养 · 宝宝喂养统计分析' };
   },
   data: {
+    lang: 'zh',
+    todayLabel: '今天',
+    summaryOptRows: [],
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     cards: [],
     week: [],
@@ -181,7 +295,22 @@ Page({
         babyName = '';
       }
     } catch (e) {}
-    this.setData({ babyName });
+    const en = this._en();
+    const mode = this.data.chartMode || 0;
+    this.setData({
+      babyName,
+      chartSub: en
+        ? (mode === 0 ? 'Bottle amount · unit ml' : 'Nursing duration · unit min')
+        : (mode === 0 ? '瓶喂奶量 · 单位 ml' : '亲喂时长 · 单位 分钟'),
+      lang: en ? 'en' : 'zh',
+      todayLabel: en ? 'Today' : '今天',
+      legend: LEGEND.map(l => Object.assign({}, l, { name: en ? (EN_LABEL[l.name] || l.name) : l.name })),
+      filters: this.data.filters.map(f => Object.assign({}, f, { label: en ? (EN_LABEL[f.name] || f.name) : f.name })),
+      summaryOptRows: SUMMARY_OPT_KEYS.map(k => ({
+        key: k,
+        label: en ? SUMMARY_LABEL_EN[k] : SUMMARY_LABEL_ZH[k]
+      }))
+    });
     this.buildStats();
     this.buildDailySummary();
   },
@@ -227,7 +356,7 @@ Page({
       feedDays: fc.days,
       feedUnit: fc.unit,
       feedColor: fc.color,
-      days: days.map(d => d.isToday ? '今天' : d.short),
+      days: days.map(d => ({ label: d.isToday ? (this._en() ? 'Today' : '今天') : d.short, isToday: d.isToday })),
       bars: this.buildBars(days, records)
     });
   },
@@ -269,15 +398,17 @@ Page({
     const memoList = wx.getStorageSync('panda_daily_memos') || [];
     const memo = memoList.find(x => x.type === 'memo' && (x.date === noPad(today) || x.date === ymd));
     const items = [];
-    const push = (key, label, value, unit) => {
-      if (opts[key]) items.push({ key, label, value: String(value), unit });
+    const en = this._en();
+    const L = en ? SUMMARY_LABEL_EN : SUMMARY_LABEL_ZH;
+    const push = (key, value, unit) => {
+      if (opts[key]) items.push({ key, label: L[key], value: String(value), unit });
     };
-    push('feeds', '今日喂奶次数', feeds, '次');
-    push('milkPowder', '总奶粉量', milkPowder, 'ml');
-    push('milkBreast', '总瓶喂母乳量', milkBreast, 'ml');
-    push('pee', '小便次数', pee, '次');
-    push('poop', '大便次数', poop, '次');
-    push('sleep', '总睡眠时长', (sleepH > 0 ? sleepH + '小时' : '') + sleepM + '分', '');
+    push('feeds', feeds, en ? 'times' : '次');
+    push('milkPowder', milkPowder, 'ml');
+    push('milkBreast', milkBreast, 'ml');
+    push('pee', pee, en ? 'times' : '次');
+    push('poop', poop, en ? 'times' : '次');
+    push('sleep', (sleepH > 0 ? (en ? sleepH + 'h ' : sleepH + '小时') : '') + sleepM + (en ? 'm' : '分'), '');
     this.setData({
       summaryOpts: opts,
       summaryItems: items,
@@ -312,7 +443,7 @@ Page({
   saveMemoEdit() {
     const text = (this.data.memoText || '').trim();
     if (!text) {
-      wx.showToast({ title: '写点什么再保存吧', icon: 'none' });
+      wx.showToast({ title: this._en() ? 'Write something first' : '写点什么再保存吧', icon: 'none' });
       return;
     }
     const now = new Date();
@@ -322,7 +453,7 @@ Page({
     wx.setStorageSync('panda_daily_memos', memoList);
     this.setData({ memoEditVisible: false });
     this.buildDailySummary();
-    wx.showToast({ title: '今日小记已保存', icon: 'success' });
+    wx.showToast({ title: this._en() ? 'Note saved' : '今日小记已保存', icon: 'success' });
   },
 
   buildFeedChart(mode) {
@@ -365,7 +496,7 @@ Page({
     days.forEach(d => d.blocks.forEach(b => { b.h = Math.max(8, Math.round(b.v / max * H)); }));
     return {
       days,
-      unit: isBottle ? 'ml' : '分钟',
+      unit: isBottle ? 'ml' : (this._en() ? 'min' : '分钟'),
       color: isBottle ? '#7eb7ee' : '#ffd95a'
     };
   },
@@ -373,7 +504,9 @@ Page({
   onChartMode(e) {
     const mode = Number(e.currentTarget.dataset.mode);
     if (mode === this.data.chartMode) return;
-    const subs = ['瓶喂奶量 · 单位 ml', '亲喂时长 · 单位 分钟'];
+    const subs = this._en()
+      ? ['Bottle amount · unit ml', 'Nursing duration · unit min']
+      : ['瓶喂奶量 · 单位 ml', '亲喂时长 · 单位 分钟'];
     const fc = this.buildFeedChart(mode);
     this.setData({
       chartMode: mode,
@@ -399,7 +532,7 @@ Page({
         w: 9,
         color: meta.color,
         type: meta.name,
-        title: r.date + ' ' + r.time + ' ' + meta.name,
+        title: r.date + ' ' + r.time + ' ' + (this._en() ? (EN_LABEL[meta.name] || meta.name) : meta.name),
         detail: this.recordDetail(r),
         show: true,
         isPoint: !seg,
@@ -583,16 +716,32 @@ Page({
   /* 记录详情（与我的-喂养记录时间轴保持一致） */
   recordDetail(r) {
     if (!r) return '';
+    const en = this._en();
     switch (r.type) {
-      case '母乳': return '左 ' + (r.nursingL || 0) + 'ml / 右 ' + (r.nursingR || 0) + 'ml / 共 ' + (r.total || 0) + 'ml';
+      case '母乳':
+        return en
+          ? 'Left ' + (r.nursingL || 0) + ' ml / Right ' + (r.nursingR || 0) + ' ml / Total ' + (r.total || 0) + ' ml'
+          : '左 ' + (r.nursingL || 0) + 'ml / 右 ' + (r.nursingR || 0) + 'ml / 共 ' + (r.total || 0) + 'ml';
       case '配方奶': return (r.amount || 0) + 'ml';
       case '瓶喂母乳': return (r.amount || 0) + 'ml';
-      case '吸奶': return '左 ' + (r.pumpLeftAmt || 0) + 'ml / 右 ' + (r.pumpRightAmt || 0) + 'ml / 共 ' + (r.pumpTotal || 0) + 'ml';
-      case '换尿布': return (r.diaperChoice || '') + (r.diaperSize ? ' ' + r.diaperSize + '码' : '') + (r.peeColor ? ' 尿' + r.peeColor : '') + (r.stoolColor ? ' 便' + r.stoolColor : '');
+      case '吸奶':
+        return en
+          ? 'Left ' + (r.pumpLeftAmt || 0) + ' ml / Right ' + (r.pumpRightAmt || 0) + ' ml / Total ' + (r.pumpTotal || 0) + ' ml'
+          : '左 ' + (r.pumpLeftAmt || 0) + 'ml / 右 ' + (r.pumpRightAmt || 0) + 'ml / 共 ' + (r.pumpTotal || 0) + 'ml';
+      case '换尿布': {
+        if (!en) {
+          return (r.diaperChoice || '') + (r.diaperSize ? ' ' + r.diaperSize + '码' : '') + (r.peeColor ? ' 尿' + r.peeColor : '') + (r.stoolColor ? ' 便' + r.stoolColor : '');
+        }
+        const choice = EN_LABEL[r.diaperChoice] || (r.diaperChoice === '嘘嘘+臭臭' ? 'Wet + Dirty' : (r.diaperChoice || 'Dirty'));
+        return choice + (r.diaperSize ? ' · size ' + r.diaperSize : '') + (r.peeColor ? ' · urine ' + r.peeColor : '') + (r.stoolColor ? ' · stool ' + r.stoolColor : '');
+      }
       case '喝水': return (r.water || 0) + 'ml';
-      case '睡眠': return (r.sleepStart || '') + ' 至 ' + (r.sleepEnd || '') + ' 共 ' + Math.round((r.sleepSeconds || 0) / 60) + ' 分钟';
+      case '睡眠':
+        return en
+          ? (r.sleepStart || '') + ' to ' + (r.sleepEnd || '') + ', ' + Math.round((r.sleepSeconds || 0) / 60) + ' min'
+          : (r.sleepStart || '') + ' 至 ' + (r.sleepEnd || '') + ' 共 ' + Math.round((r.sleepSeconds || 0) / 60) + ' 分钟';
       case '辅食': return (r.simpleAmount || 0) + 'g' + (r.food ? ' ' + r.food : '');
-      case '营养品': return (r.supps || []).join('、') || '';
+      case '营养品': return (r.supps || []).join(en ? ', ' : '、') || '';
       case '语音记录': return r.note || '';
       default: return r.note || r.detail || '';
     }
@@ -625,13 +774,19 @@ Page({
   /* 按宝宝月龄自动匹配国标喂养推荐档位 */
   getFeedStage() {
     const ma = this.monthAge();
-    let stage = FEED_STAGES[FEED_STAGES.length - 1];
+    const en = this._en();
+    let idx = FEED_STAGES.length - 1;
     for (let i = 0; i < FEED_STAGES.length; i++) {
-      if (ma >= FEED_STAGES[i].min && ma < FEED_STAGES[i].max) { stage = FEED_STAGES[i]; break; }
+      if (ma >= FEED_STAGES[i].min && ma < FEED_STAGES[i].max) { idx = i; break; }
     }
-    const monthText = ma < 0 ? '尚未设置宝宝生日'
-      : ma < 1 ? '1 个月内'
-      : ma + ' 个月';
+    const monthText = ma < 0 ? (en ? 'No birthday set yet' : '尚未设置宝宝生日')
+      : ma < 1 ? (en ? 'Under 1 month old' : '1 个月内')
+      : (en ? ma + ' months old' : ma + ' 个月');
+    if (en) {
+      const st = FEED_STAGES_EN[idx] || FEED_STAGES_EN[FEED_STAGES_EN.length - 1];
+      return { label: st.label, rows: st.rows, note: st.note, monthText };
+    }
+    const stage = FEED_STAGES[idx] || FEED_STAGES[FEED_STAGES.length - 1];
     return { ...stage, monthText };
   }
 });
