@@ -62,6 +62,45 @@ const DEFAULT_FIELDS = {
 
 const TYPE_CN = { vaccine: '疫苗提醒', supplement: '营养品提醒', stock: '库存不足提醒', milk: '保质期到期提醒' };
 
+/* 英文推送用的词表：模板字段值可以随接收者语言切换，模板标题仍由微信后台决定 */
+const VACCINE_EN = {
+  '乙肝疫苗': 'Hepatitis B', '卡介苗': 'BCG', '脊灰疫苗': 'Polio', '百白破疫苗': 'DTaP',
+  '白破疫苗': 'DT', '麻腮风疫苗': 'MMR', '乙脑减毒活疫苗': 'JE (live)', 'A群流脑疫苗': 'MenA',
+  'A+C群流脑疫苗': 'MenAC', '甲肝减毒活疫苗': 'HepA (live)', '13价肺炎球菌结合疫苗': 'PCV13',
+  '五价轮状病毒疫苗': 'RV5', '五联疫苗': 'Pentavalent', 'Hib疫苗': 'Hib',
+  'EV71手足口疫苗': 'EV71', '水痘疫苗': 'Varicella', '流感疫苗': 'Influenza'
+};
+const ITEM_EN = {
+  '奶粉': 'Formula', '配方奶': 'Formula', '母乳': 'Breast milk', '纸尿裤': 'Diapers',
+  '棉柔巾': 'Cotton tissue', '湿巾': 'Wipes', '纸巾': 'Tissues', '衣物': 'Clothes',
+  '吸奶器': 'Breast pump', '奶瓶': 'Bottle', '口水巾': 'Bib', '辅食': 'Solid food',
+  '营养品': 'Supplement', '物品': 'Item', '疫苗': 'Vaccine',
+  '维生素D': 'Vitamin D', '维生素D3': 'Vitamin D3', '维生素AD': 'Vitamin AD', 'DHA': 'DHA',
+  '益生菌': 'Probiotics', '钙': 'Calcium', '铁': 'Iron', '锌': 'Zinc', '鱼油': 'Fish oil'
+};
+const UNIT_EN = { '罐': 'cans', '件': 'items', '片': 'diapers', '包': 'packs', '瓶': 'bottles', '盒': 'boxes' };
+const EMPTY_FALLBACK_EN = {
+  vaccine: { thing: 'Vaccine reminder', phrase: 'Vaccine', number: 0 },
+  supplement: { thing: 'Feeding reminder', phrase: 'Feeding', number: 0 },
+  stock: { thing: 'Low stock', phrase: 'Stock', number: 0 },
+  milk: { thing: 'Expiry reminder', phrase: 'Expiry', number: 0 }
+};
+
+function enItem(name) {
+  const n = String(name || '');
+  if (ITEM_EN[n]) return ITEM_EN[n];
+  for (const cn of Object.keys(ITEM_EN)) {
+    if (n.indexOf(cn) === 0) return ITEM_EN[cn] + n.slice(cn.length);
+  }
+  return n;
+}
+function enUnit(unit) {
+  return UNIT_EN[String(unit || '')] || String(unit || 'items');
+}
+function enVaccine(name) {
+  return VACCINE_EN[String(name || '')] || '';
+}
+
 const FREQ_DAYS = { '每日': 1, '每2天': 2, '每3天': 3, '每周': 7, '每两周': 14 };
 
 function pad(n) { return n < 10 ? '0' + n : '' + n; }
@@ -183,11 +222,13 @@ async function templateOf(cfg, type) {
  * 微信规定订阅消息的每个字段都必须有非空值，空字符串会直接报 47003
  * （data.xxx.value is empty），所以这里对空值统一兜底。
  */
-function buildData(fields, vars, type) {
+function buildData(fields, vars, type, lang) {
   const out = {};
-  const fallback = EMPTY_FALLBACK[type] || EMPTY_FALLBACK.stock;
+  lang = lang === 'en' ? 'en' : 'zh';
+  const fallback = lang === 'en' ? (EMPTY_FALLBACK_EN[type] || EMPTY_FALLBACK_EN.stock) : (EMPTY_FALLBACK[type] || EMPTY_FALLBACK.stock);
   const today = new Date();
   const todayCn = today.getFullYear() + '年' + (today.getMonth() + 1) + '月' + today.getDate() + '日';
+  const todayEn = ymd(today);
   const pool = KIND_POOL[type] || {};
   Object.keys(fields).forEach(key => {
     const prefix = String(key).replace(/\d+$/, '');
@@ -205,11 +246,11 @@ function buildData(fields, vars, type) {
     let v = raw === undefined || raw === null ? '' : String(raw).trim();
     if (prefix === 'time' || prefix === 'date') {
       const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(v);
-      out[key] = m ? (Number(m[1]) + '年' + Number(m[2]) + '月' + Number(m[3]) + '日') : (v ? v.slice(0, 20) : todayCn);
+      out[key] = m ? (lang === 'en' ? (m[1] + '-' + pad(Number(m[2])) + '-' + pad(Number(m[3]))) : (Number(m[1]) + '年' + Number(m[2]) + '月' + Number(m[3]) + '日')) : (v ? v.slice(0, 20) : (lang === 'en' ? todayEn : todayCn));
       return;
     }
     if (prefix === 'phrase') {
-      out[key] = (v || fallback.phrase || '提醒').slice(0, 5);
+      out[key] = (v || fallback.phrase || (lang === 'en' ? 'Notice' : '提醒')).slice(0, 5);
       return;
     }
     if (prefix === 'amount' || prefix === 'money') {
@@ -217,13 +258,14 @@ function buildData(fields, vars, type) {
       return;
     }
     // thing / name / character_string / letter / symbol 等
-    out[key] = (v || fallback.thing || '提醒').slice(0, 20);
+    out[key] = (v || fallback.thing || (lang === 'en' ? 'Notice' : '提醒')).slice(0, 20);
   });
   return out;
 }
 
 /** 收集某 openid（含其所在家庭 owner）今天命中的提醒 */
-async function collectReminders(openid, familyId) {
+async function collectReminders(openid, familyId, lang) {
+  lang = lang === 'en' ? 'en' : 'zh';
   const today = todayStr();
   const owners = [openid];
   if (familyId && familyId !== 'self') {
@@ -258,7 +300,7 @@ async function collectReminders(openid, familyId) {
 
   const babyNameOf = (id) => {
     const b = babies.find(x => x._id === id);
-    return (b && b.data && b.data.name) || '宝宝';
+    return (b && b.data && b.data.name) || (lang === 'en' ? 'Baby' : '宝宝');
   };
 
   const vaccine = [];    // 疫苗倒计时提醒
@@ -275,12 +317,16 @@ async function collectReminders(openid, familyId) {
       if (!due) return;
       const gap = diffDays(today, due);
       if (gap < 0 || gap > 3) return;
-      const dose = v.dose ? (' 第' + v.dose + '剂') : '';
+      const rawGroup = v.group || v.short || '';
+      const vaccineName = lang === 'en' ? (enVaccine(rawGroup) || v.short || 'Vaccine') : (rawGroup || '疫苗');
+      const dose = v.dose ? (lang === 'en' ? (' Dose ' + v.dose) : (' 第' + v.dose + '剂')) : '';
       const babyName = babyNameOf(meta._id);
       vaccine.push({
-        name: String((v.group || v.short || '疫苗') + dose).slice(0, 20),
+        name: String(vaccineName + dose).slice(0, 20),
         date: due,
-        note: (babyName + (gap === 0 ? ' 今天应接种' : (' 还有 ' + gap + ' 天'))).slice(0, 20),
+        note: (lang === 'en'
+          ? (babyName + (gap === 0 ? ' due today' : (' in ' + gap + ' days')))
+          : (babyName + (gap === 0 ? ' 今天应接种' : (' 还有 ' + gap + ' 天')))).slice(0, 20),
         value: gap
       });
     });
@@ -294,12 +340,15 @@ async function collectReminders(openid, familyId) {
       if (!w || !w.date) return;
       const gap = diffDays(today, w.date); // date - 今天
       if (gap > 0 || gap < -3) return;
-      const nm = String(w.name || '物品');
+      const nm = String(w.name || (lang === 'en' ? 'Item' : '物品'));
+      const displayName = lang === 'en' ? enItem(nm) : nm;
       milk.push({
-        name: nm.slice(0, 20),
-        food: nm.slice(0, 20),
+        name: displayName.slice(0, 20),
+        food: displayName.slice(0, 20),
         date: w.date,
-        note: gap === 0 ? (baby + ' 今天到期') : ('已过期 ' + Math.abs(gap) + ' 天'),
+        note: lang === 'en'
+          ? (gap === 0 ? (baby + ' expires today') : (Math.abs(gap) + ' days overdue'))
+          : (gap === 0 ? (baby + ' 今天到期') : ('已过期 ' + Math.abs(gap) + ' 天')),
         value: Math.max(0, gap)
       });
     });
@@ -316,15 +365,16 @@ async function collectReminders(openid, familyId) {
       next = addDays(r.date, days);
     }
     if (next !== today) return;
-    const nm = String(r.suppName || r.supplement || '营养品');
+    const nm = String(r.suppName || r.supplement || (lang === 'en' ? 'Supplement' : '营养品'));
+    const displayName = lang === 'en' ? enItem(nm) : nm;
     const lastDate = r.suppLastDate || r.date || '';
     const gap = lastDate ? Math.max(0, diffDays(lastDate, today)) : 0;
     const babyName = babyNameOf(rec.babyId);
     supplement.push({
-      name: nm.slice(0, 20),
+      name: displayName.slice(0, 20),
       date: today,
-      note: (babyName + ' 该补充 ' + nm).slice(0, 20),
-      extra: lastDate ? ('距上次 ' + gap + ' 天') : '今天该补充了',
+      note: (lang === 'en' ? (babyName + ' · ' + displayName + ' due') : (babyName + ' 该补充 ' + displayName)).slice(0, 20),
+      extra: lastDate ? (lang === 'en' ? (gap + ' days since last') : ('距上次 ' + gap + ' 天')) : (lang === 'en' ? 'Due today' : '今天该补充了'),
       value: 1
     });
   });
@@ -352,14 +402,21 @@ async function collectReminders(openid, familyId) {
   });
   Object.keys(groups).forEach(k => {
     const g = groups[k];
-    const isFormula = /奶粉|配方奶|配方牛奶/.test(g.name) && !DEVICE_RE.test(g.name);
+    const isFormula = /奶粉|配方奶|配方牛奶|formula/i.test(g.name) && !DEVICE_RE.test(g.name);
     const th = isFormula ? 2 : 10;
     if (g.count >= th) return;
-    const label = g.name + (g.size ? '（' + g.size + '）' : '');
+    const displayName = lang === 'en' ? enItem(g.name) : g.name;
+    const label = displayName + (g.size ? (lang === 'en' ? (' (' + g.size + ')') : ('（' + g.size + '）')) : '');
     const babyPrefix = g.babyId ? (babyNameOf(g.babyId) + ' · ') : '';
+    let unit = lang === 'en' ? enUnit(g.unit) : g.unit;
+    if (lang === 'en' && Number(g.count) === 1 && /s$/.test(unit)) unit = unit.slice(0, -1);
     const stockDetail = isFormula
-      ? ('仅剩 ' + g.count + ' 罐 · 低于 ' + th + ' 罐')
-      : ('仅剩 ' + g.count + g.unit + ' · 低于 ' + th + g.unit);
+      ? (lang === 'en'
+        ? ('Only ' + g.count + ' ' + unit + ' left')
+        : ('仅剩 ' + g.count + ' 罐 · 低于 ' + th + ' 罐'))
+      : (lang === 'en'
+        ? ('Only ' + g.count + ' ' + unit + ' left')
+        : ('仅剩 ' + g.count + g.unit + ' · 低于 ' + th + g.unit));
     stock.push({
       name: (babyPrefix + label).slice(0, 20),
       note: ((g.babyId ? (babyNameOf(g.babyId) + ' ') : '') + stockDetail).slice(0, 20),
@@ -395,9 +452,10 @@ async function markSent(openid, type, dedupeKey, info) {
  * miniprogramState 决定消息点开后跳转的小程序版本：正式版 / 体验版 / 开发版。
  * 还没有正式版时会报 41030，这里自动降级重试一次。
  */
-async function sendOne(openid, tmplId, page, data, state) {
+async function sendOne(openid, tmplId, page, data, state, lang) {
   const states = state ? [state] : ['formal', 'trial', 'develop'];
-  let last = { ok: false, errCode: -1, errMsg: '未执行' };
+  const sendLang = lang === 'en' ? 'en_US' : 'zh_CN';
+  let last = { ok: false, errCode: -1, errMsg: lang === 'en' ? 'Not sent' : '未执行' };
   for (const st of states) {
     try {
       const r = await cloud.openapi.subscribeMessage.send({
@@ -405,7 +463,7 @@ async function sendOne(openid, tmplId, page, data, state) {
         templateId: tmplId,
         page,
         miniprogramState: st,
-        lang: 'zh_CN',
+        lang: sendLang,
         data
       });
       last = { ok: r && r.errCode === 0, errCode: r && r.errCode, errMsg: r && r.errMsg, state: st };
@@ -436,9 +494,10 @@ async function pushForSubscription(sub, cfg, opts) {
   const openid = sub.openid;
   const familyId = sub.familyId || 'self';
   const today = todayStr();
-  const detail = { openid, familyId, sent: [], skipped: [], errors: [] };
+  const lang = sub.lang === 'en' ? 'en' : 'zh';
+  const detail = { openid, familyId, lang, sent: [], skipped: [], errors: [] };
 
-  const rem = await collectReminders(openid, familyId);
+  const rem = await collectReminders(openid, familyId, lang);
   if (opts && opts.diagnose) {
     detail.hit = {
       vaccine: rem.vaccine.length, supplement: rem.supplement.length,
@@ -468,14 +527,14 @@ async function pushForSubscription(sub, cfg, opts) {
 
     const vars = Object.assign({}, first, {
       name: first.name,
-      note: list.length > 1 ? (first.note + '，共 ' + list.length + ' 项').slice(0, 20) : first.note,
+      note: list.length > 1 ? (first.note + (lang === 'en' ? (' · +' + (list.length - 1) + ' more') : ('，共 ' + list.length + ' 项'))).slice(0, 20) : first.note,
       food: first.food || first.name || '',
       extra: first.extra || '',
       count: list.length
     });
-    const data = buildData(t.fields, vars, type);
-    fieldMap[type] = { tmplId: t.tmplId, fields: t.fields, detected: t.detected || null, data };
-    const res = await sendOne(openid, t.tmplId, t.page, data, opts && opts.state);
+    const data = buildData(t.fields, vars, type, lang);
+    fieldMap[type] = { tmplId: t.tmplId, fields: t.fields, detected: t.detected || null, lang, data };
+    const res = await sendOne(openid, t.tmplId, t.page, data, opts && opts.state, lang);
     if (res.ok) {
       detail.sent.push({ type, templateId: t.tmplId, data });
       await markSent(openid, type, dedupeKey, { templateId: t.tmplId, ok: true });

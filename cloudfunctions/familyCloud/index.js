@@ -538,7 +538,9 @@ exports.main = async (event) => {
         const prev = exist.data.length ? (exist.data[0].templateIds || []) : [];
         const merged = prev.slice();
         templateIds.forEach(t => { if (merged.indexOf(t) < 0) merged.push(t); });
-        const rec = { familyId, openid, templateIds: merged, updatedAt: now, expireAt: now + 30 * 24 * 3600 * 1000 };
+        const prevLang = (exist.data.length && exist.data[0].lang === 'en') ? 'en' : 'zh';
+        const lang = event.lang === 'en' ? 'en' : (event.lang === 'zh' ? 'zh' : prevLang);
+        const rec = { familyId, openid, templateIds: merged, lang, updatedAt: now, expireAt: now + 30 * 24 * 3600 * 1000 };
         if (exist.data.length) {
           await db.collection('panda_subscriptions').doc(exist.data[0]._id).update({ data: rec });
         } else {
@@ -546,6 +548,17 @@ exports.main = async (event) => {
           await db.collection(SUB).add({ data: rec });
         }
         return ok({ subscribed: true });
+      }
+
+      // ---- 切换语言：已授权订阅也要跟着改推送语言 ----
+      case 'setLang': {
+        const lang = event.lang === 'en' ? 'en' : 'zh';
+        try {
+          const r = await db.collection(SUB).where({ openid }).update({ data: { lang, updatedAt: Date.now() } });
+          return ok({ lang, updated: (r && r.stats && r.stats.updated) || 0 });
+        } catch (e) {
+          return fail('语言同步失败：' + e.message, -2);
+        }
       }
 
       default:

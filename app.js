@@ -1,5 +1,8 @@
 const STORAGE_KEY = 'panda_feeding_data';      // 共享数据（宝宝列表/当前宝宝/家庭成员）
 const cloudSync = require('./utils/cloud-sync.js'); // 多人协作云端同步（家庭）
+// 统一把英文端仍写死中文的 wx.showToast / showModal / showLoading / showActionSheet 提示翻成英文
+const promptI18n = require('./utils/prompt-i18n.js');
+promptI18n.install();
 const cloudData = require('./utils/cloud-data.js');  // 全量数据云端同步（云开发后端）
 const BABY_KEY = 'panda_feeding_baby_';        // 每宝宝独立数据（记录/库存/成长足迹/提醒源）
 const { buildVaccinePlan, VACCINE_PROGRAM } = require('./utils/vaccine-data.js');
@@ -516,11 +519,11 @@ App({
           targetPage.setData({
             showGlobalAlert: true,
             globalAlert: {
-              title: '亲友加入申请',
-              message: `${m.nickname || '亲友'}（${m.familyRole || '成员'}）申请加入家庭，是否同意？`,
+              title: promptI18n.translate('亲友加入申请'),
+              message: promptI18n.translate(`${m.nickname || '亲友'}（${m.familyRole || '成员'}）申请加入家庭，是否同意？`),
               type: 'confirm',
-              confirmText: '同意',
-              cancelText: '拒绝'
+              confirmText: promptI18n.translate('同意'),
+              cancelText: promptI18n.translate('拒绝')
             }
           });
         } else {
@@ -610,10 +613,10 @@ App({
           targetPage.setData({
             showGlobalAlert: true,
             globalAlert: {
-              title: '加入申请结果',
-              message: msg,
+              title: promptI18n.translate('加入申请结果'),
+              message: promptI18n.translate(msg),
               type: 'alert',
-              confirmText: '知道了'
+              confirmText: promptI18n.translate('知道了')
             }
           });
         } else {

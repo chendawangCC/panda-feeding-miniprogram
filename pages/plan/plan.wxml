@@ -1096,18 +1096,18 @@ module.exports = {
     </view>
 
     <view class="voice-fallback" wx:if="{{voiceState.authDenied}}">
-      ⚠️ 未获得麦克风权限，请在设置中开启后重新长按。
-      <button class="va-btn va-btn-ghost auth-btn" bindtap="openVoiceSetting">去授权</button>
+      {{lang === 'en' ? '⚠️ Microphone permission is off. Enable it in Settings, then press and hold again.' : '⚠️ 未获得麦克风权限，请在设置中开启后重新长按。'}}
+      <button class="va-btn va-btn-ghost auth-btn" bindtap="openVoiceSetting">{{lang === 'en' ? 'Authorize' : '去授权'}}</button>
     </view>
     <view class="voice-fallback" wx:if="{{voiceState.fallback}}">
-      ⚠️ 语音识别暂不可用，请检查云函数 voiceAsr 部署。
+      {{lang === 'en' ? '⚠️ Voice recognition is unavailable. Check that the voiceAsr cloud function is deployed.' : '⚠️ 语音识别暂不可用，请检查云函数 voiceAsr 部署。'}}
     </view>
 
     <view class="voice-result" wx:if="{{voiceState.result}}">
-      <textarea class="voice-result-input" value="{{voiceState.result}}" bindinput="onVoiceResult" maxlength="200" auto-height placeholder="识别结果" />
+      <textarea class="voice-result-input" value="{{voiceState.result}}" bindinput="onVoiceResult" maxlength="200" auto-height placeholder="{{lang === 'en' ? 'Recognized text' : '识别结果'}}" />
       <view class="voice-actions">
-        <button class="va-btn va-btn-primary" bindtap="smartRecord">智能识别并记录</button>
-        <button class="va-btn va-btn-ghost" bindtap="saveVoice">存为语音卡片</button>
+        <button class="va-btn va-btn-primary" bindtap="smartRecord">{{lang === 'en' ? 'Recognize & Record' : '智能识别并记录'}}</button>
+        <button class="va-btn va-btn-ghost" bindtap="saveVoice">{{lang === 'en' ? 'Save Voice Card' : '存为语音卡片'}}</button>
       </view>
     </view>
   </view>

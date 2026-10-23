@@ -58,10 +58,12 @@ Page({
       success: (res) => {
         const newLang = res.tapIndex === 0 ? 'zh' : 'en';
         wx.setStorageSync('lang', newLang);
+        const go = () => setTimeout(() => wx.reLaunch({ url: '/pages/plan/plan' }), 800);
+        try {
+          const cs = require('../../utils/cloud-sync.js');
+          if (cs && cs.syncLang) cs.syncLang(newLang).then(go).catch(go); else go();
+        } catch (e) { go(); }
         wx.showToast({ title: newLang === 'en' ? 'Switched to English' : '已切换中文', icon: 'success' });
-        setTimeout(() => {
-          wx.reLaunch({ url: '/pages/plan/plan' });
-        }, 800);
       }
     });
   },

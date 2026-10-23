@@ -31,6 +31,11 @@ const STORAGE_KEY = 'panda_feeding_data';
 function getMeta() {
   try { return wx.getStorageSync(META_KEY) || {}; } catch (e) { return {}; }
 }
+
+/** 当前界面语言：中文用户保持 zh，英文用户订阅推送走英文文案 */
+function currentLang() {
+  try { return wx.getStorageSync('lang') === 'en' ? 'en' : 'zh'; } catch (e) { return 'zh'; }
+}
 function setMeta(m) {
   try { wx.setStorageSync(META_KEY, m); } catch (e) {}
 }
@@ -401,7 +406,7 @@ function enableRemind() {
           return reject(new Error('你拒绝了订阅授权，未开启提醒推送（可再次点击「去开启」授权）'));
         }
         try {
-          const r = await callFn('familyCloud', { action: 'subscribe', familyId: meta.familyId || 'self', templateIds: granted.map(t => t.tmplId) });
+          const r = await callFn('familyCloud', { action: 'subscribe', familyId: meta.familyId || 'self', templateIds: granted.map(t => t.tmplId), lang: currentLang() });
           if (!r || r.code !== 0) return reject(new Error((r && r.msg) || '订阅登记失败，请检查云开发是否已部署 familyCloud'));
           // 返回本次实际授权的模板数：一次性订阅，每个模板只能推 1 条
           resolve(Object.assign({ grantedCount: granted.length, grantedTypes: granted.map(t => t.type) }, r));
@@ -419,8 +424,19 @@ function enableRemind() {
   });
 }
 
+/** 切换语言后同步订阅记录，保证已授权用户下一次推送使用新语言 */
+function syncLang(lang) {
+  const l = lang === 'en' ? 'en' : 'zh';
+  if (!cloudReady()) return Promise.resolve(false);
+  return getOpenid()
+    .then(() => callFn('familyCloud', { action: 'setLang', lang: l }))
+    .then(r => !!(r && r.code === 0))
+    .catch(() => false);
+}
+
 module.exports = {
   REMIND_TEMPLATES,
+  syncLang,
   cloudReady,
   getOpenid,
   getMyFamily,
