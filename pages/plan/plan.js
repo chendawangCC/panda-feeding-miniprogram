@@ -89,6 +89,8 @@ Page({
     allergyStats: { allergyCount: 0, allergyFoods: [], safeCount: 0, safeFoods: [] },
     showSuppRemind: false,
     suppFreqOptions: ['每日', '每2天', '每3天', '每周', '每两周'],
+    suppFreqList: [{ v: '每日', l: '每日' }, { v: '每2天', l: '每2天' }, { v: '每3天', l: '每3天' }, { v: '每周', l: '每周' }, { v: '每两周', l: '每两周' }],
+    suppFreqLabelMap: { '每日': '每日', '每2天': '每2天', '每3天': '每3天', '每周': '每周', '每两周': '每两周' },
     showFoodPicker: false,
     foodUnitIdx: 0,
     showDayRemind: false,
@@ -479,6 +481,11 @@ Page({
       storageHint: 'Per national standard: room temp ≤25°C 4h / fridge 4°C 48h / freezer -18°C 3 months',
       saveEdit: 'Save Changes',
       saveRecord: 'Save Record',
+      deleteRecord: 'Delete this record',
+      suppRemindTitle: 'Supplement Reminder',
+      suppRemindKicker: 'Set the next reminder for supplements (optional)',
+      remindFreq: 'Reminder frequency',
+      remindTime: 'Reminder time',
       selectSupplements: 'Select supplements (multi-select)',
       addMore: 'Add more',
       nextReminder: 'Next reminder setting',
@@ -589,6 +596,11 @@ Page({
       storageHint: '按国标：室温≤25℃ 4小时 / 冷藏4℃ 48小时 / 冷冻-18℃ 3个月',
       saveEdit: '保存修改',
       saveRecord: '保存记录',
+      deleteRecord: '删除此记录',
+      suppRemindTitle: '补充提醒设置',
+      suppRemindKicker: '设置下次补充营养品的提醒（可不填）',
+      remindFreq: '提醒频率',
+      remindTime: '提醒时间',
       selectSupplements: '选择本次营养品 可多选',
       addMore: '添加更多',
       nextReminder: '下次补充提醒设置',
@@ -676,7 +688,14 @@ Page({
   '周一': 'Mon', '周二': 'Tue', '周三': 'Wed', '周四': 'Thu',
   '周五': 'Fri', '周六': 'Sat', '周日': 'Sun'
 };
-    this.setData({ i18n, lang: lang, typeMap: typeMap, hintMap: hintMap, weekMap: weekMap });
+    // 提醒频率：数据值固定中文（跨语言/跨成员统一），展示文案随语言
+    const FREQ_VALUES = ['每日', '每2天', '每3天', '每周', '每两周'];
+    const FREQ_EN = ['Daily', 'Every 2 days', 'Every 3 days', 'Weekly', 'Every 2 weeks'];
+    const suppFreqList = FREQ_VALUES.map((v, i) => ({ v: v, l: lang === 'en' ? FREQ_EN[i] : v }));
+    const suppFreqLabelMap = {};
+    suppFreqList.forEach(x => { suppFreqLabelMap[x.v] = x.l; });
+    this.setData({ i18n, lang: lang, typeMap: typeMap, hintMap: hintMap, weekMap: weekMap,
+      suppFreqList: suppFreqList, suppFreqLabelMap: suppFreqLabelMap });
 
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       // 我的=记录页：第三项高亮
@@ -1295,7 +1314,7 @@ Page({
     });
     // 提醒日期属于云端 meta / 记录字段，立即上云让家庭成员同步
     try { require('../../utils/cloud-data.js').pushAll(true); } catch (e) {}
-    wx.showToast({ title: '已更新提醒日期', icon: 'none' });
+    wx.showToast({ title: (wx.getStorageSync('lang') || 'zh') === 'en' ? 'Reminder date updated' : '已更新提醒日期', icon: 'none' });
   },
 
   // 母乳储存到期 → 点击"知道了"后消失（首页 / 库存页 / 家庭成员同步消失）
@@ -2019,7 +2038,7 @@ Page({
       wx.setStorageSync('lastSuppRemindTime', rec.suppRemindTime);
     }
     this.setData({ showSuppRemind: false });
-    wx.showToast({ title: '补充提醒已设置', icon: 'none' });
+    wx.showToast({ title: (wx.getStorageSync('lang') || 'zh') === 'en' ? 'Supplement reminder saved' : '补充提醒已设置', icon: 'none' });
   },
 
   /* 长按移除营养品（持久化，下次不再出现） */

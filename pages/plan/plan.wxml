@@ -669,7 +669,7 @@ module.exports = {
             <image class="rt-set-ico" src="/images/icons/supp-remind.png" mode="aspectFit" style="margin-top:0;" />
             <view style="display:flex;flex-direction:column;">
               <text class="rt-label" style="margin-top:0;text-align:center;">{{i18n.nextReminder}}</text>
-              <text class="rt-value {{record.suppRemindFreq ? 'rt-set-val' : 'rt-placeholder'}}" style="text-align:center;">{{record.suppRemindFreq ? record.suppRemindFreq + ' ' + (record.suppRemindTime || '') : i18n.setUpOptional}}</text>
+              <text class="rt-value {{record.suppRemindFreq ? 'rt-set-val' : 'rt-placeholder'}}" style="text-align:center;">{{record.suppRemindFreq ? (suppFreqLabelMap[record.suppRemindFreq] || record.suppRemindFreq) + ' ' + (record.suppRemindTime || '') : i18n.setUpOptional}}</text>
             </view>
           </view>
         </view>
@@ -680,9 +680,9 @@ module.exports = {
         <view class="sec-block">
           <text class="sec-label">状态</text>
           <view class="diaper-choice-grid">
-            <view class="diaper-choice {{record.diaperChoice === '嘘嘘' ? 'on' : ''}}" data-choice="嘘嘘" bindtap="selectDiaper">💧<text>嘘嘘</text></view>
-            <view class="diaper-choice {{record.diaperChoice === '臭臭' ? 'on' : ''}}" data-choice="臭臭" bindtap="selectDiaper">💩<text>臭臭</text></view>
-            <view class="diaper-choice {{record.diaperChoice === '嘘嘘+臭臭' ? 'on' : ''}}" data-choice="嘘嘘+臭臭" bindtap="selectDiaper">💧💩<text>都有</text></view>
+            <view class="diaper-choice {{record.diaperChoice === '嘘嘘' ? 'on' : ''}}" data-choice="嘘嘘" bindtap="selectDiaper">💧<text>{{lang === 'en' ? 'Pee' : '嘘嘘'}}</text></view>
+            <view class="diaper-choice {{record.diaperChoice === '臭臭' ? 'on' : ''}}" data-choice="臭臭" bindtap="selectDiaper">💩<text>{{lang === 'en' ? 'Poop' : '臭臭'}}</text></view>
+            <view class="diaper-choice {{record.diaperChoice === '嘘嘘+臭臭' ? 'on' : ''}}" data-choice="嘘嘘+臭臭" bindtap="selectDiaper">💧💩<text>{{lang === 'en' ? 'Both' : '都有'}}</text></view>
           </view>
         </view>
         <view class="sec-block" wx:if="{{record.diaperChoice === '嘘嘘' || record.diaperChoice === '嘘嘘+臭臭'}}">
@@ -973,26 +973,26 @@ module.exports = {
       </view>
 
       <view class="save-btn {{record.editIndex >= 0 ? 'save-btn-edit' : ''}}" hover-class="btn-press" hover-stay-time="60" bindtap="saveRecord">{{record.editIndex >= 0 ? i18n.saveEdit : i18n.saveRecord}}</view>
-      <view class="delete-btn" wx:if="{{record.editIndex >= 0}}" hover-class="btn-press" hover-stay-time="60" bindtap="deleteRecord">删除此记录</view>
+      <view class="delete-btn" wx:if="{{record.editIndex >= 0}}" hover-class="btn-press" hover-stay-time="60" bindtap="deleteRecord">{{i18n.deleteRecord}}</view>
     </scroll-view>
 </dialog>
 
 <!-- ==================== 过敏统计手册（辅食过敏，右上角图标触发） ==================== -->
 <!-- 营养品补充提醒设置 -->
-<dialog visible="{{showSuppRemind}}" title="补充提醒设置" kicker="设置下次补充营养品的提醒（可不填）" bind:close="closeSuppRemind">
+<dialog visible="{{showSuppRemind}}" title="{{i18n.suppRemindTitle}}" kicker="{{i18n.suppRemindKicker}}" bind:close="closeSuppRemind">
   <view class="sr-body">
-    <text class="sr-label">提醒频率</text>
+    <text class="sr-label">{{i18n.remindFreq}}</text>
     <view class="sr-freq-grid">
       <view
-        wx:for="{{suppFreqOptions}}"
-        wx:key="*this"
-        class="sr-freq {{record.suppRemindFreq === item ? 'on' : ''}}"
-        data-freq="{{item}}"
+        wx:for="{{suppFreqList}}"
+        wx:key="v"
+        class="sr-freq {{record.suppRemindFreq === item.v ? 'on' : ''}}"
+        data-freq="{{item.v}}"
         bindtap="setSuppFreq"
-      >{{item}}</view>
+      >{{item.l}}</view>
     </view>
     <view class="sr-time-row">
-      <text class="sr-label">提醒时间</text>
+      <text class="sr-label">{{i18n.remindTime}}</text>
       <view class="rt-box sr-time-box" bindtap="openRecordTimePicker" data-field="suppRemindTime" data-val="{{record.suppRemindTime || ''}}">
         <text class="rt-label">时间</text>
         <text class="rt-value">{{record.suppRemindTime || '--:--'}}</text>

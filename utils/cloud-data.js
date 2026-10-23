@@ -451,7 +451,10 @@ function mergeInto(app, data) {
       myOpenid = me.openid || '';
     } catch (e) {}
     // 判断用户是否加入了家庭
-    const hasFamily = !!(g.myFamily && g.myFamily._id);
+    // 家庭状态可能晚于 pull 就绪（冷启动、切设备、加入申请刚通过）：用 meta.familyId / 家庭列表兜底，
+    // 否则会把其他成员共享的记录当成「退出家庭残留」过滤掉，造成妈妈端看不到爸爸的记录。
+    const hasFamily = !!((g.myFamily && g.myFamily._id) || getMeta().familyId ||
+      (g.myFamilies && g.myFamilies.length));
     const pick = (kind) => (data[kind] || []).filter(d => {
       if (!d) return false;
       if (d.babyId) {
