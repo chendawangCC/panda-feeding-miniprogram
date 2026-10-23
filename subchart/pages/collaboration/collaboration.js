@@ -199,8 +199,8 @@ Page({
       for (const fam of (fams || [])) {
         // 我不是创建者，检查我在 pendingApplications 中的状态
         if (fam.ownerOpenid !== myOid) {
-          const me = (fam.pendingApplications || []).find(m => m.openid === myOid);
-          if (me) {
+          const me = (fam.pendingApplications || []).find(m => m && m.openid === myOid);
+          if (me && (me.status || 'pending') !== 'rejected') {
             pendingJoin = {
               familyId: fam._id,
               familyName: fam.name,
@@ -322,7 +322,7 @@ Page({
       if (isNaN(d.getTime())) return '';
       return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     };
-    const pendingMembers = (family.pendingApplications || []).map(p => {
+    const pendingMembers = (family.pendingApplications || []).filter(p => p && (p.status || 'pending') !== 'rejected').map(p => {
       let nick = p.nickname || '';
       if (!nick || /^[\x00-\x1F\x7F-\x9F]+$/.test(nick) || nick.length < 1) {
         nick = '亲友用户';

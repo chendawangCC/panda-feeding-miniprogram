@@ -33,8 +33,8 @@ Page({
         let pendingJoin = null;
         for (const fam of fams) {
           if (fam.ownerOpenid !== myOpenid) {
-            const me = (fam.members || []).find(m => m.openid === myOpenid);
-            if (me && me.status === 'pending') {
+            const me = (fam.pendingApplications || []).find(m => m && m.openid === myOpenid);
+            if (me && (me.status || 'pending') !== 'rejected') {
               pendingJoin = { familyId: fam._id, familyName: fam.name, status: 'pending' };
               break;
             }

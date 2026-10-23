@@ -35,6 +35,15 @@ async function ensureCollections() {
 function ok(data) { return { code: 0, ...data }; }
 function fail(msg, code = -1) { return { code, msg }; }
 
+/** 是否存在「仍待审核」的申请（已拒绝 rejected 的不算，允许重新申请/换家庭/创建家庭） */
+async function hasPendingApply(openid) {
+  try {
+    const res = await db.collection(FAM).where({ 'pendingApplications.openid': openid }).get();
+    return (res.data || []).some(fam => fam.ownerOpenid !== openid &&
+      (fam.pendingApplications || []).some(m => m && m.openid === openid && (m.status || 'pending') !== 'rejected'));
+  } catch (e) { return false; }
+}
+
 function genInviteCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let s = '';
@@ -84,13 +93,9 @@ exports.main = async (event) => {
             .count();
           if ((joined.total || 0) > 0) return fail('你已加入家庭，不能再创建家庭，请先退出当前家庭');
         } catch (e) { /* 查询失败不阻断 */ }
-        // 有待审核的家庭申请 → 拒绝
+        // 有待审核的家庭申请 → 拒绝（已拒绝的不算，允许重新创建）
         try {
-          const pendingRes = await db.collection(FAM)
-            .where({ 'pendingApplications.openid': openid })
-            .get();
-          const hasPending = (pendingRes.data || []).some(fam => fam.ownerOpenid !== openid);
-          if (hasPending) return fail('你有待审核的家庭申请，请等待审核结果后再创建家庭');
+          if (await hasPendingApply(openid)) return fail('你有待审核的家庭申请，请等待审核结果后再创建家庭');
         } catch (e) { /* 查询失败不阻断 */ }
         const name = (event.name || '').toString().trim();
         const nickname = (event.nickname || '我').toString().trim();
@@ -164,20 +169,18 @@ exports.main = async (event) => {
           }
         } catch (e) {}
         
-        // 检查是否有待审核的申请：有待审核申请时不能加入其他家庭
-        try {
-          const pendingRes = await db.collection(FAM)
-            .where({ 'pendingApplications.openid': openid })
-            .get();
-          const hasPending = (pendingRes.data || []).some(fam => fam.ownerOpenid !== openid);
-          if (hasPending) return fail('你有待审核的家庭申请，请等待审核结果后再加入其他家庭');
-        } catch (e) {}
-        
         const r = await db.collection(FAM).where({ inviteCode: code }).limit(1).get();
         if (!r.data.length) return fail('邀请码无效，请检查后重试');
         const fam = r.data[0];
         if (fam.closed) return fail('该家庭已解散，无法加入');
         if (Date.now() > fam.inviteExpire) return fail('邀请码已过期，请让家人重新分享');
+        // 已在「其他家庭」待审 → 不能再申请本家庭；本家庭的待审/已拒绝由下方 existingPending 处理
+        try {
+          const pendFams = await db.collection(FAM).where({ 'pendingApplications.openid': openid }).get();
+          const hasOtherPending = (pendFams.data || []).some(f2 => f2._id !== fam._id && f2.ownerOpenid !== openid &&
+            (f2.pendingApplications || []).some(m => m && m.openid === openid && (m.status || 'pending') !== 'rejected'));
+          if (hasOtherPending) return fail('你有待审核的家庭申请，请等待审核结果后再加入其他家庭');
+        } catch (e) {}
         const me = pickMember(fam, openid);
         if (me) {
           return ok({ familyId: fam._id, name: fam.name, already: true, applying: me.status === 'pending', members: fam.members, data: fam.data });
@@ -192,13 +195,14 @@ exports.main = async (event) => {
         } catch (e) {}
         // 检查是否已经有待审核申请
         const existingPending = (fam.pendingApplications || []).find(m => m.openid === openid);
-        if (existingPending) {
+        if (existingPending && (existingPending.status || 'pending') !== 'rejected') {
           return ok({ familyId: fam._id, name: fam.name, already: true, applying: true, members: fam.members, data: fam.data });
         }
         // 家庭成员上限：最多 6 人（正式成员）
         if ((fam.members || []).length >= 6) return fail('家庭成员已满（最多6人）');
         // 待审核申请数量上限：最多 10 个
-        const pendingList = fam.pendingApplications || [];
+        // 重新申请：清掉自己此前的 rejected 记录，避免越积越多
+        const pendingList = (fam.pendingApplications || []).filter(m => !(m.openid === openid && m.status === 'rejected'));
         if (pendingList.length >= 10) return fail('待审核申请太多，请稍后再试');
         const nickname = (event.nickname || '我').toString().trim();
         const avatar = event.avatar || '👶';
@@ -236,7 +240,7 @@ exports.main = async (event) => {
           // pendingApplications 存储在 data 字段中，不是顶层
           const pendingList = (fam.data && fam.data.pendingApplications) || fam.pendingApplications || [];
           pendingList.forEach(m => {
-            if (m && m.openid !== openid) {
+            if (m && m.openid !== openid && (m.status || 'pending') !== 'rejected') {
               pending.push({
                 familyId: fam._id,
                 familyName: fam.name,

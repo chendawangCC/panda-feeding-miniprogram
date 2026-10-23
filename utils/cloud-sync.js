@@ -183,6 +183,10 @@ function getPendingApprovals() {
 }
 
 /** 亲友查询自己的加入申请审批结果 */
+function cancelJoinApply(familyId) {
+  return callFn('familyCloud', { action: 'cancelJoinApply', familyId });
+}
+
 function getMyJoinStatus() {
   return callFn('familyCloud', { action: 'getMyJoinStatus' }).then(r => {
     if (r.code !== 0) throw new Error(r.msg);
@@ -426,6 +430,7 @@ module.exports = {
   approveMember,
   getPendingApprovals,
   getMyJoinStatus,
+  cancelJoinApply,
   updateMemberPerms,
   rejectMember,
   refreshInvite,

@@ -553,8 +553,8 @@ App({
         let pendingJoin = null;
         for (const fam of (fams || [])) {
           if (fam.ownerOpenid !== myOpenid) {
-            const me = (fam.members || []).find(m => m.openid === myOpenid);
-            if (me && me.status === 'pending') {
+            const me = (fam.pendingApplications || []).find(m => m && m.openid === myOpenid);
+            if (me && (me.status || 'pending') !== 'rejected') {
               pendingJoin = { familyId: fam._id, familyName: fam.name, status: 'pending' };
               break;
             }
@@ -594,6 +594,9 @@ App({
         if (targetPage) {
           targetPage._globalAlertCallback = {
             confirm: () => {
+              if (r.status === 'rejected' && cs.cancelJoinApply) {
+                try { cs.cancelJoinApply(r.familyId).catch(() => {}); } catch (e) {}
+              }
               cs.getMyFamily().then(() => cs.pull()).then(() => {
                 wx.reLaunch({ url: '/pages/my-babies/my-babies' });
               }).catch(() => {
