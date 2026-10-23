@@ -14,10 +14,13 @@ const PERM_MODULES = [
 
 Page({
   onShareTimeline() {
-    return { title: '熊宝喂养 · 邀请家人共同记录' };
+    return { title: this._t('熊宝喂养 · 邀请家人共同记录', 'Panda Feeding · Invite family to record together') };
   },
 
   data: {
+    lang: 'zh',
+    roleLabelMap: {},
+    familyRolesView: ['妈妈', '爸爸', '爷爷', '奶奶', '外公', '外婆', '阿姨', '叔叔', '其他'],
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     cloudOk: false,        // 云开发是否可用
     loading: false,
@@ -56,6 +59,20 @@ Page({
     myFamilyRole: ''
   },
 
+  _en() { return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en'; },
+  _t(zh, enTxt) { return this._en() ? enTxt : zh; },
+
+  /* 亲友角色英文标签（底层仍存中文值，仅显示层映射） */
+  _roleMap() {
+    const en = {
+      '妈妈': 'Mom', '爸爸': 'Dad', '爷爷': 'Grandpa', '奶奶': 'Grandma',
+      '外公': 'Grandpa (maternal)', '外婆': 'Grandma (maternal)',
+      '阿姨': 'Aunt', '叔叔': 'Uncle', '其他': 'Other'
+    };
+    if (!this._en()) return {};
+    return en;
+  },
+
   /* 亲友自己修改亲属关系 */
   openMyRolePicker() {
     const fam = this.data.family;
@@ -64,23 +81,32 @@ Page({
     const me = (this.data.members || []).find(m => m.openid === myOpenid);
     if (!me) return;
     wx.showActionSheet({
-      itemList: this.data.familyRoles,
+      itemList: this.data.familyRolesView,
       success: (res) => {
         const newRole = this.data.familyRoles[res.tapIndex];
-        wx.showLoading({ title: '保存中' });
+        wx.showLoading({ title: this._t('保存中', 'Saving') });
         cs.updateMemberPerms(fam._id, myOpenid, {}, newRole).then(r => {
           wx.hideLoading();
           this.setData({ members: r.members || [], 'family.members': r.members || [], myFamilyRole: newRole });
-          wx.showToast({ title: '身份已更新为' + newRole, icon: 'none' });
+          wx.showToast({ title: this._t('身份已更新为' + newRole, 'Role updated to ' + (this._roleMap()[newRole] || newRole)), icon: 'none' });
         }).catch(e => {
           wx.hideLoading();
-          wx.showToast({ title: '保存失败：' + (e.message || ''), icon: 'none' });
+          wx.showToast({ title: this._t('保存失败：' + (e.message || ''), 'Save failed: ' + (e.message || '')), icon: 'none' });
         });
       }
     });
   },
 
   onShow() {
+    {
+      const en = (wx.getStorageSync('lang') || 'zh') === 'en';
+      const ROLE_EN = ['Mom', 'Dad', 'Grandpa', 'Grandma', 'Grandpa (maternal)', 'Grandma (maternal)', 'Aunt', 'Uncle', 'Other'];
+      this.setData({
+        lang: en ? 'en' : 'zh',
+        roleLabelMap: this._roleMap(),
+        familyRolesView: en ? ROLE_EN : ['妈妈', '爸爸', '爷爷', '奶奶', '外公', '外婆', '阿姨', '叔叔', '其他']
+      });
+    }
     this.setData({ babyName: (app.globalData.baby || {}).name || '' });
     const cloudOk = cs.cloudReady();
     this.setData({ cloudOk });
@@ -95,7 +121,7 @@ Page({
       // 自动打开加入弹窗并填入邀请码
       this.openJoin();
       this.setData({ joinCode: pendingInviteCode });
-      wx.showToast({ title: '已识别邀请码，请选择身份后提交', icon: 'none' });
+      wx.showToast({ title: this._t('已识别邀请码，请选择身份后提交', 'Invite code detected. Choose your role, then submit.'), icon: 'none' });
     }
     
     if (cloudOk) {
@@ -256,7 +282,7 @@ Page({
       const full = JSON.stringify(err || {});
       const real = (err && (err.message || err.errMsg)) ? String(err.message || err.errMsg) : full;
       console.error('[collab] getMyFamilies fail full:', err, full);
-      wx.showModal({ title: '拉取失败', content: String(real).slice(0, 200), showCancel: false });
+      wx.showModal({ title: this._t('拉取失败', 'Sync failed'), content: String(real).slice(0, 200), showCancel: false });
     });
   },
 
@@ -329,8 +355,8 @@ Page({
     const user = wx.getStorageSync('panda_user') || {};
     if (!user.logged || !user.openid) {
       wx.showModal({
-        title: '提示',
-        content: '请先登录账号后再加入家庭',
+        title: this._t('提示', 'Notice'),
+        content: this._t('请先登录账号后再加入家庭', 'Please sign in before joining a family'),
         showCancel: false,
         success: () => {
           // 跳转到我的页，自动弹出登录抽屉
@@ -345,11 +371,11 @@ Page({
     const hasMyFamily = this.data.hasMyFamily;
     const joined = (this.data.fams || []).filter(f => !f._selfOnly && f.ownerOpenid !== this._myOpenid).length;
     if (hasMyFamily) {
-      wx.showToast({ title: '您已创建家庭，不能再加入其他家庭', icon: 'none' });
+      wx.showToast({ title: this._t('您已创建家庭，不能再加入其他家庭', 'You already created a family and cannot join another'), icon: 'none' });
       return;
     }
     if (joined >= 1) {
-      wx.showToast({ title: '您已加入1个家庭，不能再加入其他家庭', icon: 'none' });
+      wx.showToast({ title: this._t('您已加入1个家庭，不能再加入其他家庭', 'You already joined one family and cannot join another'), icon: 'none' });
       return;
     }
     this.setData({ showJoin: true, joinCode: '', joinFamilyRole: '', joinFamilyRoleIdx: -1 });
@@ -371,8 +397,8 @@ Page({
     const user = wx.getStorageSync('panda_user') || {};
     if (!user.logged || !user.openid) {
       wx.showModal({
-        title: '提示',
-        content: '请先登录账号后再扫码加入家庭',
+        title: this._t('提示', 'Notice'),
+        content: this._t('请先登录账号后再扫码加入家庭', 'Please sign in before scanning to join'),
         showCancel: false,
         success: () => {
           const app = getApp();
@@ -401,15 +427,15 @@ Page({
   confirmJoin() {
     const code = this.data.scanCode || '';
     if (!code) {
-      wx.showToast({ title: '邀请码为空', icon: 'none' });
+      wx.showToast({ title: this._t('邀请码为空', 'Invite code is empty'), icon: 'none' });
       return;
     }
     // 先检查是否登录
     const user = wx.getStorageSync('panda_user') || {};
     if (!user.logged || !user.openid) {
       wx.showModal({
-        title: '提示',
-        content: '请先登录账号后再加入家庭',
+        title: this._t('提示', 'Notice'),
+        content: this._t('请先登录账号后再加入家庭', 'Please sign in before joining a family'),
         showCancel: false,
         success: () => {
           this.setData({ showScan: false });
@@ -432,7 +458,7 @@ Page({
         that.setData({ scanState: 'applying', scanResult: r.name || '家庭' });
       } else if (r.already) {
         that.setData({ scanState: 'done', scanResult: r.name || '家庭' });
-        wx.showToast({ title: '你已在该家庭中', icon: 'none' });
+        wx.showToast({ title: this._t('你已在该家庭中', 'You are already in this family'), icon: 'none' });
       } else {
         that.setData({ scanState: 'done', scanResult: r.name || '家庭' });
       }
@@ -441,22 +467,22 @@ Page({
       cs.pull();
       that.loadFamily();
     }).catch(e => {
-      wx.showToast({ title: '加入失败：' + (e.message || ''), icon: 'none' });
+      wx.showToast({ title: this._t('加入失败：' + (e.message || ''), 'Join failed: ' + (e.message || '')), icon: 'none' });
       that.setData({ scanState: 'fail' });
     });
   },
   doJoin() {
     const code = (this.data.joinCode || '').trim().toUpperCase();
     if (!code) {
-      wx.showToast({ title: '请输入邀请码', icon: 'none' });
+      wx.showToast({ title: this._t('请输入邀请码', 'Please enter the invite code'), icon: 'none' });
       return;
     }
     // 提交申请前必须先登录
     const user = wx.getStorageSync('panda_user') || {};
     if (!user.logged || !user.openid) {
       wx.showModal({
-        title: '提示',
-        content: '请先登录账号后再申请加入家庭',
+        title: this._t('提示', 'Notice'),
+        content: this._t('请先登录账号后再申请加入家庭', 'Please sign in before requesting to join'),
         showCancel: false,
         success: () => {
           this.setData({ showJoin: false });
@@ -470,8 +496,8 @@ Page({
     }
     // 先弹窗确认：告知加入家庭后不能新建宝宝、不能创建家庭
     wx.showModal({
-      title: '确认加入家庭',
-      content: '加入家庭后，你将作为「亲友」身份使用小程序：\n\n• 不能新建自己的宝宝\n• 不能创建自己的家庭\n• 可以查看和记录家庭共享宝宝的喂养信息\n\n确定要申请加入吗？',
+      title: this._t('确认加入家庭', 'Join this family?'),
+      content: this._t('加入家庭后，你将作为「亲友」身份使用小程序：\n\n• 不能新建自己的宝宝\n• 不能创建自己的家庭\n• 可以查看和记录家庭共享宝宝的喂养信息\n\n确定要申请加入吗？', 'You will use the app as a family member:\n\n• You cannot create your own baby\n• You cannot create your own family\n• You can view and record the shared baby\n\nRequest to join?'),
       confirmText: '申请加入',
       cancelText: '取消',
       success: (res) => {
@@ -494,24 +520,24 @@ Page({
           this.setData({ joinSaving: true });
           cs.joinFamily(code, newUser.nickname, newUser.avatar, this.data.joinFamilyRole).then(r => {
             this.setData({ joinSaving: false, showJoin: false });
-            if (r.already) { wx.showToast({ title: '你已在该家庭中', icon: 'none' }); }
-            else if (r.applying) { wx.showToast({ title: '已申请加入，等待主账户审核', icon: 'none' }); }
+            if (r.already) { wx.showToast({ title: this._t('你已在该家庭中', 'You are already in this family'), icon: 'none' }); }
+            else if (r.applying) { wx.showToast({ title: this._t('已申请加入，等待主账户审核', 'Request sent, waiting for creator approval'), icon: 'none' }); }
             else {
               const fam = { _id: r.familyId || '', familyNo: '', name: r.name || '已加入的家庭', ownerOpenid: '', members: r.members || [], inviteCode: '', inviteExpire: 0 };
               this.setData({ fams: [fam], famIdx: 0 });
               this.applyFamily(fam);
-              wx.showToast({ title: '已加入家庭', icon: 'success' });
+              wx.showToast({ title: this._t('已加入家庭', 'Family joined'), icon: 'success' });
             }
             this.loadFamily();
             cs.pull();
           }).catch(e => {
             this.setData({ joinSaving: false });
-            wx.showToast({ title: e.message || '加入失败', icon: 'none' });
+            wx.showToast({ title: e.message || this._t('加入失败', 'Join failed'), icon: 'none' });
           });
         },
         fail: () => {
           this.setData({ joinSaving: false });
-          wx.showToast({ title: '请授权昵称后再提交申请', icon: 'none' });
+          wx.showToast({ title: this._t('请授权昵称后再提交申请', 'Please authorize your nickname before submitting'), icon: 'none' });
         }
       });
       return;
@@ -520,9 +546,9 @@ Page({
     cs.joinFamily(code, user.nickname, user.avatar || '/images/brand-logo.png', this.data.joinFamilyRole).then(r => {
       this.setData({ joinSaving: false, showJoin: false });
       if (r.already) {
-        wx.showToast({ title: '你已在该家庭中', icon: 'none' });
+        wx.showToast({ title: this._t('你已在该家庭中', 'You are already in this family'), icon: 'none' });
       } else if (r.applying) {
-        wx.showToast({ title: '已申请加入「' + (r.name || '家庭') + '」，等待主账户审核', icon: 'none' });
+        wx.showToast({ title: this._t('已申请加入「' + (r.name || '家庭') + '」，等待主账户审核', 'Requested to join "' + (r.name || 'family') + '", waiting for approval'), icon: 'none' });
       } else {
         // 立即展示加入的家庭（名称/成员；家庭号由 loadFamily 拉取补充），再拉取云端刷新
         const fam = {
@@ -531,13 +557,13 @@ Page({
         };
         this.setData({ fams: [fam], famIdx: 0 });
         this.applyFamily(fam);
-        wx.showToast({ title: '已加入「' + (r.name || '家庭') + '」', icon: 'success' });
+        wx.showToast({ title: this._t('已加入「' + (r.name || '家庭') + '」', 'Joined "' + (r.name || 'family') + '"'), icon: 'success' });
       }
       this.loadFamily();
       cs.pull();
     }).catch(e => {
       this.setData({ joinSaving: false });
-      wx.showToast({ title: e.message || '加入失败，请确认邀请码', icon: 'none' });
+      wx.showToast({ title: e.message || this._t('加入失败，请确认邀请码', 'Join failed — check the invite code'), icon: 'none' });
     });
   },
 
@@ -546,14 +572,14 @@ Page({
     // 规则：一个账号只能创建或加入1个家庭
     const joined = (this.data.fams || []).filter(f => !f._selfOnly && f.ownerOpenid !== this._myOpenid).length;
     if (joined >= 1) {
-      wx.showToast({ title: '您已加入家庭，不能再创建家庭', icon: 'none' });
+      wx.showToast({ title: this._t('您已加入家庭，不能再创建家庭', 'You joined a family already and cannot create one'), icon: 'none' });
       return;
     }
     // 至少要有一位宝宝才能创建家庭邀请成员
     if (!((app.globalData.babies || []).length)) {
       wx.showModal({
-        title: '请先添加宝宝',
-        content: '创建家庭需要先添加至少一位宝宝，才能邀请家人一起记录',
+        title: this._t('请先添加宝宝', 'Add a baby first'),
+        content: this._t('创建家庭需要先添加至少一位宝宝，才能邀请家人一起记录', 'Add at least one baby before creating a family so family can record together'),
         confirmText: '去添加',
         cancelText: '取消',
         success: (res) => {
@@ -584,11 +610,11 @@ Page({
       };
       this.setData({ fams: [fam], famIdx: 0 });
       this.applyFamily(fam);
-      wx.showToast({ title: '家庭已创建，家庭号 ' + (r.familyNo || '') + '，快分享二维码邀请家人', icon: 'none' });
+      wx.showToast({ title: this._t('家庭已创建，家庭号 ' + (r.familyNo || '') + '，快分享二维码邀请家人', 'Family created. ID ' + (r.familyNo || '') + ' — share the QR code to invite family'), icon: 'none' });
       this.loadFamily();
     }).catch(e => {
       this.setData({ loading: false });
-      wx.showToast({ title: '创建失败：' + (e.message || ''), icon: 'none' });
+      wx.showToast({ title: this._t('创建失败：' + (e.message || ''), 'Create failed: ' + (e.message || '')), icon: 'none' });
     });
   },
 
@@ -611,7 +637,7 @@ Page({
         .then(f => this.doInvite(f))
         .catch(e => {
           this.setData({ loading: false });
-          wx.showToast({ title: '创建家庭失败：' + (e.message || ''), icon: 'none' });
+          wx.showToast({ title: this._t('创建家庭失败：' + (e.message || ''), 'Create family failed: ' + (e.message || '')), icon: 'none' });
         });
       return;
     }
@@ -619,7 +645,7 @@ Page({
   },
 
   doInvite(fam) {
-    wx.showLoading({ title: '生成中…' });
+    wx.showLoading({ title: this._t('生成中…', 'Generating...') });
     cs.refreshInvite(fam._id).then(r => {
       wx.hideLoading();
       const now = new Date(r.inviteExpire || Date.now());
@@ -631,7 +657,7 @@ Page({
       setTimeout(() => this.drawQr(), 80);
     }).catch(e => {
       wx.hideLoading();
-      wx.showToast({ title: '生成失败：' + (e.message || ''), icon: 'none' });
+      wx.showToast({ title: this._t('生成失败：' + (e.message || ''), 'Generate failed: ' + (e.message || '')), icon: 'none' });
     });
   },
 
@@ -666,14 +692,14 @@ Page({
   noop() {},
 
   shareInvite() {
-    wx.showToast({ title: '已生成分享卡片，点右上角转发给亲友', icon: 'none' });
+    wx.showToast({ title: this._t('已生成分享卡片，点右上角转发给亲友', 'Share card ready — tap the top-right menu to send it'), icon: 'none' });
   },
 
   onShareAppMessage() {
     const inv = this.data.invite || {};
     const famId = (this.data.family || {})._id || '';
     return {
-      title: '邀请你加入' + (inv.familyName || '宝宝的喂养家庭') + '，一起记录喂养',
+      title: this._t('邀请你加入' + (inv.familyName || '宝宝的喂养家庭') + '，一起记录喂养', 'Join ' + (inv.familyName || 'our feeding family') + ' and record feedings together'),
       path: '/pages/index/index?invite=' + (inv.code || ''),
       imageUrl: ''
     };
@@ -691,8 +717,8 @@ Page({
     const user = wx.getStorageSync('panda_user') || {};
     if (!user.logged && m.openid === this._myOpenid) {
       wx.showModal({
-        title: '去登录或注册',
-        content: '登录后可设置头像与账户名，并与亲友云端共享喂养记录',
+        title: this._t('去登录或注册', 'Sign in or sign up'),
+        content: this._t('登录后可设置头像与账户名，并与亲友云端共享喂养记录', 'Sign in to set your avatar and name, and share records with family in the cloud'),
         confirmText: '去登录',
         cancelText: '取消',
         success: r => {
@@ -706,7 +732,7 @@ Page({
       // 主账户：弹出成员操作菜单
       this.setData({ showMemberAction: true, actionMember: m });
     } else if (this.data.isOwner) {
-      wx.showToast({ title: '这是你本人', icon: 'none' });
+      wx.showToast({ title: this._t('这是你本人', 'This is you'), icon: 'none' });
     }
   },
 
@@ -729,14 +755,14 @@ Page({
   confirmRemove(m) {
     const fam = this.data.family;
     wx.showModal({
-      title: '移除成员',
-      content: '确定移除 ' + (m.nickname || '该成员') + ' 吗？移除后将无法看到家庭数据。',
+      title: this._t('移除成员', 'Remove member'),
+      content: this._t('确定移除 ' + (m.nickname || '该成员') + ' 吗？移除后将无法看到家庭数据。', 'Remove ' + (m.nickname || 'this member') + '? They will lose access to family data.'),
       success: r => {
         if (!r.confirm) return;
         cs.removeMember(fam._id, m.openid).then(members => {
           this.setData({ members });
-          wx.showToast({ title: '已移除', icon: 'none' });
-        }).catch(e => wx.showToast({ title: '移除失败：' + (e.message || ''), icon: 'none' }));
+          wx.showToast({ title: this._t('已移除', 'Removed'), icon: 'none' });
+        }).catch(e => wx.showToast({ title: this._t('移除失败：' + (e.message || ''), 'Remove failed: ' + (e.message || '')), icon: 'none' }));
       }
     });
   },
@@ -794,10 +820,10 @@ Page({
     this.setData({ permSaving: true });
     cs.updateMemberPerms(fam._id, editor.openid, perms, editor.familyRole || '').then(r => {
       this.setData({ permSaving: false, showPerm: false, members: r.members || [], 'family.members': r.members || [] });
-      wx.showToast({ title: '权限已保存', icon: 'none' });
+      wx.showToast({ title: this._t('权限已保存', 'Permissions saved'), icon: 'none' });
     }).catch(e => {
       this.setData({ permSaving: false });
-      wx.showToast({ title: '保存失败：' + (e.message || ''), icon: 'none' });
+      wx.showToast({ title: this._t('保存失败：' + (e.message || ''), 'Save failed: ' + (e.message || '')), icon: 'none' });
     });
   },
 
@@ -812,7 +838,7 @@ Page({
     if (this._pendingNotified === pending.openid) return;
     this._pendingNotified = pending.openid;
     wx.showModal({
-      title: '亲友申请加入',
+      title: this._t('亲友申请加入', 'Family join request'),
       content: (pending.nickname || '该亲友') + ' 申请加入你的家庭「' + (fam.name || '') + '」',
       confirmText: '同意加入',
       cancelText: '稍后处理',
@@ -834,20 +860,20 @@ Page({
     const members = this.data.members || [];
     const memberCount = members.filter(m => m.role !== 'owner').length;
     if (memberCount >= 6) {
-      wx.showToast({ title: '家庭成员已满，最多6个亲友', icon: 'none' });
+      wx.showToast({ title: this._t('家庭成员已满，最多6个亲友', 'Family is full — up to 6 members'), icon: 'none' });
       return;
     }
-    wx.showLoading({ title: '审核中' });
+    wx.showLoading({ title: this._t('审核中', 'Reviewing') });
     cs.approveMember(fam._id, openid, 'member').then(r => {
       wx.hideLoading();
       const members = r.members || [];
       // 从待审核列表中移除已同意的成员
       const pendingMembers = (this.data.pendingMembers || []).filter(x => x.openid !== openid);
       this.setData({ members, 'family.members': members, pendingMembers });
-      wx.showToast({ title: '已同意加入', icon: 'none' });
+      wx.showToast({ title: this._t('已同意加入', 'Approved'), icon: 'none' });
     }).catch(err => {
       wx.hideLoading();
-      wx.showToast({ title: '操作失败：' + (err.message || ''), icon: 'none' });
+      wx.showToast({ title: this._t('操作失败：' + (err.message || ''), 'Failed: ' + (err.message || '')), icon: 'none' });
     });
   },
 
@@ -859,25 +885,25 @@ Page({
            || (this.data.pendingMembers || []).find(x => x.openid === openid);
     if (!fam || fam._selfOnly || !m) return;
     wx.showModal({
-      title: '审核加入申请',
-      content: '同意 ' + (m.nickname || '该亲友') + ' 加入家庭吗？同意后可设置亲属关系和使用权限。',
+      title: this._t('审核加入申请', 'Review join request'),
+      content: this._t('同意 ' + (m.nickname || '该亲友') + ' 加入家庭吗？同意后可设置亲属关系和使用权限。', 'Approve ' + (m.nickname || 'this member') + ' to join? You can then set their relationship and permissions.'),
       confirmText: '同意并设置',
       cancelText: '拒绝',
       success: res => {
         if (!res.confirm) {
-          wx.showLoading({ title: '处理中' });
+          wx.showLoading({ title: this._t('处理中', 'Processing') });
           cs.rejectMember(fam._id, openid).then(r => {
             wx.hideLoading();
             this.setData({ members: r.members || [], 'family.members': r.members || [] });
-            wx.showToast({ title: '已拒绝', icon: 'none' });
+            wx.showToast({ title: this._t('已拒绝', 'Declined'), icon: 'none' });
           }).catch(err => {
             wx.hideLoading();
-            wx.showToast({ title: '操作失败：' + (err.message || ''), icon: 'none' });
+            wx.showToast({ title: this._t('操作失败：' + (err.message || ''), 'Failed: ' + (err.message || '')), icon: 'none' });
           });
           return;
         }
         // 同意：先通过审核，再自动打开权限设置弹窗
-        wx.showLoading({ title: '同意中' });
+        wx.showLoading({ title: this._t('同意中', 'Approving') });
         cs.approveMember(fam._id, openid, 'member').then(r => {
           wx.hideLoading();
           const members = r.members || [];
@@ -887,10 +913,10 @@ Page({
           if (newMember) {
             this.openPermEditor(newMember);
           }
-          wx.showToast({ title: '已同意加入，请设置亲属关系', icon: 'none' });
+          wx.showToast({ title: this._t('已同意加入，请设置亲属关系', 'Approved — now set their relationship'), icon: 'none' });
         }).catch(err => {
           wx.hideLoading();
-          wx.showToast({ title: '操作失败：' + (err.message || ''), icon: 'none' });
+          wx.showToast({ title: this._t('操作失败：' + (err.message || ''), 'Failed: ' + (err.message || '')), icon: 'none' });
         });
       }
     });
@@ -905,16 +931,16 @@ Page({
            || (this.data.pendingMembers || []).find(x => x.openid === openid);
     if (!fam || fam._selfOnly || !m) return;
     wx.showModal({
-      title: '拒绝加入',
-      content: '确定拒绝 ' + (m.nickname || '该亲友') + ' 的加入申请吗？',
+      title: this._t('拒绝加入', 'Decline request'),
+      content: this._t('确定拒绝 ' + (m.nickname || '该亲友') + ' 的加入申请吗？', 'Decline the join request from ' + (m.nickname || 'this member') + '?'),
       success: r => {
         if (!r.confirm) return;
         cs.rejectMember(fam._id, openid).then(res => {
           // 从待审核列表中移除已拒绝的成员
           const pendingMembers = (this.data.pendingMembers || []).filter(x => x.openid !== openid);
           this.setData({ members: res.members || [], 'family.members': res.members || [], pendingMembers });
-          wx.showToast({ title: '已拒绝', icon: 'none' });
-        }).catch(e => wx.showToast({ title: '操作失败：' + (e.message || ''), icon: 'none' }));
+          wx.showToast({ title: this._t('已拒绝', 'Declined'), icon: 'none' });
+        }).catch(e => wx.showToast({ title: this._t('操作失败：' + (e.message || ''), 'Failed: ' + (e.message || '')), icon: 'none' }));
       }
     });
   },
@@ -924,16 +950,16 @@ Page({
     const pendingJoin = this.data.pendingJoin;
     if (!pendingJoin || !pendingJoin.familyId) return;
     wx.showModal({
-      title: '取消申请',
-      content: '确定要取消加入该家庭的申请吗？',
+      title: this._t('取消申请', 'Cancel request'),
+      content: this._t('确定要取消加入该家庭的申请吗？', 'Cancel your request to join this family?'),
       success: (res) => {
         if (res.confirm) {
           const cs = getApp().cloudSync;
-          wx.showLoading({ title: '取消中...' });
+          wx.showLoading({ title: this._t('取消中...', 'Cancelling...') });
           cs.call('familyCloud', { action: 'cancelJoinApply', familyId: pendingJoin.familyId }).then(r => {
             wx.hideLoading();
             if (r && r.ok !== false) {
-              wx.showToast({ title: '已取消申请', icon: 'success' });
+              wx.showToast({ title: this._t('已取消申请', 'Request cancelled'), icon: 'success' });
               this.setData({ pendingJoin: null });
               // 刷新页面
               this.loadFamily();
@@ -942,7 +968,7 @@ Page({
             }
           }).catch(e => {
             wx.hideLoading();
-            wx.showToast({ title: '取消失败', icon: 'none' });
+            wx.showToast({ title: this._t('取消失败', 'Cancel failed'), icon: 'none' });
           });
         }
       }
@@ -955,7 +981,7 @@ Page({
     const fam = this.data.family;
     if (!fam || !fam._id) return;
     wx.showModal({
-      title: '重命名家庭',
+      title: this._t('重命名家庭', 'Rename family'),
       editable: true,
       placeholderText: '请输入家庭名称',
       content: fam.name || '',
@@ -963,16 +989,16 @@ Page({
         if (res.confirm) {
           const newName = (res.content || '').trim();
           if (!newName) {
-            wx.showToast({ title: '家庭名称不能为空', icon: 'none' });
+            wx.showToast({ title: this._t('家庭名称不能为空', 'Family name cannot be empty'), icon: 'none' });
             return;
           }
           if (newName === fam.name) return;
           const cs = getApp().cloudSync;
-          wx.showLoading({ title: '保存中...' });
+          wx.showLoading({ title: this._t('保存中...', 'Saving...') });
           cs.call('familyCloud', { action: 'renameFamily', familyId: fam._id, name: newName }).then(r => {
             wx.hideLoading();
             if (r && r.ok !== false) {
-              wx.showToast({ title: '重命名成功', icon: 'success' });
+              wx.showToast({ title: this._t('重命名成功', 'Renamed'), icon: 'success' });
               // 更新本地数据
               this.setData({
                 'family.name': newName
@@ -984,7 +1010,7 @@ Page({
             }
           }).catch(e => {
             wx.hideLoading();
-            wx.showToast({ title: '重命名失败', icon: 'none' });
+            wx.showToast({ title: this._t('重命名失败', 'Rename failed'), icon: 'none' });
           });
         }
       }
@@ -998,7 +1024,7 @@ Page({
     console.log('[onLeave] fam=', !!fam, '_selfOnly=', fam && fam._selfOnly, 'ownerOpenid=', fam && fam.ownerOpenid, '_myOpenid=', this._myOpenid);
     if (!fam) return;
     if (fam._selfOnly) {
-      wx.showToast({ title: '当前仅你一人，无需退出', icon: 'none' });
+      wx.showToast({ title: this._t('当前仅你一人，无需退出', 'You are the only member, nothing to leave'), icon: 'none' });
       return;
     }
     const isOwner = fam.ownerOpenid === this._myOpenid;
@@ -1006,8 +1032,8 @@ Page({
     if (isOwner) {
       // 创建者退出 = 解散家庭：先详细说明影响
       wx.showModal({
-        title: '解散家庭提醒',
-        content: '确定解散整个家庭吗？解散后其他成员将失去所有权限。',
+        title: this._t('解散家庭提醒', 'Dissolve family?'),
+        content: this._t('确定解散整个家庭吗？解散后其他成员将失去所有权限。', 'Dissolve the whole family? Other members will lose all access.'),
         success: r => {
           if (!r.confirm) return;
           cs.leaveFamily(fam._id).then(res => {
@@ -1026,16 +1052,16 @@ Page({
             // 重新拉取数据，自动移除未授权的宝宝
             return cs.pull().then(() => {
               this.loadFamily();
-              wx.showToast({ title: '家庭已解散', icon: 'none' });
+              wx.showToast({ title: this._t('家庭已解散', 'Family dissolved'), icon: 'none' });
             });
-          }).catch(e => wx.showToast({ title: '退出失败：' + (e.message || ''), icon: 'none' }));
+          }).catch(e => wx.showToast({ title: this._t('退出失败：' + (e.message || ''), 'Leave failed: ' + (e.message || '')), icon: 'none' }));
         }
       });
       return;
     }
     wx.showModal({
-      title: '退出家庭',
-      content: '退出后将失去该家庭宝宝的查看与编辑权限。确定退出？',
+      title: this._t('退出家庭', 'Leave family'),
+      content: this._t('退出后将失去该家庭宝宝的查看与编辑权限。确定退出？', 'You will lose view and edit access to this family. Leave anyway?'),
       confirmText: '退出',
       cancelText: '取消',
       success: r => {
@@ -1086,7 +1112,7 @@ Page({
               wx.showToast({ title: isOwner ? '家庭已解散' : '已退出家庭', icon: 'none' });
             });
           });
-        }).catch(e => wx.showToast({ title: '退出失败：' + (e.message || ''), icon: 'none' }));
+        }).catch(e => wx.showToast({ title: this._t('退出失败：' + (e.message || ''), 'Leave failed: ' + (e.message || '')), icon: 'none' }));
       }
     });
   },

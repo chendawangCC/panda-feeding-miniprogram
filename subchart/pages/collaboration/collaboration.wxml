@@ -5,24 +5,24 @@
   <view class="page-header-back">
     <view class="back-btn" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">一起记录宝宝的每一天</text>
-      <view class="header-title">多人协作与分享</view>
+      <text class="header-kicker">{{lang === 'en' ? 'Recording every day of your baby, together' : '一起记录宝宝的每一天'}}</text>
+      <view class="header-title">{{lang === 'en' ? 'Family Collaboration' : '多人协作与分享'}}</view>
     </view>
   </view>
 
   <!-- 云开发未开通 -->
   <view class="cloud-tip" wx:if="{{!cloudOk}}">
-    <text class="cloud-tip-title">需先开通云开发</text>
-    <text class="cloud-tip-desc">多人协作云端同步依赖微信云开发。请在开发者工具中开通云开发环境并上传 familyCloud / pushReminder 云函数。当前为你个人家庭模式，本地记录照常使用。</text>
+    <text class="cloud-tip-title">{{lang === 'en' ? 'Cloud development required' : '需先开通云开发'}}</text>
+    <text class="cloud-tip-desc">{{lang === 'en' ? 'Family sync relies on WeChat Cloud. Enable a cloud environment and deploy the familyCloud / pushReminder cloud functions. You are in personal mode for now and local records keep working.' : '多人协作云端同步依赖微信云开发。请在开发者工具中开通云开发环境并上传 familyCloud / pushReminder 云函数。当前为你个人家庭模式，本地记录照常使用。'}}</text>
   </view>
 
   <!-- 待审核状态 -->
   <view class="pending-tip" wx:if="{{pendingJoin}}">
     <view class="pending-card">
-      <text class="pending-title">等待审核</text>
-      <text class="pending-desc">你已申请加入「{{pendingJoin.familyName || '亲友的家庭'}}」，等待创建者审核通过后即可共享宝宝数据。</text>
-      <view class="pending-status">审核中...</view>
-      <view class="cancel-apply-btn" bindtap="cancelJoinApply">取消申请</view>
+      <text class="pending-title">{{lang === 'en' ? 'Awaiting approval' : '等待审核'}}</text>
+      <text class="pending-desc">{{lang === 'en' ? ('You requested to join "' + (pendingJoin.familyName || 'a family') + '". Baby data is shared once the creator approves.') : ('你已申请加入「' + (pendingJoin.familyName || '亲友的家庭') + '」，等待创建者审核通过后即可共享宝宝数据。')}}</text>
+      <view class="pending-status">{{lang === 'en' ? 'Reviewing...' : '审核中...'}}</view>
+      <view class="cancel-apply-btn" bindtap="cancelJoinApply">{{lang === 'en' ? 'Cancel request' : '取消申请'}}</view>
     </view>
   </view>
 
@@ -38,12 +38,12 @@
           bindtap="switchFamily"
         >
           <text class="fam-chip-name">{{item.name}}</text>
-          <text class="fam-chip-tag">{{item.ownerOpenid === myOpenid ? '我创建' : '已加入'}}</text>
+          <text class="fam-chip-tag">{{item.ownerOpenid === myOpenid ? (lang === 'en' ? 'Created by me' : '我创建') : (lang === 'en' ? 'Joined' : '已加入')}}</text>
         </view>
         <!-- 只有当没有创建家庭、没有加入家庭时，才显示创建和加入按钮 -->
-        <view class="fam-chip fam-chip-create" wx:if="{{!hasMyFamily && !joinedCount && !pendingJoin}}" bindtap="openCreate">＋ 创建家庭</view>
-        <view class="fam-chip fam-chip-add" wx:if="{{!hasMyFamily && !joinedCount && !pendingJoin}}" bindtap="openJoin">＋ 输入邀请码</view>
-        <view class="fam-chip fam-chip-scan" wx:if="{{!hasMyFamily && !joinedCount && !pendingJoin}}" bindtap="scanJoin">⊕ 扫码加入</view>
+        <view class="fam-chip fam-chip-create" wx:if="{{!hasMyFamily && !joinedCount && !pendingJoin}}" bindtap="openCreate">{{lang === 'en' ? '＋ Create family' : '＋ 创建家庭'}}</view>
+        <view class="fam-chip fam-chip-add" wx:if="{{!hasMyFamily && !joinedCount && !pendingJoin}}" bindtap="openJoin">{{lang === 'en' ? '＋ Enter code' : '＋ 输入邀请码'}}</view>
+        <view class="fam-chip fam-chip-scan" wx:if="{{!hasMyFamily && !joinedCount && !pendingJoin}}" bindtap="scanJoin">{{lang === 'en' ? '⊕ Scan to join' : '⊕ 扫码加入'}}</view>
       </view>
     </scroll-view>
   </view>
@@ -55,9 +55,9 @@
         <text class="family-name-text">{{family.name}}</text>
         <image wx:if="{{isOwner}}" class="family-edit-icon" src="/images/icons/edit-pencil.png" mode="aspectFit" />
       </view>
-      <view class="family-no" wx:if="{{family.familyNo}}">家庭号 {{family.familyNo}}</view>
+      <view class="family-no" wx:if="{{family.familyNo}}">{{lang === 'en' ? ('Family ID ' + family.familyNo) : ('家庭号 ' + family.familyNo)}}</view>
     </view>
-    <view class="family-owner">{{isOwner ? '我·创建者' : '我加入的家庭'}}</view>
+    <view class="family-owner">{{isOwner ? (lang === 'en' ? 'Me · Creator' : '我·创建者') : (lang === 'en' ? 'Family I joined' : '我加入的家庭')}}</view>
   </view>
 
   <!-- 亲友修改自己的亲属关系按钮 -->
@@ -66,8 +66,8 @@
       <image class="invite-ico" src="/images/icons/edit-pencil.png" mode="aspectFit" />
     </view>
     <view class="invite-info">
-      <text class="invite-title">修改我的亲属关系</text>
-      <text class="invite-sub">当前身份：{{myFamilyRole || '未设置'}}，点击可以修改自己在家庭中的身份</text>
+      <text class="invite-title">{{lang === 'en' ? 'Change my relationship' : '修改我的亲属关系'}}</text>
+      <text class="invite-sub">{{lang === 'en' ? ('Current role: ' + ((roleLabelMap[myFamilyRole] || myFamilyRole) || 'Not set') + '. Tap to change your role in this family.') : ('当前身份：' + (myFamilyRole || '未设置') + '，点击可以修改自己在家庭中的身份')}}</text>
     </view>
     <text class="invite-arrow">›</text>
   </view>
@@ -78,8 +78,8 @@
       <image class="invite-ico" src="/images/icons/invite-qr.png" mode="aspectFit" />
     </view>
     <view class="invite-info">
-      <text class="invite-title">分享加入二维码</text>
-      <text class="invite-sub">{{babyName ? ('邀请亲友扫码加入' + babyName + '的家庭') : '邀请亲友扫码加入家庭'}}<text class="invite-famno" wx:if="{{family.familyNo}}"> · 家庭号 {{family.familyNo}}</text></text>
+      <text class="invite-title">{{lang === 'en' ? 'Share a join QR code' : '分享加入二维码'}}</text>
+      <text class="invite-sub">{{babyName ? (lang === 'en' ? ('Invite family to scan and join ' + babyName + ' family') : ('邀请亲友扫码加入' + babyName + '的家庭')) : (lang === 'en' ? 'Invite family to scan and join' : '邀请亲友扫码加入家庭')}}<text class="invite-famno" wx:if="{{family.familyNo}}">{{lang === 'en' ? (' · Family ID ' + family.familyNo) : (' · 家庭号 ' + family.familyNo)}}</text></text>
     </view>
     <text class="invite-arrow">›</text>
   </view>
@@ -88,10 +88,10 @@
   <view class="pending-section" wx:if="{{isOwner && pendingMembers && pendingMembers.length}}">
     <view class="section-head">
       <view>
-        <view class="section-title">待审核申请</view>
-        <view class="section-desc">等待你审核通过后，即可加入家庭共享宝宝数据</view>
+        <view class="section-title">{{lang === 'en' ? 'Pending requests' : '待审核申请'}}</view>
+        <view class="section-desc">{{lang === 'en' ? 'Once you approve, they can join and share baby data' : '等待你审核通过后，即可加入家庭共享宝宝数据'}}</view>
       </view>
-      <view class="family-count">{{pendingMembers.length}} 人待审核</view>
+      <view class="family-count">{{lang === 'en' ? (pendingMembers.length + ' pending') : (pendingMembers.length + ' 人待审核')}}</view>
     </view>
     <view class="family-list">
       <view
@@ -104,12 +104,12 @@
           <view wx:else class="family-avatar-default"><image class="family-avatar-logo" src="/images/brand-logo.png" mode="aspectFit" /></view>
         </view>
         <view class="family-info">
-          <text class="family-name">{{item.nickname || '无'}}<text class="pending-tag">待审核</text></text>
-          <text class="family-sub">申请加入 · 等待你审核</text>
+          <text class="family-name">{{item.nickname || (lang === 'en' ? 'None' : '无')}}<text class="pending-tag">{{lang === 'en' ? 'Pending' : '待审核'}}</text></text>
+          <text class="family-sub">{{lang === 'en' ? 'Requested to join · awaiting review' : '申请加入 · 等待你审核'}}</text>
         </view>
         <view class="family-actions" catchtap="noop">
-          <text class="fam-act reject" catchtap="rejectMemberJoin" data-openid="{{item.openid}}">拒绝</text>
-          <text class="fam-act approve" catchtap="approveMember" data-openid="{{item.openid}}">同意</text>
+          <text class="fam-act reject" catchtap="rejectMemberJoin" data-openid="{{item.openid}}">{{lang === 'en' ? 'Decline' : '拒绝'}}</text>
+          <text class="fam-act approve" catchtap="approveMember" data-openid="{{item.openid}}">{{lang === 'en' ? 'Approve' : '同意'}}</text>
         </view>
       </view>
     </view>
@@ -118,10 +118,10 @@
   <!-- 我的亲友（未创建家庭时隐藏，创建者也在亲友名单中） -->
   <view class="section-head" wx:if="{{family && !family._selfOnly}}">
     <view>
-      <view class="section-title">我的亲友</view>
-      <view class="section-desc">{{family._selfOnly ? '当前为你个人家庭 · 邀请家人后，喂养记录云端实时共享' : '数据云端实时共享 · 点击成员可设置权限（创建者）'}}</view>
+      <view class="section-title">{{lang === 'en' ? 'My family' : '我的亲友'}}</view>
+      <view class="section-desc">{{family._selfOnly ? (lang === 'en' ? 'Personal family for now — invite family and records sync instantly' : '当前为你个人家庭 · 邀请家人后，喂养记录云端实时共享') : (lang === 'en' ? 'Synced in real time · creators can tap a member to set permissions' : '数据云端实时共享 · 点击成员可设置权限（创建者）')}}</view>
     </view>
-    <view class="family-count">{{members.length}}/6 位成员</view>
+    <view class="family-count">{{lang === 'en' ? (members.length + '/6 members') : (members.length + '/6 位成员')}}</view>
   </view>
 
   <!-- 正式家庭成员列表（包含创建者） -->
@@ -138,32 +138,32 @@
         <view wx:else class="family-avatar-default"><image class="family-avatar-logo" src="/images/brand-logo.png" mode="aspectFit" /></view>
       </view>
       <view class="family-info">
-        <text class="family-name">{{item.nickname || '无'}}<text class="role-tag" wx:if="{{item.role === 'owner'}}">创建者</text><text class="fam-role-tag" wx:if="{{item.familyRole}}">{{item.familyRole}}</text></text>
-        <text class="family-sub">{{item.joinedAt ? ('加入于 ' + item.joinedAt) : '家庭成员'}}</text>
+        <text class="family-name">{{item.nickname || (lang === 'en' ? 'None' : '无')}}<text class="role-tag" wx:if="{{item.role === 'owner'}}">{{lang === 'en' ? 'Creator' : '创建者'}}</text><text class="fam-role-tag" wx:if="{{item.familyRole}}">{{roleLabelMap[item.familyRole] || item.familyRole}}</text></text>
+        <text class="family-sub">{{item.joinedAt ? (lang === 'en' ? ('Joined ' + item.joinedAt) : ('加入于 ' + item.joinedAt)) : (lang === 'en' ? 'Family member' : '家庭成员')}}</text>
       </view>
-      <text class="family-edit" wx:if="{{isOwner && item.role !== 'owner'}}" bindtap="editMember">设置</text>
+      <text class="family-edit" wx:if="{{isOwner && item.role !== 'owner'}}" bindtap="editMember">{{lang === 'en' ? 'Settings' : '设置'}}</text>
     </view>
   </view>
 
   <!-- 退出/解散家庭（仅多人家庭；创建者退出 = 解散家庭） -->
-  <view class="leave-btn" wx:if="{{family && !family._selfOnly}}" bindtap="onLeave">{{isOwner ? '解散家庭' : '退出家庭'}}</view>
+  <view class="leave-btn" wx:if="{{family && !family._selfOnly}}" bindtap="onLeave">{{isOwner ? (lang === 'en' ? 'Dissolve family' : '解散家庭') : (lang === 'en' ? 'Leave family' : '退出家庭')}}</view>
 
-  <view class="sync-tip" wx:if="{{family && !family._selfOnly}}">云端自动同步中 · 记录、成长、疫苗、库存变化实时共享</view>
+  <view class="sync-tip" wx:if="{{family && !family._selfOnly}}">{{lang === 'en' ? 'Auto-syncing to cloud · records, growth, vaccines and stock shared in real time' : '云端自动同步中 · 记录、成长、疫苗、库存变化实时共享'}}</view>
 </view>
 
 <!-- 邀请亲友二维码弹窗（云端邀请码，每次打开刷新） -->
-<dialog visible="{{showInvite}}" position="center" title="邀请亲友" bind:close="closeInvite">
+<dialog visible="{{showInvite}}" position="center" title="{{lang === 'en' ? 'Invite family' : '邀请亲友'}}" bind:close="closeInvite">
   <view class="invite-pop">
-    <text class="ip-title">邀请亲友共同记录</text>
-    <text class="ip-sub">扫码加入二维码 · 邀请码 {{invite.code}}</text>
+    <text class="ip-title">{{lang === 'en' ? 'Invite family to record together' : '邀请亲友共同记录'}}</text>
+    <text class="ip-sub">{{lang === 'en' ? ('Scan the QR code · Invite code ' + invite.code) : ('扫码加入二维码 · 邀请码 ' + invite.code)}}</text>
     <view class="ip-qr-wrap">
       <canvas class="ip-qr" canvas-id="inviteQr" />
     </view>
     <text class="ip-family">{{invite.familyName}}</text>
     <text class="ip-expire">{{invite.expireText}}</text>
-    <text class="ip-count" wx:if="{{invite.memberCount >= 6}}">成员已满（6/6），无法继续邀请</text>
-    <text class="ip-count" wx:else>成员 {{invite.memberCount}}/6</text>
-    <button class="ip-share" wx:if="{{invite.memberCount < 6}}" open-type="share" bindtap="shareInvite">分享二维码</button>
+    <text class="ip-count" wx:if="{{invite.memberCount >= 6}}">{{lang === 'en' ? 'Family full (6/6), cannot invite more' : '成员已满（6/6），无法继续邀请'}}</text>
+    <text class="ip-count" wx:else>{{lang === 'en' ? ('Members ' + invite.memberCount + '/6') : ('成员 ' + invite.memberCount + '/6')}}</text>
+    <button class="ip-share" wx:if="{{invite.memberCount < 6}}" open-type="share" bindtap="shareInvite">{{lang === 'en' ? 'Share QR code' : '分享二维码'}}</button>
   </view>
 </dialog>
 
@@ -171,18 +171,18 @@
 <dialog visible="{{showPerm}}" position="bottom" bind:close="closePerm">
   <view class="perm-pop" wx:if="{{permEditor}}">
     <view class="perm-head">
-      <text class="perm-title">设置「{{permEditor.nickname}}」的权限</text>
-      <text class="perm-sub">可控制其查看/编辑以下模块及可操作的宝宝</text>
+      <text class="perm-title">{{lang === 'en' ? ('Set permissions for ' + permEditor.nickname) : ('设置「' + permEditor.nickname + '」的权限')}}</text>
+      <text class="perm-sub">{{lang === 'en' ? 'Control what they can view/edit and which babies they can access' : '可控制其查看/编辑以下模块及可操作的宝宝'}}</text>
     </view>
 
     <scroll-view scroll-y class="perm-body">
       <!-- 家庭角色（妈妈/爸爸等，滑动选择） -->
       <view class="perm-group">
-        <view class="perm-group-title">家庭角色</view>
-        <picker range="{{familyRoles}}" value="{{permEditor.familyRoleIdx}}" bindchange="onPermRoleChange">
+        <view class="perm-group-title">{{lang === 'en' ? 'Family role' : '家庭角色'}}</view>
+        <picker range="{{familyRolesView}}" value="{{permEditor.familyRoleIdx}}" bindchange="onPermRoleChange">
           <view class="perm-role">
-            <text class="perm-role-label">亲友角色</text>
-            <text class="perm-role-val {{permEditor.familyRole ? '' : 'muted'}}">{{permEditor.familyRole || '请选择（妈妈/爸爸/爷爷…）'}}</text>
+            <text class="perm-role-label">{{lang === 'en' ? 'Relationship' : '亲友角色'}}</text>
+            <text class="perm-role-val {{permEditor.familyRole ? '' : 'muted'}}">{{roleLabelMap[permEditor.familyRole] || permEditor.familyRole || (lang === 'en' ? 'Select (Mom/Dad/Grandpa...)' : '请选择（妈妈/爸爸/爷爷…）')}}</text>
             <text class="perm-role-arrow">›</text>
           </view>
         </picker>
@@ -190,30 +190,30 @@
 
       <!-- 家庭权限 -->
       <view class="perm-group">
-        <view class="perm-group-title">数据操作权限</view>
+        <view class="perm-group-title">{{lang === 'en' ? 'Data permissions' : '数据操作权限'}}</view>
         <view class="perm-seg perm-seg-large">
-          <text class="perm-seg-item {{permEditor.accessLevel === 'view' ? 'on-view' : ''}}" data-val="view" catchtap="setAccessLevel">仅查看</text>
-          <text class="perm-seg-item {{permEditor.accessLevel === 'edit' ? 'on-edit' : ''}}" data-val="edit" catchtap="setAccessLevel">查看和编辑</text>
+          <text class="perm-seg-item {{permEditor.accessLevel === 'view' ? 'on-view' : ''}}" data-val="view" catchtap="setAccessLevel">{{lang === 'en' ? 'View only' : '仅查看'}}</text>
+          <text class="perm-seg-item {{permEditor.accessLevel === 'edit' ? 'on-edit' : ''}}" data-val="edit" catchtap="setAccessLevel">{{lang === 'en' ? 'View and edit' : '查看和编辑'}}</text>
         </view>
         <view class="perm-access-desc">
-          <text wx:if="{{permEditor.accessLevel === 'view'}}">该亲友可查看家庭中所有宝宝的喂养记录、成长档案、疫苗信息，但不能添加或修改记录。</text>
-          <text wx:else>该亲友可查看并添加/修改家庭中所有宝宝的喂养记录、成长档案、疫苗信息等。</text>
+          <text wx:if="{{permEditor.accessLevel === 'view'}}">{{lang === 'en' ? 'They can view all babies feeding records, growth profiles and vaccine info, but cannot add or edit records.' : '该亲友可查看家庭中所有宝宝的喂养记录、成长档案、疫苗信息，但不能添加或修改记录。'}}</text>
+          <text wx:else>{{lang === 'en' ? 'They can view and add/edit all babies feeding records, growth profiles and vaccine info.' : '该亲友可查看并添加/修改家庭中所有宝宝的喂养记录、成长档案、疫苗信息等。'}}</text>
         </view>
       </view>
 
       <!-- 家庭权限说明 -->
       <view class="perm-group">
-        <view class="perm-group-title">家庭数据权限</view>
+        <view class="perm-group-title">{{lang === 'en' ? 'Family data access' : '家庭数据权限'}}</view>
         <view class="perm-note">
-          <text>加入家庭后，可查看家庭中所有宝宝的喂养记录、成长档案、疫苗信息等。</text>
-          <text class="perm-note-sub">权限由创建者统一设置，家庭中所有宝宝共享同一权限。</text>
+          <text>{{lang === 'en' ? 'After joining, they can view all babies feeding records, growth profiles and vaccine info in this family.' : '加入家庭后，可查看家庭中所有宝宝的喂养记录、成长档案、疫苗信息等。'}}</text>
+          <text class="perm-note-sub">{{lang === 'en' ? 'Permissions are set by the creator and apply to every baby in the family.' : '权限由创建者统一设置，家庭中所有宝宝共享同一权限。'}}</text>
         </view>
       </view>
     </scroll-view>
 
     <view class="perm-footer">
-      <view class="perm-save" hover-class="hover-dim" bindtap="savePerms">{{permSaving ? '保存中…' : '保存权限'}}</view>
-      <view class="perm-cancel" hover-class="hover-dim" bindtap="closePerm">取消</view>
+      <view class="perm-save" hover-class="hover-dim" bindtap="savePerms">{{permSaving ? (lang === 'en' ? 'Saving...' : '保存中…') : (lang === 'en' ? 'Save permissions' : '保存权限')}}</view>
+      <view class="perm-cancel" hover-class="hover-dim" bindtap="closePerm">{{lang === 'en' ? 'Cancel' : '取消'}}</view>
     </view>
   </view>
 </dialog>
@@ -221,30 +221,30 @@
 <!-- 成员操作菜单 -->
 <dialog visible="{{showMemberAction}}" position="center" bind:close="closeMemberAction">
   <view class="member-action-pop">
-    <text class="member-action-title">{{actionMember.nickname || '该亲友'}}</text>
-    <view class="member-action-btn primary" hover-class="hover-dim" bindtap="onActionSetPerm">设置亲友关系与权限</view>
-    <view class="member-action-btn danger" hover-class="hover-dim" bindtap="onActionRemove">移除成员</view>
-    <view class="member-action-cancel" hover-class="hover-dim" bindtap="closeMemberAction">取消</view>
+    <text class="member-action-title">{{actionMember.nickname || (lang === 'en' ? 'This member' : '该亲友')}}</text>
+    <view class="member-action-btn primary" hover-class="hover-dim" bindtap="onActionSetPerm">{{lang === 'en' ? 'Relationship and permissions' : '设置亲友关系与权限'}}</view>
+    <view class="member-action-btn danger" hover-class="hover-dim" bindtap="onActionRemove">{{lang === 'en' ? 'Remove member' : '移除成员'}}</view>
+    <view class="member-action-cancel" hover-class="hover-dim" bindtap="closeMemberAction">{{lang === 'en' ? 'Cancel' : '取消'}}</view>
   </view>
 </dialog>
 
 <!-- 加入其他家庭（输入邀请码） -->
 <dialog visible="{{showJoin}}" position="center" bind:close="closeJoin">
   <view class="join-pop">
-    <text class="join-title">加入亲友的家庭</text>
-    <text class="join-sub">输入亲友分享的邀请码，加入后可查看/编辑对方家庭中有权限的宝宝（权限由对方创建者控制）</text>
-    <input class="join-input" placeholder="请输入邀请码" value="{{joinCode}}" bindinput="onJoinCode" maxlength="10" />
-    <view class="join-scan" bindtap="scanJoin">扫一扫 · 识别分享二维码加入</view>
-    <picker range="{{familyRoles}}" value="{{joinFamilyRoleIdx}}" bindchange="onJoinRoleChange">
+    <text class="join-title">{{lang === 'en' ? 'Join a family' : '加入亲友的家庭'}}</text>
+    <text class="join-sub">{{lang === 'en' ? 'Enter the invite code shared by your family. After joining you can view/edit the babies you are granted access to (controlled by the creator).' : '输入亲友分享的邀请码，加入后可查看/编辑对方家庭中有权限的宝宝（权限由对方创建者控制）'}}</text>
+    <input class="join-input" placeholder="{{lang === 'en' ? 'Enter invite code' : '请输入邀请码'}}" value="{{joinCode}}" bindinput="onJoinCode" maxlength="10" />
+    <view class="join-scan" bindtap="scanJoin">{{lang === 'en' ? 'Scan · recognise a shared QR code' : '扫一扫 · 识别分享二维码加入'}}</view>
+    <picker range="{{familyRolesView}}" value="{{joinFamilyRoleIdx}}" bindchange="onJoinRoleChange">
       <view class="join-role">
-        <text class="join-role-label">我的角色</text>
-        <text class="join-role-val">{{joinFamilyRole || '请选择（妈妈/爸爸/爷爷…）'}}</text>
+        <text class="join-role-label">{{lang === 'en' ? 'My role' : '我的角色'}}</text>
+        <text class="join-role-val">{{roleLabelMap[joinFamilyRole] || joinFamilyRole || (lang === 'en' ? 'Select (Mom/Dad/Grandpa...)' : '请选择（妈妈/爸爸/爷爷…）')}}</text>
         <text class="join-role-arrow">›</text>
       </view>
     </picker>
     <view class="join-actions">
-      <view class="join-save" hover-class="hover-dim" bindtap="doJoin">{{joinSaving ? '加入中…' : '加入家庭'}}</view>
-      <view class="join-cancel" hover-class="hover-dim" bindtap="closeJoin">取消</view>
+      <view class="join-save" hover-class="hover-dim" bindtap="doJoin">{{joinSaving ? (lang === 'en' ? 'Joining...' : '加入中…') : (lang === 'en' ? 'Join family' : '加入家庭')}}</view>
+      <view class="join-cancel" hover-class="hover-dim" bindtap="closeJoin">{{lang === 'en' ? 'Cancel' : '取消'}}</view>
     </view>
   </view>
 </dialog>
@@ -252,12 +252,12 @@
 <!-- 创建家庭 -->
 <dialog visible="{{showCreate}}" position="center" bind:close="closeCreate">
   <view class="join-pop">
-    <text class="join-title">创建家庭</text>
-    <text class="join-sub">创建后生成家庭号与邀请二维码，可分享给亲友加入，一起查看 / 编辑宝宝记录</text>
-    <input class="join-input" placeholder="请输入家庭名称" value="{{familyNameInput}}" bindinput="onFamilyName" maxlength="20" />
+    <text class="join-title">{{lang === 'en' ? 'Create a family' : '创建家庭'}}</text>
+    <text class="join-sub">{{lang === 'en' ? 'A family ID and invite QR code are generated so family can join and view/edit baby records together' : '创建后生成家庭号与邀请二维码，可分享给亲友加入，一起查看 / 编辑宝宝记录'}}</text>
+    <input class="join-input" placeholder="{{lang === 'en' ? 'Enter family name' : '请输入家庭名称'}}" value="{{familyNameInput}}" bindinput="onFamilyName" maxlength="20" />
     <view class="join-actions">
-      <view class="join-save create-save" hover-class="hover-dim" bindtap="doCreateFamily">创建家庭</view>
-      <view class="join-cancel" hover-class="hover-dim" bindtap="closeCreate">取消</view>
+      <view class="join-save create-save" hover-class="hover-dim" bindtap="doCreateFamily">{{lang === 'en' ? 'Create family' : '创建家庭'}}</view>
+      <view class="join-cancel" hover-class="hover-dim" bindtap="closeCreate">{{lang === 'en' ? 'Cancel' : '取消'}}</view>
     </view>
   </view>
 </dialog>
@@ -266,8 +266,8 @@
 <dialog visible="{{showScan}}" position="center" bind:close="closeScan">
   <view class="scan-pop">
     <block wx:if="{{scanState === 'fail'}}">
-      <text class="sp-title">扫描失败</text>
-      <text class="sp-sub">未识别到有效的加入二维码</text>
+      <text class="sp-title">{{lang === 'en' ? 'Scan failed' : '扫描失败'}}</text>
+      <text class="sp-sub">{{lang === 'en' ? 'No valid join QR code found' : '未识别到有效的加入二维码'}}</text>
       <view class="sp-frame">
         <view class="sp-corner sp-tl"></view>
         <view class="sp-corner sp-tr"></view>
@@ -275,43 +275,43 @@
         <view class="sp-corner sp-br"></view>
         <view class="sp-scan-line"></view>
       </view>
-      <text class="sp-hint">请将「分享加入二维码」放入取景框，10 秒内未能识别将再次提示。</text>
-      <view class="sp-btn" bindtap="retryScan">重新识别</view>
+      <text class="sp-hint">{{lang === 'en' ? 'Place the shared join QR code in the frame; you will be prompted again if it is not recognised within 10 seconds.' : '请将「分享加入二维码」放入取景框，10 秒内未能识别将再次提示。'}}</text>
+      <view class="sp-btn" bindtap="retryScan">{{lang === 'en' ? 'Scan again' : '重新识别'}}</view>
     </block>
 
     <block wx:if="{{scanState === 'confirm'}}">
-      <text class="sp-title">加入亲友的家庭</text>
-      <text class="sp-sub">已识别到加入二维码</text>
+      <text class="sp-title">{{lang === 'en' ? 'Join a family' : '加入亲友的家庭'}}</text>
+      <text class="sp-sub">{{lang === 'en' ? 'Join QR code detected' : '已识别到加入二维码'}}</text>
       <view class="sp-family">{{scanCode}}</view>
       <view class="sp-hint">
-        <text>确认加入该家庭？</text>
-        <text>加入后你将作为「亲友」身份使用：</text>
-        <text>• 不能新建自己的宝宝</text>
-        <text>• 不能创建自己的家庭</text>
-        <text>• 可查看和记录家庭共享宝宝</text>
+        <text>{{lang === 'en' ? 'Join this family?' : '确认加入该家庭？'}}</text>
+        <text>{{lang === 'en' ? 'You will join as a family member:' : '加入后你将作为「亲友」身份使用：'}}</text>
+        <text>{{lang === 'en' ? '• You cannot create your own baby' : '• 不能新建自己的宝宝'}}</text>
+        <text>{{lang === 'en' ? '• You cannot create your own family' : '• 不能创建自己的家庭'}}</text>
+        <text>{{lang === 'en' ? '• You can view and record the shared baby' : '• 可查看和记录家庭共享宝宝'}}</text>
       </view>
-      <view class="sp-btn" bindtap="confirmJoin">确认申请加入</view>
-      <view class="sp-cancel" bindtap="closeScan">取消</view>
+      <view class="sp-btn" bindtap="confirmJoin">{{lang === 'en' ? 'Request to join' : '确认申请加入'}}</view>
+      <view class="sp-cancel" bindtap="closeScan">{{lang === 'en' ? 'Cancel' : '取消'}}</view>
     </block>
 
     <block wx:if="{{scanState === 'joining'}}">
-      <text class="sp-title">正在提交申请…</text>
-      <text class="sp-sub">请稍候</text>
-      <view class="sp-btn disabled">提交中</view>
+      <text class="sp-title">{{lang === 'en' ? 'Submitting request...' : '正在提交申请…'}}</text>
+      <text class="sp-sub">{{lang === 'en' ? 'Please wait' : '请稍候'}}</text>
+      <view class="sp-btn disabled">{{lang === 'en' ? 'Submitting' : '提交中'}}</view>
     </block>
 
     <block wx:if="{{scanState === 'applying'}}">
-      <text class="sp-title">申请已提交</text>
-      <text class="sp-sub">已申请加入「{{scanResult}}」</text>
-      <view class="sp-hint">等待主账户审核同意，审核通过后数据自动同步。</view>
-      <view class="sp-btn" bindtap="closeScan">知道了</view>
+      <text class="sp-title">{{lang === 'en' ? 'Request sent' : '申请已提交'}}</text>
+      <text class="sp-sub">{{lang === 'en' ? ('Requested to join "' + scanResult + '"') : ('已申请加入「' + scanResult + '」')}}</text>
+      <view class="sp-hint">{{lang === 'en' ? 'Waiting for the creator to approve. Data syncs automatically once approved.' : '等待主账户审核同意，审核通过后数据自动同步。'}}</view>
+      <view class="sp-btn" bindtap="closeScan">{{lang === 'en' ? 'Got it' : '知道了'}}</view>
     </block>
 
     <block wx:if="{{scanState === 'done'}}">
-      <text class="sp-title">加入成功</text>
-      <text class="sp-sub">已加入「{{scanResult}}」</text>
-      <view class="sp-hint">喂养记录与提醒已开始云端同步。</view>
-      <view class="sp-btn" bindtap="closeScan">知道了</view>
+      <text class="sp-title">{{lang === 'en' ? 'Joined' : '加入成功'}}</text>
+      <text class="sp-sub">{{lang === 'en' ? ('Joined "' + scanResult + '"') : ('已加入「' + scanResult + '」')}}</text>
+      <view class="sp-hint">{{lang === 'en' ? 'Feeding records and reminders now sync to the cloud.' : '喂养记录与提醒已开始云端同步。'}}</view>
+      <view class="sp-btn" bindtap="closeScan">{{lang === 'en' ? 'Got it' : '知道了'}}</view>
     </block>
   </view>
 </dialog>
