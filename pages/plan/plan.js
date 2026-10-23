@@ -1,6 +1,7 @@
 const app = getApp();
 const cs = require('../../utils/cloud-sync.js');
 const perm = require('../../utils/perm.js');
+const remindUtil = require('../../utils/remind.js');
 
 function calcDays(birthday) {
   if (!birthday) return 0;
@@ -1037,8 +1038,11 @@ Page({
         today: isToday,
         ymd,
         hasRecord: !!recordDates[ymd],
-        hasVaccine: !!(m.dueMap[ymd] || m.shelfMap[ymd] || m.warrMap[ymd] || m.milkMap[ymd]),
-        hasSupp: !!(m.suppMap[ymd] || m.d3Map[ymd])
+        hasVaccine: !!m.dueMap[ymd],
+        hasSupp: !!(m.suppMap[ymd] || m.d3Map[ymd]),
+        hasMilk: !!m.milkMap[ymd],
+        hasShelf: !!m.shelfMap[ymd],
+        hasWarr: !!m.warrMap[ymd]
       });
     }
     this.setData({
@@ -1100,6 +1104,11 @@ Page({
       shelfMap[ymdOf(ex.getFullYear() + '-' + (ex.getMonth() + 1) + '-' + ex.getDate())] = true;
     });
 
+    // 奶粉开罐到期（喂养台/快速记录里点「已开罐」生成，库存为空也提醒）
+    (g.shelfWarnings || []).forEach(w => {
+      if (w && w.kind === 'formulaOpen' && w.date) shelfMap[w.date] = true;
+    });
+
     // 保修期到期（电器）
     const warrMap = {};
     (g.stockItems || []).forEach(s => {
@@ -1108,7 +1117,6 @@ Page({
 
     // 母乳储存到期（吸奶记录 × 国标储存时限）
     const MS = g.MILK_STORAGE || {};
-    const ackMilks = g.acknowledgedMilks || [];
     const milkMap = {};
     (g.records || []).forEach(r => {
       if (!r || r.type !== '吸奶') return;
@@ -1127,8 +1135,8 @@ Page({
       const y = expire.getFullYear() + '-' + String(expire.getMonth() + 1).padStart(2, '0') + '-' + String(expire.getDate()).padStart(2, '0');
       // 生成唯一的 ack id：优先用记录 id，如果没有则用日期+时间+储存条件组合
       const milkAckId = r.id ? ('milk_' + r.id + '_' + y) : ('milk_' + r.date + '_' + storageTime + '_' + st + '_' + y);
-      // 已确认的母乳提醒不显示红点
-      if (ackMilks.indexOf(milkAckId) >= 0) return;
+      // 已确认的母乳提醒不显示红点（云端 ack 并集 / 本机旧键都算已处理）
+      if (remindUtil.isMilkAcked(r, y)) return;
       milkMap[y] = true;
     });
 
@@ -1172,8 +1180,20 @@ Page({
         items.push({ tag: '保修期', name: (s.name || '电器') + ' 保修到期', time: String(ymd).slice(5).replace('-', '/'), stockId: s.id, editable: true });
       }
     });
+    // 奶粉开罐到期（与首页提醒口径一致：到期前 3 天开始提示）
+    const _enK = app.globalData.lang === 'en' || wx.getStorageSync('lang') === 'en';
+    (g.shelfWarnings || []).forEach(w => {
+      if (!w || w.kind !== 'formulaOpen' || !w.date) return;
+      if (w.date !== ymd) return;
+      items.push({
+        tag: _enK ? 'Formula' : '开罐',
+        name: _enK
+          ? ('Opened formula use-by ' + String(ymd).slice(5).replace('-', '/') + ' (within ' + (w.openDays || 28) + ' days)')
+          : ('奶粉开罐用到 ' + String(ymd).slice(5).replace('-', '/') + '（开罐后 ' + (w.openDays || 28) + ' 天内）'),
+        time: String(ymd).slice(5).replace('-', '/')
+      });
+    });
     const MS = g.MILK_STORAGE || {};
-    const ackMilks = g.acknowledgedMilks || [];
     (g.records || []).forEach(r => {
       if (!r || r.type !== '吸奶') return;
       const st = MS[r.storage] ? r.storage : 'fridge';
@@ -1192,9 +1212,9 @@ Page({
       // 到期日期（年月日，用于红点匹配）
       const y = expire.getFullYear() + '-' + String(expire.getMonth() + 1).padStart(2, '0') + '-' + String(expire.getDate()).padStart(2, '0');
       // 生成唯一的 ack id：优先用记录 id，如果没有则用日期+时间+储存条件组合
-      const milkAckId = r.id ? ('milk_' + r.id + '_' + y) : ('milk_' + r.date + '_' + storageTime + '_' + st + '_' + y);
-      // 已确认的母乳提醒不显示
-      if (ackMilks.indexOf(milkAckId) >= 0) return;
+      const milkAckId = remindUtil.milkAckId(r, y);
+      // 已确认的母乳提醒不显示（多端/多页面共用同一处理状态）
+      if (remindUtil.isMilkAcked(r, y)) return;
       if (y === ymd) {
         const stockLabel = cfg.label || '冷藏';
         const inDate = String(r.date || '').slice(5).replace('-', '/');
@@ -1207,6 +1227,7 @@ Page({
           name: '母乳到期（' + stockLabel + '）· ' + inDate + ' ' + inTime + ' 入库',
           time: '到期于 ' + String(ymd).slice(5).replace('-', '/') + ' ' + expireTime,
           milkAckId,
+          milkRecId: r.id || '',
           canAck: true
         });
       }
@@ -1250,6 +1271,7 @@ Page({
       const r = records.find(x => x.id === item.suppId);
       if (!r) return;
       r.suppNextRemindDate = newDate;
+      r._u = Date.now(); // 版本号前进，其他设备 pull 时才认这条修改
       app.persist();
     }
     // 处理保修期
@@ -1258,45 +1280,56 @@ Page({
       const s = stockItems.find(x => x.id === item.stockId);
       if (!s) return;
       s.warrantyUntil = newDate;
+      s._u = Date.now();
       app.persist();
     }
     else {
       return;
     }
 
-    // 刷新红点图 + 当天提醒列表
-    this.buildRemindMaps();
+    // 刷新折叠日期条 + 展开日历 + 当天提醒列表（保留当前选中与浏览月份）
+    this.refreshCalendarDots();
     const ymd = this.data.dayRemind.date;
-    // 保留展开日历当前浏览的月份，不跳转到今天
-    const calBase = new Date(this.data.calYear, this.data.calMonth, 1);
     this.setData({
-      monthDays: this.buildMonthDays(calBase),
       dayRemind: { ...this.data.dayRemind, items: this.collectDayReminds(ymd) }
     });
+    // 提醒日期属于云端 meta / 记录字段，立即上云让家庭成员同步
+    try { require('../../utils/cloud-data.js').pushAll(true); } catch (e) {}
     wx.showToast({ title: '已更新提醒日期', icon: 'none' });
   },
 
-  // 母乳储存到期 → 点击"知道了"后消失
+  // 母乳储存到期 → 点击"知道了"后消失（首页 / 库存页 / 家庭成员同步消失）
   onDrMilkAck(e) {
     const idx = Number(e.currentTarget.dataset.index);
     const item = this.data.dayRemind.items[idx];
     if (!item || !item.milkAckId) return;
-    const g = app.globalData;
-    const ackMilks = g.acknowledgedMilks || [];
-    if (ackMilks.indexOf(item.milkAckId) < 0) {
-      ackMilks.push(item.milkAckId);
-      g.acknowledgedMilks = ackMilks;
-      app.persist();
-    }
-    // 刷新红点图 + 当天提醒列表
-    this.buildRemindMaps();
+    remindUtil.ackMilkById(item.milkAckId, item.milkRecId || '');
+    // 刷新折叠日期条 + 展开日历 + 当天提醒列表
+    this.refreshCalendarDots();
     const ymd = this.data.dayRemind.date;
-    // 保留展开日历当前浏览的月份，不跳转到今天
-    const calBase = new Date(this.data.calYear, this.data.calMonth, 1);
     this.setData({
-      monthDays: this.buildMonthDays(calBase),
       dayRemind: { ...this.data.dayRemind, items: this.collectDayReminds(ymd) }
     });
+  },
+
+  /* 处理/改期红点后：同时刷新折叠日期条 + 展开日历（不改变当前选中与浏览月份） */
+  refreshCalendarDots() {
+    const m = this.buildRemindMaps();
+    const recordDates = {};
+    (app.globalData.records || []).forEach(r => { if (r && r.date) recordDates[r.date] = true; });
+    const dates = (this.data.dates || []).map(d => {
+      const ymd = d.ymd;
+      return Object.assign({}, d, {
+        hasRecord: !!recordDates[ymd],
+        hasVaccine: !!m.dueMap[ymd],
+        hasSupp: !!(m.suppMap[ymd] || m.d3Map[ymd]),
+        hasMilk: !!m.milkMap[ymd],
+        hasShelf: !!m.shelfMap[ymd],
+        hasWarr: !!m.warrMap[ymd]
+      });
+    });
+    const calBase = new Date(this.data.calYear, this.data.calMonth, 1);
+    this.setData({ dates: dates, monthDays: this.buildMonthDays(calBase) });
   },
 
   buildMonthDays(anchor) {
@@ -2563,8 +2596,11 @@ Page({
         ymd,
         today: this.isSameDay(cur, today),
         hasRecord: !!recordDates[ymd],
-        hasVaccine: !!(mRemind.dueMap[ymd] || mRemind.shelfMap[ymd] || mRemind.warrMap[ymd] || mRemind.milkMap[ymd]),
-        hasSupp: !!(mRemind.suppMap[ymd] || mRemind.d3Map[ymd])
+        hasVaccine: !!mRemind.dueMap[ymd],
+        hasSupp: !!(mRemind.suppMap[ymd] || mRemind.d3Map[ymd]),
+        hasMilk: !!mRemind.milkMap[ymd],
+        hasShelf: !!mRemind.shelfMap[ymd],
+        hasWarr: !!mRemind.warrMap[ymd]
       });
     }
     patch.dates = dates;

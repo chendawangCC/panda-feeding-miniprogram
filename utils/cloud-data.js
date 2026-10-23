@@ -530,6 +530,8 @@ function mergeInto(app, data) {
       g.diaperStock = local.diaperStock || 0;
       g.shelfWarnings = local.shelfWarnings || [];
       g.vaccinePlan = local.vaccinePlan || [];
+      // 已处理的母乳到期提醒随云端 meta 并集同步，必须写进 globalData，否则红点各处仍显示
+      g.acknowledgedMilks = local.acknowledgedMilks || [];
     }
   });
   // 如果 currentBabyId 空或不在宝宝列表里，自动切到第一个
@@ -553,6 +555,7 @@ function mergeInto(app, data) {
         g.diaperStock = local.diaperStock || 0;
         g.shelfWarnings = local.shelfWarnings || [];
         g.vaccinePlan = local.vaccinePlan || [];
+        g.acknowledgedMilks = local.acknowledgedMilks || [];
       } catch(e) {}
     }
     // 始终同步 g.baby 为当前宝宝

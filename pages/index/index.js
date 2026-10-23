@@ -1,4 +1,5 @@
 const app = getApp();
+const remindUtil = require('../../utils/remind.js');
 const perm = require('../../utils/perm.js');
 const { exifTime } = require('../../utils/exif-time.js');
 const { diffDays } = require('../../utils/vaccine-data.js');
@@ -744,6 +745,8 @@ Page({
     const MS = g.MILK_STORAGE || {};
     (g.records || []).forEach((r) => {
       if (!r || r.type !== '吸奶') return;
+      const minfo = remindUtil.expireOf(r, MS);
+      if (!minfo) return;
       const st = MS[r.storage] ? r.storage : 'fridge';
       const cfg = MS[st] || MS.fridge;
       const dp = String(r.date || todayStr()).split('-').map(Number);
@@ -763,9 +766,8 @@ Page({
         const inTime = r.time || '';
         const expireTime = String(expire.getHours()).padStart(2, '0') + ':' + String(expire.getMinutes()).padStart(2, '0') + ':' + String(expire.getSeconds()).padStart(2, '0');
         const itemKey = r.id || ('rec_' + Date.now());
-        // 已忽略的母乳到期提醒不再显示
-        const dismissed = wx.getStorageSync('dismissed_milk_exp') || {};
-        if (dismissed[itemKey]) return;
+        // 已处理（日历「知道了」/ 库存页 / 其它成员）的母乳到期提醒不再显示
+        if (remindUtil.isMilkAcked(r, minfo.ymd)) return;
         items.push({
           key: itemKey, iconImg: '/images/icons/rec-pump.png', icon: '',
           title: min < 0 ? '母乳已到期（' + (cfg.label || '') + '）' : '母乳即将到期（' + (cfg.label || '') + '）',
@@ -776,6 +778,8 @@ Page({
           // 已到期的按钮改成"知道了"，点击后本条提醒消失
           actionLabel: min < 0 ? '知道了' : '去查看',
           actionKey: min < 0 ? 'dismiss_milk' : 'record',
+          milkAckId: minfo.ackId,
+          milkRecId: r.id || '',
           minutesUntil: min
         });
       }
@@ -1042,11 +1046,16 @@ Page({
 
     // 母乳已到期：点击"知道了"后本条提醒消失（actionKey=dismiss_milk）
     if (key === 'dismiss_milk') {
-      // 拿到当前这条母乳提醒的原始key
+      // 母乳到期：统一处理状态（日历红点 / 首页 / 库存页 / 家庭成员同步）
       const itemKey = e.currentTarget.dataset.itemkey || '';
-      const dismissed = wx.getStorageSync('dismissed_milk_exp') || {};
-      dismissed[itemKey] = true;
-      wx.setStorageSync('dismissed_milk_exp', dismissed);
+      const recId = e.currentTarget.dataset.itemrec || '';
+      if (itemKey.indexOf('milk_') === 0) {
+        remindUtil.ackMilkById(itemKey, recId);
+      } else {
+        const dismissed = wx.getStorageSync('dismissed_milk_exp') || {};
+        dismissed[itemKey] = true;
+        wx.setStorageSync('dismissed_milk_exp', dismissed);
+      }
       wx.showToast({ title: '已标记为处理', icon: 'success' });
       // 重新拉取并渲染弹窗，保留其他提醒
       this.buildReminders();

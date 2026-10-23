@@ -1,4 +1,5 @@
 const app = getApp();
+const remindUtil = require('../../../utils/remind.js');
 const perm = require('../../../utils/perm.js');
 
 Page({
@@ -198,22 +199,15 @@ Page({
       return;
     }
     const now = new Date();
-    const dismissedMilk = wx.getStorageSync('dismissed_milk_exp') || {};
     const list = [];
     milkRecords.forEach((r, i) => {
       const recId = r.id || ('rec_' + i);
-      if (dismissedMilk[recId]) return; // 已点知道了，不显示
+      const minfo = remindUtil.expireOf(r, MS);
+      if (!minfo) return;
+      if (remindUtil.isMilkAcked(r, minfo.ymd)) return; // 日历/首页/其他成员已处理
       const st = MS[r.storage] ? r.storage : 'fridge';
       const cfg = MS[st] || MS.fridge;
-      const dp = String(r.date || this.todayStr()).split('-').map(Number);
-      const tp = String(r.time || '00:00').split(':').map(Number);
-      const start = new Date(dp[0], (dp[1] || 1) - 1, dp[2] || 1, tp[0] || 0, tp[1] || 0, 0);
-      let expire;
-      if (cfg.unit === 'h') {
-        expire = new Date(start.getTime() + cfg.value * 3600000);
-      } else {
-        expire = new Date(start.getFullYear(), start.getMonth() + cfg.value, start.getDate(), start.getHours(), start.getMinutes());
-      }
+      const expire = minfo.expire;
       const diffMs = expire - now;
       const expired = diffMs <= 0;
       const en = this._en();
@@ -232,7 +226,8 @@ Page({
       const dateLabel = String(r.date || '').split('-').slice(1).join('/');
       list.push({
         id: recId,
-        idx: i,
+        ackId: minfo.ackId,
+        idx: records.indexOf(r),
         storage: st,
         expired,
         daysLabel,
@@ -245,10 +240,14 @@ Page({
   },
 
   dismissMilkWarning(e) {
-    const id = e.currentTarget.dataset.id;
-    const dismissed = wx.getStorageSync('dismissed_milk_exp') || {};
-    dismissed[id] = true;
-    wx.setStorageSync('dismissed_milk_exp', dismissed);
+    const id = e.currentTarget.dataset.id || '';
+    const ackId = e.currentTarget.dataset.ackid || '';
+    if (ackId) remindUtil.ackMilkById(ackId, id);
+    else {
+      const dismissed = wx.getStorageSync('dismissed_milk_exp') || {};
+      dismissed[id] = true;
+      wx.setStorageSync('dismissed_milk_exp', dismissed);
+    }
     wx.showToast({ title: this._t('已知道了', 'Got it'), icon: 'success' });
     this.setData({ milkWarnings: this.buildMilkWarnings() });
   },
@@ -344,6 +343,7 @@ Page({
     if (!rec || rec.type !== '吸奶') return;
     if (rec.storage === st) return;
     rec.storage = st;
+    rec._u = Date.now(); // 储存方式变更需要同步给其他设备/成员
     app.saveBabyData();
     this.setData({ milkWarnings: this.buildMilkWarnings() });
     const cfg = (g.MILK_STORAGE || {})[st] || {};
