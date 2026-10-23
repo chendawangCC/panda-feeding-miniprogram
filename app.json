@@ -37,13 +37,10 @@
       "root": "subchart",
       "pages": [
         "pages/firstaid/index/index",
-        "pages/firstaid/account/account",
-        "pages/firstaid/baby/baby",
         "pages/firstaid/contact/contact",
         "pages/firstaid/contact/edit",
         "pages/firstaid/family/family",
         "pages/firstaid/kit/kit",
-        "pages/firstaid/mine/mine",
         "pages/firstaid/module/module",
         "pages/firstaid/prepare/prepare",
         "pages/firstaid/record/record",
