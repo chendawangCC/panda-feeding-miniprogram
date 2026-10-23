@@ -138,6 +138,20 @@ Page({
   },
 
   onShow() {
+    const lang = wx.getStorageSync('lang') || 'zh';
+    // 按语言动态设置工具卡片，保留喂养台和成长档案原中文
+    const tools = lang === 'en' ? [
+      { iconImg: '/images/icons/tool-inventory.png', bg: '#fff2b9', title: 'Feeding Station', desc: 'Stock & restock', action: 'feeding' },
+      { iconImg: '/images/icons/tool-book.png', bg: '#fff2b9', title: 'Parenting Guide', desc: 'Growth knowledge', action: 'encyclopedia' },
+      { iconImg: '/images/icons/sos.png', bg: '#ffe3cc', title: 'SOS Guide', desc: 'Emergency care', action: 'sos' },
+      { iconImg: '/images/icons/tool-growth.png', bg: '#fff2b9', title: 'Baby Profile', desc: 'Record every moment', action: 'baby' }
+    ] : [
+      { iconImg: '/images/icons/tool-inventory.png', bg: '#fff2b9', title: '喂养台', desc: '物资余量与补货', action: 'feeding' },
+      { iconImg: '/images/icons/tool-book.png', bg: '#fff2b9', title: '育儿百科全书', desc: '成长知识随时查', action: 'encyclopedia' },
+      { iconImg: '/images/icons/sos.png', bg: '#ffe3cc', title: 'SOS 指导', desc: '紧急照护指引', action: 'sos' },
+      { iconImg: '/images/icons/tool-growth.png', bg: '#fff2b9', title: '宝宝成长档案', desc: '记录每个重要时刻', action: 'baby' }
+    ];
+    this.setData({ lang: lang, tools: tools });
     console.log('[index onShow] records=', (app.globalData.records||[]).length, 'currentBabyId=', app.globalData.currentBabyId, 'baby=', (app.globalData.baby||{}).id);
     (app.globalData.records||[]).forEach((r,i) => console.log('[index onShow] r', i, 'type=', r.type, 'date=', r.date, 'by=', r.by && r.by.name));
     this.guideFirst();
@@ -288,46 +302,61 @@ Page({
     });
   },
 
-  /* 最后一条记录的详情文案 */
+  /* 最后一条记录的详情文案（随语言切换） */
   feedDetail(r) {
+    const en = (this.data.lang || wx.getStorageSync('lang') || 'zh') === 'en';
     switch (r.type) {
       case '母乳':
-        return '母乳 · ' + this.fmtDur(r.total || 0);
+        return (en ? 'Breastfeeding · ' : '母乳 · ') + this.fmtDur(r.total || 0);
       case '配方奶':
-        return '配方奶 · ' + (r.amount || 0) + ' ml';
+        return (en ? 'Bottle Feeding · ' : '配方奶 · ') + (r.amount || 0) + ' ml';
       case '瓶喂母乳':
-        return '瓶喂母乳 · ' + (r.amount || 0) + ' ml';
+        return (en ? 'Bottle Feeding · ' : '瓶喂母乳 · ') + (r.amount || 0) + ' ml';
       case '吸奶':
-        return '吸奶 · 共 ' + ((r.pumpTotal || 0)) + ' ml';
+        return en ? ('Pumping · ' + ((r.pumpTotal || 0)) + ' ml total') : ('吸奶 · 共 ' + ((r.pumpTotal || 0)) + ' ml');
       case '辅食':
-        return '辅食 · ' + ((r.simpleAmount || 0)) + ' 份';
+        return en ? ('Solid Food · ' + ((r.simpleAmount || 0)) + ' serving(s)') : ('辅食 · ' + ((r.simpleAmount || 0)) + ' 份');
       case '喝水':
-        return '喝水 · ' + (r.water || 0) + ' ml';
+        return (en ? 'Water · ' : '喝水 · ') + (r.water || 0) + ' ml';
       case '洗澡':
-        return '洗澡';
+        return en ? 'Bath Time' : '洗澡';
       case '体温':
-        return '量体温 · ' + (r.temperature || '36.5') + '℃';
+        return (en ? 'Temperature · ' : '量体温 · ') + (r.temperature || '36.5') + '℃';
       case '换尿布':
-        return '换尿布';
+        return en ? 'Diaper Change' : '换尿布';
       case '睡眠':
-        return '睡眠';
+        return en ? 'Sleep' : '睡眠';
       case '营养品':
-        return '营养品 · ' + (r.supps || []).join('、');
+        return (en ? 'Supplements · ' : '营养品 · ') + (r.supps || []).join(en ? ', ' : '、');
       default:
-        return r.type + '记录';
+        return en ? ('Record · ' + r.type) : (r.type + '记录');
     }
   },
 
   /* 秒数 → 时长文案 */
   fmtDur(sec) {
-    if (!sec) return '0 分钟';
+    const en = (this.data.lang || wx.getStorageSync('lang') || 'zh') === 'en';
+    if (!sec) return en ? '0 min' : '0 分钟';
     const mm = Math.floor(sec / 60);
     const ss = sec % 60;
+    if (en) return ss ? (mm + ' min ' + ss + ' sec') : (mm + ' min');
     return ss ? mm + ' 分 ' + ss + ' 秒' : mm + ' 分钟';
   },
 
   /* 距今多久文案 */
   agoText(min) {
+    const en = (this.data.lang || wx.getStorageSync('lang') || 'zh') === 'en';
+    if (en) {
+      if (min < 1) return 'Just now';
+      if (min < 60) return min + ' min ago';
+      const hh = Math.floor(min / 60);
+      if (hh < 24) {
+        const mm = min % 60;
+        return mm ? (hh + ' hr ' + mm + ' min ago') : (hh + ' hr ago');
+      }
+      const dd = Math.floor(hh / 24);
+      return dd === 1 ? 'Yesterday' : (dd + ' days ago');
+    }
     if (min < 1) return '刚刚';
     if (min < 60) return min + ' 分钟前';
     const hh = Math.floor(min / 60);
@@ -339,8 +368,9 @@ Page({
     return dd + ' 天前';
   },
 
-  /* 每日祝福语（无记录时展示，按日期每天自动换一条） */
+  /* 每日祝福语（无记录时展示，按日期每天自动换一条，随语言切换） */
   dailyBlessing() {
+    const en = (this.data.lang || wx.getStorageSync('lang') || 'zh') === 'en';
     const list = [
       '愿你与宝宝相处的每一天，都被温柔以待',
       '记录是爱的证据，今天也要好好爱自己',
@@ -367,9 +397,37 @@ Page({
       '每一份付出，都在悄悄开花',
       '今天也辛苦啦，抱抱自己吧'
     ];
+    const listEn = [
+      'Every day with baby, be treated gently',
+      'Recording is proof of love, love yourself too',
+      'You care for baby, keep time for yourself',
+      'Every little detail is your gentle care',
+      'May you smile today as baby grows',
+      'Your patience is baby\'s best nutrient',
+      'Remember water and meals today too',
+      'A new mom\'s days deserve recording',
+      'May you be surrounded by love today',
+      'Take it slow, you two are doing great',
+      'Every look from baby says thank you',
+      'You are baby\'s world, and your own light',
+      'Keep gentleness for yourself too',
+      'Ordinary days build extraordinary love',
+      'Rest when tired, mom\'s rest matters',
+      'May the moon watch over tired you',
+      'Small steps today, strength tomorrow',
+      'Your love is starlight in baby\'s eyes',
+      'Feeding, diapers, sleep all count',
+      'May you and baby be treated gently',
+      'You have done enough, let time do more',
+      'Morning light stops for you and baby',
+      'Every effort is quietly blooming',
+      'You did well today, give yourself a hug'
+    ];
     const d = new Date();
     const seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
-    const start = seed % list.length;
+    const pool = en ? listEn : list;
+    const start = seed % pool.length;
+    if (en) return pool[start];
     // 祝福语不超过 14 个字：命中超长则顺延替换为新的短祝福语
     for (let i = 0; i < list.length; i++) {
       const b = list[(start + i) % list.length];
@@ -573,8 +631,8 @@ Page({
       if (!s.name) return;
       // 电器类物品不参与首页库存偏低/用尽提醒，只在保修期到期时才提醒
       if (/吸奶器|消毒器|温奶器|摇奶器|辅食机|料理机|恒温壶|烘干机|洗衣机|电器|暖奶器/.test(s.name)) return;
-      // 过滤掉预置测试假数据：名称是奶粉/棉柔巾且size为"通用"的预置项，用户没真实录入就不显示
-      if ((s.name.indexOf('奶粉') >= 0 || s.name.indexOf('棉柔巾') >= 0) && (!s.size || s.size === '通用')) return;
+      // 过滤旧版本预置示例耗材（纸尿裤/奶粉/棉柔巾，库存 0 且无耗材属性），避免假的库存提醒
+      if (app.isLegacyPresetStock && app.isLegacyPresetStock(s)) return;
       const size = s.size || '通用';
       const groupKey = s.name + '_' + size;
       if (!stockGroups[groupKey]) {
@@ -622,8 +680,8 @@ Page({
       if (!s.name) return;
       // 电器类物品不参与首页库存用尽提醒
       if (/吸奶器|消毒器|温奶器|摇奶器|辅食机|料理机|恒温壶|烘干机|洗衣机|电器|暖奶器/.test(s.name)) return;
-      // 过滤掉预置测试假数据
-      if ((s.name.indexOf('奶粉') >= 0 || s.name.indexOf('棉柔巾') >= 0) && (!s.size || s.size === '通用')) return;
+      // 过滤旧版本预置示例耗材，避免假的“用尽”提醒
+      if (app.isLegacyPresetStock && app.isLegacyPresetStock(s)) return;
       let groupName = s.name;
       if (s.name.indexOf('纸尿裤') >= 0 || s.name.indexOf('拉拉裤') >= 0) groupName = '纸尿裤';
       else if (s.name.indexOf('奶粉') >= 0 || s.name.indexOf('牛奶粉') >= 0 || s.name.indexOf('羊奶粉') >= 0) groupName = '配方奶粉';
@@ -735,6 +793,7 @@ Page({
     });
 
     if (hasBaby) {
+    const lang = this.data.lang || wx.getStorageSync('lang') || 'zh';
     // —— 喂养提醒：按宝宝月龄推荐间隔，有上次记录则提前10分钟提醒；无记录则常驻「今天该喂奶了」 ——
     const feedTypes = ['母乳', '配方奶', '瓶喂母乳'];
     const feeds = (g.records || []).filter(r => r && feedTypes.indexOf(r.type) >= 0).slice()
@@ -755,20 +814,20 @@ Page({
         const passedMin = Math.max(0, Math.round((now - lastTs) / 60000));
         todos.push({
           key: 'feed', iconImg: '/images/icons/rec-nursing.png', icon: '',
-          title: min < 0 ? '该喂奶了' : '即将到喂奶时间',
-          desc: '距上次喂养已 ' + passedMin + ' 分钟 · 建议间隔 ' + intervalText + (min < 0 ? '（已超时）' : ''),
-          tag: min < 0 ? '已超时' : '临近', tagClass: min < 0 ? 'red' : 'amber',
-          done: false, actionLabel: '去记录', actionKey: 'record', minutesUntil: min
+          title: lang === 'en' ? (min < 0 ? 'Time to feed' : 'Upcoming feed') : (min < 0 ? '该喂奶了' : '即将到喂奶时间'),
+          desc: lang === 'en' ? ('Last feed was ' + passedMin + ' mins ago · Recommended interval ' + intervalText + (min < 0 ? ' (Overdue)' : '')) : ('距上次喂养已 ' + passedMin + ' 分钟 · 建议间隔 ' + intervalText + (min < 0 ? '（已超时）' : '')),
+          tag: lang === 'en' ? (min < 0 ? 'Overdue' : 'Upcoming') : (min < 0 ? '已超时' : '临近'), tagClass: min < 0 ? 'red' : 'amber',
+          done: false, actionLabel: lang === 'en' ? 'Log' : '去记录', actionKey: 'record', minutesUntil: min
         });
       }
     } else {
       // 时间轴上没有任何亲喂/瓶喂记录：常驻提醒今天该喂奶了
       todos.push({
         key: 'feed', iconImg: '/images/icons/rec-nursing.png', icon: '',
-        title: '今天该喂奶了',
-        desc: '今天还没有亲喂或瓶喂记录，建议间隔 ' + intervalText,
-        tag: '待记录', tagClass: 'amber',
-        done: false, actionLabel: '去记录', actionKey: 'record', minutesUntil: 0
+        title: lang === 'en' ? 'Time to feed today' : '今天该喂奶了',
+        desc: lang === 'en' ? ('No feeding record today, recommended interval ' + intervalText) : ('今天还没有亲喂或瓶喂记录，建议间隔 ' + intervalText),
+        tag: lang === 'en' ? 'Pending' : '待记录', tagClass: 'amber',
+        done: false, actionLabel: lang === 'en' ? 'Log' : '去记录', actionKey: 'record', minutesUntil: 0
       });
     }
 
@@ -824,10 +883,10 @@ Page({
         const sMin = ((sp[0] || 0) * 60 + (sp[1] || 0)) - nowMin;
         if (sMin <= WINDOW) {
           todos.push({
-            key: 'supplement', iconImg: '/images/icons/rec-food.png', icon: '', title: '今日辅食安排',
-            desc: setTime + ' · ' + this.supplementStage(months) + (sMin < 0 ? '（已到时间）' : ''),
-            tag: '辅食', tagClass: 'amber', done: false,
-            actionLabel: '看食谱', actionKey: 'supplement', minutesUntil: sMin,
+            key: 'supplement', iconImg: '/images/icons/rec-food.png', icon: '', title: lang === 'en' ? 'Today Solid Food' : '今日辅食安排',
+            desc: setTime + ' · ' + this.supplementStage(months) + (lang === 'en' ? (sMin < 0 ? ' (Due now)' : '') : (sMin < 0 ? '（已到时间）' : '')),
+            tag: lang === 'en' ? 'Solid Food' : '辅食', tagClass: 'amber', done: false,
+            actionLabel: lang === 'en' ? 'View Recipe' : '看食谱', actionKey: 'supplement', minutesUntil: sMin,
             months: months
           });
         }
@@ -1042,48 +1101,73 @@ Page({
     wx.showToast({ title: '已更新', icon: 'none' });
   },
 
-  /* 每日早教推荐：根据宝宝月龄推荐，每天更新 */
+  /* 每日早教推荐：根据宝宝月龄推荐，每天更新（中英双语内容库，按语言切换） */
   buildEduRec() {
     const baby = app.globalData.baby || {};
-    
-    // 早教内容库（按月龄分组）
+    const en = (this.data.lang || wx.getStorageSync('lang') || 'zh') === 'en';
+
+    // 早教内容库（按月龄分组）—— 中文
     const eduLib = {
-      // 0-3个月
       '0-3': [
         { type: '早教儿歌', title: '摇篮曲', content: '摇篮曲：轻轻哼起《小星星》，让宝宝在温柔的歌声中安静入睡。', tip: '每天睡前哼唱，培养宝宝的音乐感知和安全感。' },
         { type: '黑白卡', title: '视觉刺激', content: '黑白卡：在宝宝眼前20-30cm处缓慢移动黑白对比卡片，刺激视觉发育。', tip: '每次1-2分钟，每天2-3次，促进宝宝视神经发育。' },
         { type: '抚触按摩', title: '亲子抚触', content: '亲子抚触：用温和的手法轻轻按摩宝宝的手脚、背部，促进亲子关系。', tip: '洗完澡后做抚触，每次5-10分钟，注意保暖。' },
       ],
-      // 4-6个月
       '4-6': [
         { type: '早教儿歌', title: '拔萝卜', content: '拔萝卜：边唱边做动作，让宝宝感受节奏和韵律。', tip: '抱着宝宝轻轻晃动，让宝宝感受音乐节奏。' },
         { type: '翻身练习', title: '宝宝翻身', content: '翻身练习：用玩具引导宝宝从仰卧翻到俯卧，锻炼背部肌肉。', tip: '每次练习2-3分钟，不要勉强，多鼓励。' },
         { type: '抓握训练', title: '抓握玩具', content: '抓握训练：给宝宝不同材质的玩具，让宝宝练习抓握和换手。', tip: '选择安全无毒的玩具，注意观察宝宝反应。' },
       ],
-      // 7-12个月
       '7-12': [
         { type: '早教儿歌', title: '两只老虎', content: '两只老虎：边唱边做手指游戏，锻炼宝宝手部精细动作。', tip: '大人先做示范，让宝宝模仿手指动作。' },
         { type: '爬行练习', title: '学爬引导', content: '爬行练习：用玩具在前方引导宝宝爬行，锻炼四肢协调能力。', tip: '在地板上铺软垫，确保安全，每次5-10分钟。' },
         { type: '认知训练', title: '认物游戏', content: '认物游戏：指着家里的物品告诉宝宝名称，比如"这是灯""这是桌子"。', tip: '每天练习几次，每次认识2-3个物品。' },
       ],
-      // 1-2岁
       '1-2': [
         { type: '早教唐诗', title: '静夜思', content: '静夜思\n床前明月光，疑是地上霜。\n举头望明月，低头思故乡。', tip: '每天读1-2遍，让宝宝感受语言的韵律和节奏。' },
         { type: '早教操', title: '宝宝操', content: '宝宝操：抱着宝宝做简单的伸展运动，活动四肢关节。', tip: '动作要轻柔，跟着音乐节奏做，每次5分钟。' },
         { type: '积木游戏', title: '搭积木', content: '积木游戏：和宝宝一起搭积木，锻炼手眼协调和空间认知。', tip: '从简单的搭高开始，逐步增加难度。' },
       ],
-      // 2-3岁
       '2-3': [
         { type: '早教唐诗', title: '悯农', content: '悯农\n锄禾日当午，汗滴禾下土。\n谁知盘中餐，粒粒皆辛苦。', tip: '结合吃饭时讲，让宝宝懂得珍惜粮食。' },
         { type: '讲故事', title: '绘本阅读', content: '绘本阅读：选择画面丰富、文字简单的绘本，和宝宝一起阅读。', tip: '每天睡前读1-2本，培养阅读习惯。' },
         { type: '涂鸦画画', title: '宝宝涂鸦', content: '涂鸦画画：给宝宝纸和蜡笔，让宝宝自由涂鸦，发挥想象力。', tip: '不要教宝宝画"像"，鼓励自由表达。' },
       ],
     };
+    // 早教内容库（按月龄分组）—— 英文，与中文一一对应
+    const eduLibEn = {
+      '0-3': [
+        { type: 'Nursery Rhyme', title: 'Lullaby', content: 'Lullaby: hum "Twinkle Twinkle Little Star" softly and let your baby drift off to the gentle singing.', tip: 'Sing before bed every day to build musical awareness and a sense of security.' },
+        { type: 'Black & White Cards', title: 'Visual Stimulation', content: 'Black & white cards: move the high-contrast card slowly 20-30cm in front of your baby to stimulate visual development.', tip: '1-2 minutes each time, 2-3 times a day, to support optic nerve development.' },
+        { type: 'Baby Massage', title: 'Parent-Child Touch', content: 'Baby massage: gently massage your baby\'s hands, feet and back with soft strokes to strengthen bonding.', tip: 'Do it after bath, 5-10 minutes each time, and keep your baby warm.' },
+      ],
+      '4-6': [
+        { type: 'Nursery Rhyme', title: 'Pulling the Radish', content: 'Pulling the radish: sing the song and act it out so your baby feels the rhythm.', tip: 'Hold your baby and sway gently to help them feel the beat.' },
+        { type: 'Rolling Practice', title: 'Baby Rolls Over', content: 'Rolling practice: use a toy to guide your baby from lying on the back to the tummy, strengthening back muscles.', tip: '2-3 minutes each time; never force it, just encourage.' },
+        { type: 'Grasping Practice', title: 'Grasp the Toy', content: 'Grasping practice: offer toys of different textures so your baby practises grasping and switching hands.', tip: 'Choose safe, non-toxic toys and watch your baby\'s reaction.' },
+      ],
+      '7-12': [
+        { type: 'Nursery Rhyme', title: 'Two Tigers', content: 'Two tigers: sing along with finger play to train fine motor skills.', tip: 'Show it first, then let your baby copy the finger movements.' },
+        { type: 'Crawling Practice', title: 'Learning to Crawl', content: 'Crawling practice: place a toy ahead to guide your baby to crawl, building limb coordination.', tip: 'Put a soft mat on the floor for safety, 5-10 minutes each time.' },
+        { type: 'Cognitive Training', title: 'Naming Objects', content: 'Naming objects: point at things at home and tell your baby their names, such as "this is the lamp", "this is the table".', tip: 'Practise a few times a day, 2-3 objects each time.' },
+      ],
+      '1-2': [
+        { type: 'Classic Poem', title: 'Quiet Night Thoughts', content: 'Quiet Night Thoughts\nMoonlight before my bed, like frost upon the ground.\nI raise my head to the bright moon, and lower it thinking of home.', tip: 'Read it 1-2 times a day so your baby feels the rhythm of language.' },
+        { type: 'Baby Exercise', title: 'Baby Workout', content: 'Baby workout: hold your baby and do simple stretching to move the arms and legs.', tip: 'Keep movements gentle, follow the music, about 5 minutes each time.' },
+        { type: 'Block Play', title: 'Building Blocks', content: 'Block play: build blocks together to train hand-eye coordination and spatial awareness.', tip: 'Start with simple stacking and increase difficulty gradually.' },
+      ],
+      '2-3': [
+        { type: 'Classic Poem', title: 'The Farmer', content: 'The Farmer\nHoeing under the midday sun, sweat falling into the soil.\nWho knows that every grain on the plate comes from such hard work.', tip: 'Talk about it at mealtime to teach your baby to value food.' },
+        { type: 'Storytelling', title: 'Picture Book Reading', content: 'Picture book reading: pick books with rich pictures and simple words and read together.', tip: 'Read 1-2 books before bed to build a reading habit.' },
+        { type: 'Scribbling', title: 'Baby Scribbles', content: 'Scribbling: give your baby paper and crayons and let them draw freely and imagine.', tip: 'Don\'t push them to draw "realistically" — encourage free expression.' },
+      ],
+    };
+    const lib = en ? eduLibEn : eduLib;
 
     // 没有宝宝时，随机推荐早教内容
     if (!baby.birthday) {
       // 把所有月龄组的内容合并成一个列表
-      const allContent = Object.keys(eduLib).flatMap(k => eduLib[k]);
+      const allContent = Object.keys(lib).flatMap(k => lib[k]);
       // 每天根据日期选择不同的推荐内容
       const today = new Date();
       const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 86400000);
@@ -1091,7 +1175,7 @@ Page({
       const rec = allContent[idx];
       this.setData({
         eduRec: {
-          ageText: '通用早教推荐',
+          ageText: en ? 'General activity' : '通用早教推荐',
           type: rec.type,
           title: rec.title,
           content: rec.content,
@@ -1110,7 +1194,11 @@ Page({
       days += new Date(now.getFullYear(), now.getMonth(), 0).getDate();
     }
     if (months < 0) months = 0;
-    const ageText = months < 1 ? days + '天' : months + '个月' + (days > 0 ? days + '天' : '');
+    const ageText = en
+      ? (months < 1
+          ? days + (days === 1 ? ' day' : ' days')
+          : (months + (months === 1 ? ' month' : ' months') + (days > 0 ? ' ' + days + (days === 1 ? ' day' : ' days') : '')))
+      : (months < 1 ? days + '天' : months + '个月' + (days > 0 ? days + '天' : ''));
 
     // 根据月龄选择分组
     let groupKey = '0-3';
@@ -1120,7 +1208,7 @@ Page({
     else if (months >= 13 && months <= 24) groupKey = '1-2';
     else if (months >= 25) groupKey = '2-3';
 
-    const group = eduLib[groupKey] || eduLib['0-3'];
+    const group = lib[groupKey] || lib['0-3'];
 
     // 每天根据日期选择不同的推荐内容
     const today = new Date();

@@ -25,7 +25,7 @@
       <image class="reminder-flower-img" src="{{reminder.iconImg}}" mode="aspectFit" />
     </view>
     <block wx:if="{{reminder.hasRecord}}">
-      <text class="reminder-kicker">最后一次喂养</text>
+      <text class="reminder-kicker">{{lang === 'en' ? 'Last Feeding' : '最后一次喂养'}}</text>
       <view class="reminder-main">{{reminder.lastDetail}}</view>
       <text class="reminder-sub" user-select>{{reminder.lastTime}} · {{reminder.agoText}}</text>
     </block>
@@ -33,16 +33,16 @@
       <view class="reminder-bless-wrap">
         <text class="reminder-bless" user-select>{{reminder.blessing}}</text>
       </view>
-      <text class="reminder-sub">今天还没有喂养记录，记录后展示喂养详情</text>
+      <text class="reminder-sub">{{lang === 'en' ? 'No feeding record today. Details show after logging.' : '今天还没有喂养记录，记录后展示喂养详情'}}</text>
     </block>
-    <view class="reminder-btn" catchtap="openReminder">查看今日提醒</view>
+    <view class="reminder-btn" catchtap="openReminder">{{lang === 'en' ? 'Today Reminders' : '查看今日提醒'}}</view>
   </view>
 
   <!-- 工具 -->
   <view class="section-head">
     <view>
-      <view class="section-title">工具</view>
-      <view class="section-desc">育儿日常，一处轻松管理</view>
+      <view class="section-title">{{lang === 'en' ? 'Tools' : '工具'}}</view>
+      <view class="section-desc">{{lang === 'en' ? 'All parenting tools in one place' : '育儿日常，一处轻松管理'}}</view>
     </view>
   </view>
   <view class="tools-grid">
@@ -64,8 +64,8 @@
   <!-- 每日早教 -->
   <view class="section-head">
     <view>
-      <view class="section-title">每日早教</view>
-      <view class="section-desc">{{eduRec.ageText}} · 今日推荐</view>
+      <view class="section-title">{{lang === 'en' ? 'Daily Activity' : '每日早教'}}</view>
+      <view class="section-desc">{{eduRec.ageText}} · {{lang === 'en' ? 'Today' : '今日推荐'}}</view>
     </view>
   </view>
   <view class="edu-card">
@@ -81,10 +81,10 @@
     <!-- ===== 列表：2 小时内临近提醒（库存预警 / 保质期 / 疫苗待接种 / 喂养） ===== -->
     <block wx:if="{{rmode === 'list'}}">
       <view class="rm-header">
-        <view class="rm-title">每日提醒</view>
+        <view class="rm-title">{{lang === 'en' ? 'Today Reminders' : '每日提醒'}}</view>
         <view class="rm-close" catchtap="confirmReminder">✕</view>
       </view>
-      <view class="rm-subtitle">仅显示 2 小时内到期的临近提醒</view>
+      <view class="rm-subtitle">{{lang === 'en' ? 'Only show reminders due within 2 hours' : '仅显示 2 小时内到期的临近提醒'}}</view>
 
       <view class="rm-none rm-none-big" wx:if="{{remindEmpty}}">
         <view>暂无临近提醒</view>
@@ -107,7 +107,7 @@
         </view>
 
         <view class="rm-section" wx:if="{{reminders.feedTodos.length}}">
-          <view class="rm-sec-title">喂养提醒</view>
+          <view class="rm-sec-title">{{lang === 'en' ? 'Feeding Reminders' : '喂养提醒'}}</view>
           <view class="rm-item" wx:for="{{reminders.feedTodos}}" wx:key="key">
             <view class="rm-item-icon"><image wx:if="{{item.iconImg}}" class="rm-item-icon-img" src="{{item.iconImg}}" mode="aspectFit" /><text wx:else>{{item.icon}}</text></view>
             <view class="rm-item-info">
@@ -149,7 +149,7 @@
         </view>
       </block>
 
-      <view class="rm-btn" bindtap="confirmReminder">知道了</view>
+      <view class="rm-btn" bindtap="confirmReminder">{{lang === 'en' ? 'Got it' : '知道了'}}</view>
     </block>
 
     <!-- ===== 补货面板 ===== -->
@@ -200,7 +200,7 @@
         <view class="recipe-tips-title">喂养要点</view>
         <view class="recipe-tip" wx:for="{{recipeInfo.tips}}" wx:for-item="tip" wx:key="*this">· {{tip}}</view>
       </view>
-      <view class="rm-btn" bindtap="backToList">知道了</view>
+      <view class="rm-btn" bindtap="backToList">{{lang === 'en' ? 'Got it' : '知道了'}}</view>
     </block>
 
 </dialog>

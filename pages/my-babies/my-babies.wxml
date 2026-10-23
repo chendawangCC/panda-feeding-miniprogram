@@ -6,12 +6,12 @@
   <view class="page-header-back">
     <view class="back-btn" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">新建宝宝 · 切换与管理</text>
-      <view class="header-title">我的宝贝</view>
+      <text class="header-kicker">{{lang === 'en' ? 'Create baby · switch & manage' : '新建宝宝 · 切换与管理'}}</text>
+      <view class="header-title">{{lang === 'en' ? 'My Baby' : '我的宝贝'}}</view>
     </view>
     <view class="add-btn" wx:if="{{babies.length && !hasSharedBaby}}" bindtap="addBaby">
       <image class="add-btn-ico" src="/images/icons/baby-add.png" mode="aspectFit" />
-      <text>添加宝宝</text>
+      <text>{{lang === 'en' ? 'Add Baby' : '添加宝宝'}}</text>
     </view>
   </view>
 
@@ -25,13 +25,13 @@
       bindtap="switchBaby"
     >
       <view class="baby-info">
-        <text class="baby-name">{{item.name || '未命名宝宝'}}</text>
-        <text class="baby-meta">{{item.gender || '未设置性别'}} · {{item.birthday || '未填写出生日期'}}</text>
+        <text class="baby-name">{{item.name || (lang === 'en' ? 'Unnamed baby' : '未命名宝宝')}}</text>
+        <text class="baby-meta">{{item.gender ? (lang === 'en' ? (genderMap[item.gender] || item.gender) : item.gender) : (lang === 'en' ? 'Gender not set' : '未设置性别')}} · {{item.birthday || (lang === 'en' ? 'Birthday not set' : '未填写出生日期')}}</text>
       </view>
-      <view class="baby-tag" wx:if="{{item.isShared}}">共享</view>
-      <view class="baby-tag" wx:if="{{item.id === currentBabyId}}">当前</view>
+      <view class="baby-tag" wx:if="{{item.isShared}}">{{lang === 'en' ? 'Shared' : '共享'}}</view>
+      <view class="baby-tag" wx:if="{{item.id === currentBabyId}}">{{lang === 'en' ? 'Current' : '当前'}}</view>
       <view class="baby-actions" wx:if="{{!item.isShared}}">
-        <view class="baby-act edit" catchtap="editBaby" data-id="{{item.id}}">编辑</view>
+        <view class="baby-act edit" catchtap="editBaby" data-id="{{item.id}}">{{lang === 'en' ? 'Edit' : '编辑'}}</view>
       </view>
     </view>
   </view>
@@ -39,14 +39,14 @@
   <!-- 空状态 -->
   <view class="empty" wx:if="{{!babies.length}}">
     <image class="empty-icon-img" src="/images/icons/empty-baby.png" mode="aspectFit" />
-    <text class="empty-title">{{isFamilyMember ? '暂无共享宝宝' : '还没有宝宝'}}</text>
-    <text class="empty-desc">{{isFamilyMember ? '等待家庭创建者共享宝宝信息' : '添加第一个宝宝，开始记录喂养日常'}}</text>
+    <text class="empty-title">{{isFamilyMember ? (lang === 'en' ? 'No shared baby yet' : '暂无共享宝宝') : (lang === 'en' ? 'No baby yet' : '还没有宝宝')}}</text>
+    <text class="empty-desc">{{isFamilyMember ? (lang === 'en' ? 'Waiting for the family owner to share baby info' : '等待家庭创建者共享宝宝信息') : (lang === 'en' ? 'Add your first baby to start recording' : '添加第一个宝宝，开始记录喂养日常')}}</text>
     <view class="empty-btn" wx:if="{{!hasSharedBaby}}" bindtap="addBaby">
       <image class="add-btn-ico" src="/images/icons/baby-add.png" mode="aspectFit" />
-      <text>添加宝宝</text>
+      <text>{{lang === 'en' ? 'Add Baby' : '添加宝宝'}}</text>
     </view>
   </view>
 
-  <view class="tip">点击宝宝卡片可切换当前记录的宝宝；编辑宝宝资料请点右侧「编辑」</view>
+  <view class="tip">{{lang === 'en' ? 'Tap a baby card to switch; tap Edit on the right to update info' : '点击宝宝卡片可切换当前记录的宝宝；编辑宝宝资料请点右侧「编辑」'}}</view>
 </view>
 

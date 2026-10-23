@@ -9,6 +9,7 @@ Page({
   },
 
   data: {
+    lang: 'zh',
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     user: {},
     loginVisible: false,
@@ -31,7 +32,38 @@ Page({
   },
 
   onShow() {
-    this.setData({ user: app.getUser() });
+    const lang = wx.getStorageSync('lang') || 'zh';
+    const exportItems = lang === 'en' ? [
+      { key: 'records', label: 'Feeding Records', desc: 'Breastfeeding / bottle / sleep / diaper and all records', checked: true, count: 0 },
+      { key: 'babies', label: 'Baby Profile', desc: 'Birth and basic profile of baby', checked: true, count: 0 },
+      { key: 'cost', label: 'Feeding Station Cost', desc: 'Purchase cost of formula, diapers and supplies', checked: true, count: 0 },
+      { key: 'allergy', label: 'Allergy Manual', desc: 'Solid food allergy statistics', checked: true, count: 0 }
+    ] : [
+      { key: 'records', label: '喂养记录', desc: '母乳 / 配方奶 / 睡眠 / 换尿布等全部喂养记录', checked: true, count: 0 },
+      { key: 'babies', label: '宝宝成长档案', desc: '宝宝的出生与基本信息档案', checked: true, count: 0 },
+      { key: 'cost', label: '喂养台成本统计', desc: '奶粉、纸尿裤等喂养物品的购入成本统计', checked: true, count: 0 },
+      { key: 'allergy', label: '过敏统计手册', desc: '辅食过敏与不过敏食物统计', checked: true, count: 0 }
+    ];
+    const old = this.data.exportItems || [];
+    exportItems.forEach(it => {
+      const prev = old.find(o => o.key === it.key);
+      if (prev) { it.checked = prev.checked; it.count = prev.count; }
+    });
+    this.setData({ user: app.getUser(), lang: lang, exportItems: exportItems });
+  },
+
+  switchLang() {
+    wx.showActionSheet({
+      itemList: ['简体中文', 'English'],
+      success: (res) => {
+        const newLang = res.tapIndex === 0 ? 'zh' : 'en';
+        wx.setStorageSync('lang', newLang);
+        wx.showToast({ title: newLang === 'en' ? 'Switched to English' : '已切换中文', icon: 'success' });
+        setTimeout(() => {
+          wx.reLaunch({ url: '/pages/plan/plan' });
+        }, 800);
+      }
+    });
   },
 
   goBack() {

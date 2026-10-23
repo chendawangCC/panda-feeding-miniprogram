@@ -3,7 +3,18 @@ const app = getApp();
 Component({
   data: {
     selected: 0,
-    hidden: false
+    hidden: false,
+    homeLabel: '首页',
+    meLabel: '我的'
+  },
+  lifetimes: {
+    attached() {
+      const lang = wx.getStorageSync('lang') || 'zh';
+      this.setData({
+        homeLabel: lang === 'en' ? 'Home' : '首页',
+        meLabel: lang === 'en' ? 'Me' : '我的'
+      });
+    }
   },
   methods: {
     switchTab(e) {

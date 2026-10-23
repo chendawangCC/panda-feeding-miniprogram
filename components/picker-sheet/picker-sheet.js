@@ -11,14 +11,28 @@ Component({
     value: { type: String, value: '' },
     minTime: { type: String, value: '' } // 时间选择器最小可选时间 HH:MM
   },
+  lifetimes: {
+    attached() {
+      this.setData({ lang: wx.getStorageSync('lang') || 'zh' });
+    }
+  },
+  pageLifetimes: {
+    show() {
+      this.setData({ lang: wx.getStorageSync('lang') || 'zh' });
+    }
+  },
   data: {
+    lang: 'zh',
     years: [], months: [], days: [], hours: [], minutes: [],
     indexes: [0, 0, 0],
     yIdx: 0, mIdx: 0, dIdx: 0, hIdx: 0, minIdx: 0
   },
   observers: {
     visible(v) {
-      if (v) this.initFromValue();
+      if (v) {
+        this.setData({ lang: wx.getStorageSync('lang') || 'zh' });
+        this.initFromValue();
+      }
       const cur = this.currentPage();
       if (cur) {
         cur._ovl = cur._ovl || 0;

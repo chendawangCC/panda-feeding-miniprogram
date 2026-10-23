@@ -10,6 +10,8 @@ Page({
     return { title: '熊宝喂养 · 我的宝贝' };
   },
   data: {
+    lang: 'zh',
+    genderMap: { '男宝宝': 'Boy', '女宝宝': 'Girl', '暂不填写': 'Not now' },
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     babies: [],
     currentBabyId: ''
@@ -56,6 +58,8 @@ Page({
   },
 
   refresh() {
+    const lang = wx.getStorageSync('lang') || 'zh';
+    this.setData({ lang: lang });
     const user = app.getUser();
     // 未登录状态：清空所有宝宝信息
     if (!user.logged) {

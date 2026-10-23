@@ -22,21 +22,21 @@ module.exports = function (v) {
   <view class="page-header-back">
     <view class="back-btn" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">{{isEdit ? '完善宝宝信息' : '只需填写宝宝小名'}}</text>
-      <view class="header-title">{{isEdit ? '宝宝详情' : '添加宝宝'}}</view>
+      <text class="header-kicker">{{isEdit ? (lang === 'en' ? 'Complete baby info' : '完善宝宝信息') : (lang === 'en' ? 'Just the nickname' : '只需填写宝宝小名')}}</text>
+      <view class="header-title">{{isEdit ? (lang === 'en' ? 'Baby Details' : '宝宝详情') : (lang === 'en' ? 'Add Baby' : '添加宝宝')}}</view>
     </view>
   </view>
 
   <!-- 宝宝小名 -->
   <view class="form-group">
-    <text class="form-label">宝宝小名</text>
-    <input class="input-box" value="{{form.name}}" bindinput="onName" placeholder="请输入宝宝小名" />
+    <text class="form-label">{{lang === 'en' ? 'Baby Nickname' : '宝宝小名'}}</text>
+    <input class="input-box" value="{{form.name}}" bindinput="onName" placeholder="{{lang === 'en' ? 'Enter baby nickname' : '请输入宝宝小名'}}" />
   </view>
 
   <!-- 必填：性别 / 出生日期 / 关系；生产方式为选填，其余（出生时刻 / 血型 / 体重 / 身长）选填 -->
   <!-- 宝宝性别 -->
   <view class="form-group">
-    <text class="form-label">宝宝性别</text>
+    <text class="form-label">{{lang === 'en' ? 'Gender' : '宝宝性别'}}</text>
     <view class="gender-row">
       <view
         wx:for="{{genders}}"
@@ -44,25 +44,25 @@ module.exports = function (v) {
         class="gender-btn {{form.gender === item ? 'on' : ''}}"
         data-value="{{item}}"
         bindtap="onGenderBtn"
-      >{{item}}</view>
+      >{{lang === 'en' ? (genderMap[item] || item) : item}}</view>
     </view>
   </view>
 
   <!-- 出生日期 -->
   <view class="form-group">
-    <text class="form-label">宝宝出生日期</text>
-    <view class="picker-box {{form.birthday ? '' : 'placeholder'}}" bindtap="openBirthdayPicker">{{form.birthday || '请选择出生日期'}}<text class="picker-arrow">▾</text></view>
+    <text class="form-label">{{lang === 'en' ? 'Birthday' : '宝宝出生日期'}}</text>
+    <view class="picker-box {{form.birthday ? '' : 'placeholder'}}" bindtap="openBirthdayPicker">{{form.birthday || (lang === 'en' ? 'Select birthday' : '请选择出生日期')}}<text class="picker-arrow">▾</text></view>
   </view>
 
   <!-- 出生时刻 -->
   <view class="form-group">
-    <text class="form-label">出生时刻 <text class="optional">（选填）</text></text>
-    <view class="picker-box {{form.time ? '' : 'placeholder'}}" bindtap="openTimePicker">{{form.time || '请选择出生时刻'}}<text class="picker-arrow">▾</text></view>
+    <text class="form-label">{{lang === 'en' ? 'Birth Time' : '出生时刻'}} <text class="optional">{{lang === 'en' ? '(optional)' : '（选填）'}}</text></text>
+    <view class="picker-box {{form.time ? '' : 'placeholder'}}" bindtap="openTimePicker">{{form.time || (lang === 'en' ? 'Select birth time' : '请选择出生时刻')}}<text class="picker-arrow">▾</text></view>
   </view>
 
   <!-- 我是宝宝的 -->
   <view class="form-group">
-    <text class="form-label">我是宝宝的</text>
+    <text class="form-label">{{lang === 'en' ? 'My role' : '我是宝宝的'}}</text>
     <view class="relation-row">
       <view
         wx:for="{{relations}}"
@@ -70,14 +70,14 @@ module.exports = function (v) {
         class="relation-chip {{form.relation === item ? 'on' : ''}}"
         data-value="{{item}}"
         bindtap="onRelationBtn"
-      >{{item}}</view>
-      <view class="relation-chip relation-add" bindtap="addRelation">＋ 增加角色</view>
+      >{{lang === 'en' ? (relationMap[item] || item) : item}}</view>
+      <view class="relation-chip relation-add" bindtap="addRelation">{{lang === 'en' ? '+ Add Role' : '＋ 增加角色'}}</view>
     </view>
   </view>
 
   <!-- 生产方式 -->
   <view class="form-group">
-    <text class="form-label">生产方式</text>
+    <text class="form-label">{{lang === 'en' ? 'Delivery' : '生产方式'}}</text>
     <view class="gender-row">
       <view
         wx:for="{{deliveries}}"
@@ -85,36 +85,36 @@ module.exports = function (v) {
         class="gender-btn {{form.delivery === item ? 'on' : ''}}"
         data-value="{{item}}"
         bindtap="onDeliveryBtn"
-      >{{item}}</view>
+      >{{lang === 'en' ? (deliveryMap[item] || item) : item}}</view>
     </view>
   </view>
 
   <!-- 血型 -->
   <view class="form-group">
-    <text class="form-label">血型 <text class="optional">（选填）</text></text>
-    <picker mode="selector" range="{{bloodTypes}}" bindchange="onBloodChange">
-      <view class="picker-box {{form.blood ? '' : 'placeholder'}}">{{form.blood || '请选择血型'}}<text class="picker-arrow">▾</text></view>
+    <text class="form-label">{{lang === 'en' ? 'Blood Type' : '血型'}} <text class="optional">{{lang === 'en' ? '(optional)' : '（选填）'}}</text></text>
+    <picker mode="selector" range="{{bloodLabels}}" bindchange="onBloodChange">
+      <view class="picker-box {{form.blood ? '' : 'placeholder'}}">{{form.blood ? (lang === 'en' ? (bloodMap[form.blood] || form.blood) : form.blood) : (lang === 'en' ? 'Select blood type' : '请选择血型')}}<text class="picker-arrow">▾</text></view>
     </picker>
   </view>
 
   <!-- 出生体重（手动填写） -->
   <view class="form-group">
-    <text class="form-label">出生体重 <text class="optional">（选填，KG）</text></text>
+    <text class="form-label">{{lang === 'en' ? 'Birth Weight' : '出生体重'}} <text class="optional">{{lang === 'en' ? '(optional, KG)' : '（选填，KG）'}}</text></text>
     <input class="input-box" type="digit" value="{{form.weight}}" bindinput="onWeight" placeholder="KG" />
   </view>
 
   <!-- 出生身长（手动填写） -->
   <view class="form-group">
-    <text class="form-label">出生身长 <text class="optional">（选填，厘米）</text></text>
-    <input class="input-box" type="digit" value="{{form.height}}" bindinput="onHeight" placeholder="厘米" />
+    <text class="form-label">{{lang === 'en' ? 'Birth Length' : '出生身长'}} <text class="optional">{{lang === 'en' ? '(optional, cm)' : '（选填，厘米）'}}</text></text>
+    <input class="input-box" type="digit" value="{{form.height}}" bindinput="onHeight" placeholder="{{lang === 'en' ? 'cm' : '厘米'}}" />
   </view>
 
 
   <!-- 保存 -->
-  <view class="btn-save" hover-class="btn-press" hover-stay-time="60" bindtap="save">保存宝宝信息</view>
+  <view class="btn-save" hover-class="btn-press" hover-stay-time="60" bindtap="save">{{lang === 'en' ? 'Save Baby Info' : '保存宝宝信息'}}</view>
 
   <!-- 移除宝宝（仅编辑模式） -->
-  <view class="remove-baby" wx:if="{{isEdit}}" bindtap="removeBaby">移除宝宝</view>
+  <view class="remove-baby" wx:if="{{isEdit}}" bindtap="removeBaby">{{lang === 'en' ? 'Remove Baby' : '移除宝宝'}}</view>
 
   <!-- 自定义日期/时间选择器 -->
   <picker-sheet visible="{{showBirthdayPicker}}" mode="date" value="{{form.birthday}}" bind:confirm="onBirthday" bind:close="closeBirthdayPicker" />

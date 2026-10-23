@@ -28,7 +28,7 @@ module.exports = {
   <view class="page-header">
     <view class="page-header-left">
       <text class="header-kicker">{{headerDate}}</text>
-      <view class="header-title">今日日程</view>
+      <view class="header-title">{{lang === 'en' ? 'Today' : '今日日程'}}</view>
     </view>
     <view class="account-scan" catchtap="scan">
       <image class="account-scan-ico" src="/images/icons/mine-scan.png" mode="aspectFit" />
@@ -66,14 +66,14 @@ module.exports = {
     </view>
     <view class="ic-weather-row">
       <view class="ic-wcard">
-        <text class="ic-wlabel">今日天气</text>
+        <text>{{lang === 'en' ? 'Weather' : '今日天气'}}</text>
         <view class="ic-wline">
           <image class="ic-wico" src="{{weather.img || '/images/icons/weather-sun.png'}}" mode="aspectFit" />
           <text class="ic-wval">{{weather.type}}</text>
         </view>
       </view>
       <view class="ic-wcard">
-        <text class="ic-wlabel">当前温度</text>
+        <text>{{lang === 'en' ? 'Temperature' : '当前温度'}}</text>
         <view class="ic-wline">
           <image class="ic-wico" src="/images/icons/weather-temp.png" mode="aspectFit" />
           <text class="ic-wval">{{weather.temp}}</text>
@@ -93,7 +93,7 @@ module.exports = {
         data-index="{{index}}"
         bindtap="selectDate"
       >
-        <text class="date-week">{{item.today ? '今日' : item.week}}</text>
+        <text class="date-week">{{item.today ? (lang === 'en' ? 'Today' : '今日') : (lang === 'en' ? weekMap[item.week] : item.week)}}</text>
         <text class="date-num">{{item.num}}</text>
         <view class="dv-dots" catchtap="openDayRemind" data-ymd="{{item.ymd}}">
           <view class="dv-dot dv-vax" wx:if="{{item.hasVaccine}}"></view>
@@ -110,7 +110,7 @@ module.exports = {
   <!-- 日历展开条：点击展开 / 点击收回 -->
   <view class="cal-pull {{calendarOpen ? 'open' : ''}}" bindtap="toggleCalendar">
     <view class="cal-pull-line"></view>
-    <text class="cal-pull-text">{{calendarOpen ? '点击收回日历' : '点击展开日历'}}</text>
+    <text class="cal-pull-text">{{calendarOpen ? (lang === 'en' ? 'Tap to collapse calendar' : '点击收回日历') : (lang === 'en' ? 'Tap to expand calendar' : '点击展开日历')}}</text>
   </view>
 
   <!-- 整月日历 -->
@@ -123,10 +123,10 @@ module.exports = {
         <view class="mc-nav-btn" catchtap="calNextMonth">›</view>
         <view class="mc-nav-btn" catchtap="calNextYear">»</view>
       </view>
-      <text class="mc-hint">点日期查看</text>
+      <text>{{lang === 'en' ? 'Tap date to view' : '点日期查看'}}</text>
     </view>
     <view class="mc-week">
-      <text>日</text><text>一</text><text>二</text><text>三</text><text>四</text><text>五</text><text>六</text>
+      <text>{{lang === 'en' ? 'Sun' : '日'}}</text><text>{{lang === 'en' ? 'Mon' : '一'}}</text><text>{{lang === 'en' ? 'Tue' : '二'}}</text><text>{{lang === 'en' ? 'Wed' : '三'}}</text><text>{{lang === 'en' ? 'Thu' : '四'}}</text><text>{{lang === 'en' ? 'Fri' : '五'}}</text><text>{{lang === 'en' ? 'Sat' : '六'}}</text>
     </view>
     <view class="mc-grid">
       <view wx:for="{{monthDays}}" wx:key="index" class="mc-cell">
@@ -139,7 +139,7 @@ module.exports = {
       </view>
     </view>
     <view class="mc-bottom">
-      <view class="mc-today-btn" catchtap="goToday">回到今天</view>
+      <view class="mc-today-btn" bindtap="goToday">回到今天</view>
     </view>
   </view>
 
@@ -167,7 +167,7 @@ module.exports = {
   <view class="timeline" wx:if="{{baby.id}}">
     <!-- 时间轴标题 + 喂养数据图表入口 -->
     <view class="timeline-head">
-      <text class="tl-head-title">喂养记录</text>
+      <text class="tl-head-title">{{lang === 'en' ? 'Feeding Records' : '喂养记录'}}</text>
       <view class="tl-head-stats" bindtap="goStats">
         <image class="tl-head-stats-ico" src="/images/icons/rec-stats.png" mode="aspectFit" />
       </view>
@@ -338,7 +338,7 @@ module.exports = {
 
 
 <!-- ==================== 宝宝切换弹窗 ==================== -->
-<dialog visible="{{babySwitchVisible}}" title="选择宝宝" kicker="切换当前记录的宝宝" bind:close="closeBabySwitcher">
+<dialog visible="{{babySwitchVisible}}" title="{{lang === 'en' ? 'Choose Baby' : '选择宝宝'}}" kicker="{{lang === 'en' ? 'Switch the baby being recorded' : '切换当前记录的宝宝'}}" bind:close="closeBabySwitcher">
   <view class="baby-switch-body">
     <view
       wx:for="{{babyList}}"
@@ -350,8 +350,8 @@ module.exports = {
       <view class="baby-switch-meta">
         <view class="baby-switch-name-row">
           <text class="baby-switch-name">{{item.name}}</text>
-          <text class="baby-switch-tag" wx:if="{{item.isShared}}">共享</text>
-          <text class="baby-switch-tag" wx:elif="{{item.id === currentBabyId}}">当前</text>
+          <text class="baby-switch-tag" wx:if="{{item.isShared}}">{{lang === 'en' ? 'Shared' : '共享'}}</text>
+          <text class="baby-switch-tag" wx:elif="{{item.id === currentBabyId}}">{{lang === 'en' ? 'Current' : '当前'}}</text>
         </view>
         <text class="baby-switch-age">{{item.ageText}}</text>
       </view>
@@ -369,53 +369,53 @@ module.exports = {
         <view class="quick-grid">
             <view class="quick-item quick-yellow" data-type="母乳" bindtap="selectQuick">
               <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-nursing.png" mode="aspectFit" />
-              <text class="quick-name">亲喂</text>
-              <text class="quick-sub">左右分别计时</text>
+              <text class="quick-name">{{i18n.breastfed}}</text>
+              <text class="quick-sub">{{i18n.breastfedSub}}</text>
             </view>
             <view class="quick-item quick-blue" data-type="配方奶" bindtap="selectQuick">
               <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-bottle.png" mode="aspectFit" />
-              <text class="quick-name">瓶喂</text>
-              <text class="quick-sub">记录喂奶量</text>
+              <text class="quick-name">{{i18n.bottleFed}}</text>
+              <text class="quick-sub">{{i18n.bottleFedSub}}</text>
             </view>
             <view class="quick-item quick-orange" data-type="吸奶" bindtap="selectQuick">
               <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-pump.png" mode="aspectFit" />
-              <text class="quick-name">吸奶</text>
-              <text class="quick-sub">左右量与计时</text>
+              <text class="quick-name">{{i18n.pump}}</text>
+              <text class="quick-sub">{{i18n.pumpSub}}</text>
             </view>
             <view class="quick-item quick-green" data-type="营养品" bindtap="selectQuick">
               <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-supplement.png" mode="aspectFit" />
-              <text class="quick-name">营养品</text>
-              <text class="quick-sub">可多选记录</text>
+              <text class="quick-name">{{i18n.supplement}}</text>
+              <text class="quick-sub">{{i18n.supplementSub}}</text>
             </view>
             <view class="quick-item quick-orange" data-type="辅食" bindtap="selectQuick">
               <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-food.png" mode="aspectFit" />
-              <text class="quick-name">辅食</text>
-              <text class="quick-sub">记录辅食份量</text>
+              <text class="quick-name">{{i18n.solidFood}}</text>
+              <text class="quick-sub">{{i18n.solidFoodSub}}</text>
             </view>
             <view class="quick-item quick-blue" data-type="喝水" bindtap="selectQuick">
               <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-water.png" mode="aspectFit" />
-              <text class="quick-name">喝水</text>
-              <text class="quick-sub">记录喝水量</text>
+              <text class="quick-name">{{i18n.water}}</text>
+              <text class="quick-sub">{{i18n.waterSub}}</text>
             </view>
             <view class="quick-item quick-green" data-type="换尿布" bindtap="selectQuick">
               <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-diaper.png" mode="aspectFit" />
-              <text class="quick-name">换尿布</text>
-              <text class="quick-sub">选择尿便情况</text>
+              <text class="quick-name">{{i18n.diaper}}</text>
+              <text class="quick-sub">{{i18n.diaperSub}}</text>
             </view>
             <view class="quick-item quick-purple" data-type="睡眠" bindtap="selectQuick">
               <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-sleep.png" mode="aspectFit" />
-              <text class="quick-name">睡眠</text>
-              <text class="quick-sub">记录睡眠时段</text>
+              <text class="quick-name">{{i18n.sleep}}</text>
+              <text class="quick-sub">{{i18n.sleepSub}}</text>
             </view>
             <view class="quick-item quick-red" data-type="体温" bindtap="selectQuick">
               <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-temp.png" mode="aspectFit" />
-              <text class="quick-name">体温</text>
-              <text class="quick-sub">记录宝宝体温</text>
+              <text class="quick-name">{{i18n.temp}}</text>
+              <text class="quick-sub">{{i18n.tempSub}}</text>
             </view>
             <view class="quick-item quick-cyan" data-type="洗澡" bindtap="selectQuick">
               <image class="quick-emoji quick-emoji-img" src="/images/icons/rec-shower.png" mode="aspectFit" />
-              <text class="quick-name">洗澡</text>
-              <text class="quick-sub">记录洗澡时长</text>
+              <text class="quick-name">{{i18n.bath}}</text>
+              <text class="quick-sub">{{i18n.bathSub}}</text>
             </view>
         </view>
       </view>
@@ -425,7 +425,7 @@ module.exports = {
         bindtouchstart="voiceTouchStart" bindtouchend="voiceTouchEnd" bindtouchcancel="voiceTouchEnd" catchtap="noop">
         <view class="quick-voice-ico-row">
           <image class="quick-voice-ico" src="/images/icons/rec-voice.png" mode="aspectFit" />
-          <text class="quick-voice-txt">{{voiceState.recognizing ? '正在识别…' : (voiceState.recording ? '正在聆听，松开结束' : '语音录入')}}</text>
+          <text class="quick-voice-txt">{{voiceState.recognizing ? i18n.recognizing : (voiceState.recording ? i18n.listening : i18n.voiceInput)}}</text>
         </view>
         <text class="quick-voice-sub" wx:if="{{voiceState.recording}}">{{voiceState.seconds}}″</text>
       </view>
@@ -436,7 +436,7 @@ module.exports = {
 </dialog>
 
 <!-- ==================== 记录弹窗 ==================== -->
-<dialog visible="{{record.visible}}" title="{{record.editIndex >= 0 ? '编辑' + record.type : (record.type === '换尿布' ? '记录换尿布' : '记录' + record.type)}}" kicker="{{record.editIndex >= 0 ? '修改这条记录' : '填写本次详情'}}" bind:close="closeRecord">
+<dialog visible="{{record.visible}}" title="{{recordTitle}}" kicker="{{i18n.fillDetail}}" bind:close="closeRecord">
     <scroll-view class="sheet-body" scroll-y>
       <!-- 摘要 -->
       <view class="record-summary">
@@ -445,8 +445,8 @@ module.exports = {
           <text wx:else>{{record.icon}}</text>
         </view>
         <view class="rs-info">
-          <text class="rs-type">{{record.type === '换尿布' ? '换尿布' + (record.diaperChoice ? ' · ' + record.diaperChoice : '') : record.type}}</text>
-          <text class="rs-hint">{{record.hint}}</text>
+          <text class="rs-type">{{record.type}}</text>
+          <text class="rs-hint">{{lang === 'en' ? hintMap[record.type] || record.hint : record.hint}}</text>
         </view>
         <!-- 记录时间（新增默认当前时间，编辑可改，用于补记/调整；亲喂在下方记录开始/结束时间） -->
         <view class="rs-time" wx:if="{{record.type !== '母乳' && record.type !== '配方奶' && record.type !== '瓶喂母乳' && record.type !== '吸奶' && record.type !== '换尿布' && record.type !== '辅食' && record.type !== '喝水' && record.type !== '睡眠' && record.type !== '营养品' && record.type !== '体温' && record.type !== '洗澡'}}">
@@ -463,19 +463,19 @@ module.exports = {
       <view wx:if="{{record.type === '配方奶' || record.type === '瓶喂母乳'}}" class="sec">
         <view class="sec-head">
           <view>
-            <text class="sec-label">瓶喂</text>
+            <text class="sec-label">{{i18n.bottleFed}}</text>
             <text class="sec-hint-sm">补充完成后，保存本次记录</text>
           </view>
         </view>
         <view class="milk-tabs">
-          <view class="milk-tab {{record.milkType === '配方奶' ? 'on' : ''}}" data-type="配方奶" bindtap="setMilkType">配方奶</view>
-          <view class="milk-tab {{record.milkType === '瓶喂母乳' ? 'on' : ''}}" data-type="瓶喂母乳" bindtap="setMilkType">瓶喂母乳</view>
+          <view class="milk-tab {{record.milkType === '配方奶' ? 'on' : ''}}" data-type="配方奶" bindtap="setMilkType">{{lang === 'en' ? 'Formula' : '配方奶'}}</view>
+          <view class="milk-tab {{record.milkType === '瓶喂母乳' ? 'on' : ''}}" data-type="瓶喂母乳" bindtap="setMilkType">{{lang === 'en' ? 'Expressed Breastmilk' : '瓶喂母乳'}}</view>
         </view>
         <view class="milk-amount-head">
-          <text class="milk-amount-label">滑动选择瓶喂量</text>
+          <text class="milk-amount-label">{{i18n.slideBottleAmount}}</text>
           <view class="milk-amount-val"><input class="milk-amount-input" type="number" value="{{record.amount}}" bindinput="onAmountInput" /><text class="milk-amount-unit">ML</text></view>
         </view>
-        <text class="milk-amount-hint">每5ML一个档位</text>
+        <text class="milk-amount-hint">{{i18n.per5mlStep}}</text>
         <slider class="slider" min="0" max="330" step="5" value="{{record.amount}}" activeColor="#d59f11" block-size="22" bindchanging="onAmountSlider" bindchange="onAmountSlider" />
         <view class="milk-amount-range">
           <text>0ML</text>
@@ -484,8 +484,8 @@ module.exports = {
         <!-- 奶粉开罐（非必选）+ 到期提醒 -->
         <view class="milk-open-sec" wx:if="{{record.milkType === '配方奶'}}">
           <view class="milk-open-row" bindtap="toggleMilkOpen">
-            <text class="milk-open-label">本次奶粉开罐</text>
-            <view class="milk-open-toggle {{record.milkOpen ? 'on' : ''}}">{{record.milkOpen ? '已开罐' : '未开罐'}}</view>
+            <text class="milk-open-label">{{i18n.milkOpened}}</text>
+            <view class="milk-open-toggle {{record.milkOpen ? 'on' : ''}}">{{record.milkOpen ? i18n.opened : i18n.notOpened}}</view>
           </view>
           <view class="milk-warn-check" wx:if="{{record.milkOpen}}" bindtap="toggleMilkWarn">
             <view class="check-box {{record.milkWarn ? 'on' : ''}}">{{record.milkWarn ? '✓' : ''}}</view>
@@ -494,17 +494,17 @@ module.exports = {
         </view>
         <!-- 记录时间：开始/结束（默认空，可手动选） -->
         <view class="record-time-block">
-          <text class="sec-label">记录时间</text>
+          <text class="sec-label">{{lang === 'en' ? 'Record Time' : '记录时间'}}</text>
           <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange">
             <view class="date-row">{{record.recordDate}}</view>
           </picker>
           <view class="rt-row">
             <view class="rt-box" bindtap="openRecordTimePicker" data-field="bottleStart" data-val="{{record.bottleStart || ''}}">
-              <text class="rt-label">开始时间</text>
+              <text class="rt-label">{{i18n.startTime}}</text>
               <text class="rt-value">{{record.bottleStart || '--:--'}}</text>
             </view>
             <view class="rt-box" bindtap="openRecordTimePicker" data-field="bottleEnd" data-val="{{record.bottleEnd || ''}}">
-              <text class="rt-label">结束时间</text>
+              <text class="rt-label">{{i18n.endTime}}</text>
               <text class="rt-value">{{record.bottleEnd || '--:--'}}</text>
             </view>
           </view>
@@ -515,13 +515,13 @@ module.exports = {
       <view wx:if="{{record.type === '母乳'}}" class="sec">
         <view class="sec-head">
           <view>
-            <text class="sec-label">亲喂</text>
+            <text class="sec-label">{{i18n.breastfed}}</text>
             <text class="sec-hint-sm">轻点左右一侧开始或结束计时</text>
           </view>
         </view>
         <view class="nursing-head">
-          <text class="nursing-head-label">左右点击计时</text>
-          <view class="chip">两侧喂奶总时长 <text class="chip-strong">{{fmt.duration(record.nursingL + record.nursingR)}}</text></view>
+          <text class="nursing-head-label">{{i18n.leftRightTimer}}</text>
+          <view class="chip">{{i18n.totalFeedDuration}} <text class="chip-strong">{{fmt.duration(record.nursingL + record.nursingR)}}</text></view>
         </view>
         <view class="nursing-grid">
           <view class="nursing-side nursing-left {{record.nursingActive === '左' ? 'active' : ''}}" data-side="左" bindtap="toggleNursing">
@@ -539,17 +539,17 @@ module.exports = {
         </view>
         <!-- 记录时间：开始/结束（未计时为空，可手动填，计时自动记录） -->
         <view class="record-time-block">
-          <text class="sec-label">记录时间</text>
+          <text class="sec-label">{{lang === 'en' ? 'Record Time' : '记录时间'}}</text>
           <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange">
             <view class="date-row">{{record.recordDate}}</view>
           </picker>
           <view class="rt-row">
             <view class="rt-box" bindtap="openRecordTimePicker" data-field="nursingStart" data-val="{{record.nursingStart || ''}}">
-              <text class="rt-label">开始时间</text>
+              <text class="rt-label">{{i18n.startTime}}</text>
               <text class="rt-value">{{record.nursingStart || '--:--'}}</text>
             </view>
             <view class="rt-box" bindtap="openRecordTimePicker" data-field="nursingEnd" data-val="{{record.nursingEnd || ''}}">
-              <text class="rt-label">结束时间</text>
+              <text class="rt-label">{{i18n.endTime}}</text>
               <text class="rt-value">{{record.nursingEnd || '--:--'}}</text>
             </view>
           </view>
@@ -565,8 +565,8 @@ module.exports = {
           </view>
         </view>
         <view class="pump-head-row">
-          <text class="pump-head-label">左右分别记录</text>
-          <view class="chip">两侧喂奶总时长 <text class="chip-strong">{{fmt.duration(record.pumpL + record.pumpR)}}</text> · 总量 <text class="chip-strong">{{record.pumpLeftAmt + record.pumpRightAmt}} ml</text></view>
+          <text class="pump-head-label">{{i18n.leftRightRecord}}</text>
+          <view class="chip">{{i18n.totalFeedDuration}} <text class="chip-strong">{{fmt.duration(record.pumpL + record.pumpR)}}</text> · {{i18n.totalAmount}} <text class="chip-strong">{{record.pumpLeftAmt + record.pumpRightAmt}} ml</text></view>
         </view>
         <view class="pump-grid">
           <view class="pump-card pump-left {{record.pumpActive === '左' ? 'active' : ''}}" data-side="左" bindtap="togglePump">
@@ -585,7 +585,7 @@ module.exports = {
         <!-- 吸奶量：滑动选择（对齐瓶喂） -->
         <view class="pump-amt-block">
           <view class="pump-amt-head">
-            <text class="pump-amt-label">滑动选择吸奶量</text>
+            <text class="pump-amt-label">{{i18n.slidePumpAmount}}</text>
             <text class="pump-amt-hint">每5ML一个档位</text>
           </view>
           <view class="pump-amt-row">
@@ -605,30 +605,30 @@ module.exports = {
         </view>
         <!-- 记录时间：开始/结束（默认空，可手动填，计时自动记录） -->
         <view class="record-time-block">
-          <text class="sec-label">记录时间</text>
+          <text class="sec-label">{{lang === 'en' ? 'Record Time' : '记录时间'}}</text>
           <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange">
             <view class="date-row">{{record.recordDate}}</view>
           </picker>
           <view class="rt-row">
             <view class="rt-box" bindtap="openRecordTimePicker" data-field="pumpStart" data-val="{{record.pumpStart || ''}}">
-              <text class="rt-label">开始时间</text>
+              <text class="rt-label">{{i18n.startTime}}</text>
               <text class="rt-value">{{record.pumpStart || '--:--'}}</text>
             </view>
             <view class="rt-box" bindtap="openRecordTimePicker" data-field="pumpEnd" data-val="{{record.pumpEnd || ''}}">
-              <text class="rt-label">结束时间</text>
+              <text class="rt-label">{{i18n.endTime}}</text>
               <text class="rt-value">{{record.pumpEnd || '--:--'}}</text>
             </view>
           </view>
         </view>
         <!-- 母乳储存方式（国标） -->
         <view class="milk-store-sec">
-          <text class="milk-store-label">本次母乳储存</text>
+          <text class="milk-store-label">{{i18n.milkStorage}}</text>
           <view class="milk-store-row">
-            <view class="store-chip {{record.storage === 'room' ? 'on' : ''}}" data-st="room" bindtap="onStorage">室温 4h</view>
-            <view class="store-chip {{record.storage === 'fridge' ? 'on' : ''}}" data-st="fridge" bindtap="onStorage">冷藏 48h</view>
-            <view class="store-chip {{record.storage === 'freezer' ? 'on' : ''}}" data-st="freezer" bindtap="onStorage">冷冻 3个月</view>
+            <view class="store-chip {{record.storage === 'room' ? 'on' : ''}}" data-st="room" bindtap="onStorage">{{i18n.roomTemp}}</view>
+            <view class="store-chip {{record.storage === 'fridge' ? 'on' : ''}}" data-st="fridge" bindtap="onStorage">{{i18n.fridge}}</view>
+            <view class="store-chip {{record.storage === 'freezer' ? 'on' : ''}}" data-st="freezer" bindtap="onStorage">{{i18n.freezer}}</view>
           </view>
-          <text class="milk-store-hint">按国标：室温≤25℃ 4小时 / 冷藏4℃ 48小时 / 冷冻-18℃ 3个月</text>
+          <text class="milk-store-hint">{{i18n.storageHint}}</text>
         </view>
       </view>
 
@@ -641,8 +641,8 @@ module.exports = {
           </view>
         </view>
         <view class="supp-head">
-          <text class="supp-head-label">选择本次营养品 可多选</text>
-          <view class="supp-more" bindtap="addSupp">添加更多</view>
+          <text class="supp-head-label">{{i18n.selectSupplements}}</text>
+          <view class="supp-more" bindtap="addSupp">{{i18n.addMore}}</view>
         </view>
         <view class="supp-grid">
           <view
@@ -656,7 +656,7 @@ module.exports = {
         </view>
         <!-- 记录时间：服用时间 + 下次补充提醒设置（点击按钮后设置，可不填） -->
         <view class="record-time-block">
-          <text class="sec-label">记录时间</text>
+          <text class="sec-label">{{lang === 'en' ? 'Record Time' : '记录时间'}}</text>
           <view class="rt-row">
             <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange" class="rt-box">
               <view class="date-row" style="margin-top:0;border:none;padding:0;height:100%;display:flex;align-items:center;justify-content:center;">{{record.recordDate}}</view>
@@ -668,8 +668,8 @@ module.exports = {
           <view class="rt-box rt-set" bindtap="openSuppRemind" style="margin-top:16rpx;width:100%;box-sizing:border-box;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:16rpx;">
             <image class="rt-set-ico" src="/images/icons/supp-remind.png" mode="aspectFit" style="margin-top:0;" />
             <view style="display:flex;flex-direction:column;">
-              <text class="rt-label" style="margin-top:0;text-align:center;">下次补充提醒设置</text>
-              <text class="rt-value {{record.suppRemindFreq ? 'rt-set-val' : 'rt-placeholder'}}" style="text-align:center;">{{record.suppRemindFreq ? record.suppRemindFreq + ' ' + (record.suppRemindTime || '') : '去设置（可不填）'}}</text>
+              <text class="rt-label" style="margin-top:0;text-align:center;">{{i18n.nextReminder}}</text>
+              <text class="rt-value {{record.suppRemindFreq ? 'rt-set-val' : 'rt-placeholder'}}" style="text-align:center;">{{record.suppRemindFreq ? record.suppRemindFreq + ' ' + (record.suppRemindTime || '') : i18n.setUpOptional}}</text>
             </view>
           </view>
         </view>
@@ -686,7 +686,7 @@ module.exports = {
           </view>
         </view>
         <view class="sec-block" wx:if="{{record.diaperChoice === '嘘嘘' || record.diaperChoice === '嘘嘘+臭臭'}}">
-          <text class="sec-label">嘘嘘颜色</text>
+          <text class="sec-label">{{i18n.urineColor}}</text>
           <view class="sample-row">
             <view class="sample {{record.peeColor === '透明' ? 'on' : ''}}" data-field="peeColor" data-val="透明" bindtap="selectDiaperSample">
               <view class="sample-img-color" style="background:#f5f5f5;border:2rpx solid #ddd"></view><text>透明</text>
@@ -709,7 +709,7 @@ module.exports = {
           </view>
         </view>
         <view class="sec-block" wx:if="{{record.diaperChoice === '臭臭' || record.diaperChoice === '嘘嘘+臭臭'}}">
-          <text class="sec-label">便便颜色</text>
+          <text class="sec-label">{{i18n.stoolColor}}</text>
           <view class="sample-row">
             <view class="sample {{record.stoolColor === '金黄' ? 'on' : ''}}" data-field="stoolColor" data-val="金黄" bindtap="selectDiaperSample">
               <view class="sample-img-color" style="background:#f5c542"></view><text>金黄</text>
@@ -744,22 +744,22 @@ module.exports = {
           <text class="sec-label">便便性状</text>
           <view class="sample-row">
             <view class="sample {{record.stoolTexture === '水样便' ? 'on' : ''}}" data-field="stoolTexture" data-val="水样便" bindtap="selectDiaperSample">
-              <image class="sample-img" src="/images/diaper/water.jpg" mode="aspectFill" /><text>水样便</text>
+              <image class="sample-img" src="/images/diaper/water.jpg" mode="aspectFill" /><text>{{i18n.wateryStool}}</text>
             </view>
             <view class="sample {{record.stoolTexture === '糊状便' ? 'on' : ''}}" data-field="stoolTexture" data-val="糊状便" bindtap="selectDiaperSample">
-              <image class="sample-img" src="/images/diaper/paste.jpg" mode="aspectFill" /><text>糊状便</text>
+              <image class="sample-img" src="/images/diaper/paste.jpg" mode="aspectFill" /><text>{{i18n.pasteStool}}</text>
             </view>
             <view class="sample {{record.stoolTexture === '软便' ? 'on' : ''}}" data-field="stoolTexture" data-val="软便" bindtap="selectDiaperSample">
-              <image class="sample-img" src="/images/diaper/soft.jpg" mode="aspectFill" /><text>软便</text>
+              <image class="sample-img" src="/images/diaper/soft.jpg" mode="aspectFill" /><text>{{i18n.softStool}}</text>
             </view>
             <view class="sample {{record.stoolTexture === '奶瓣便' ? 'on' : ''}}" data-field="stoolTexture" data-val="奶瓣便" bindtap="selectDiaperSample">
-              <image class="sample-img" src="/images/diaper/paste.jpg" mode="aspectFill" /><text>奶瓣便</text>
+              <image class="sample-img" src="/images/diaper/paste.jpg" mode="aspectFill" /><text>{{i18n.curdStool}}</text>
             </view>
             <view class="sample {{record.stoolTexture === '成形便' ? 'on' : ''}}" data-field="stoolTexture" data-val="成形便" bindtap="selectDiaperSample">
-              <image class="sample-img" src="/images/diaper/solid.jpg" mode="aspectFill" /><text>成形便</text>
+              <image class="sample-img" src="/images/diaper/solid.jpg" mode="aspectFill" /><text>{{i18n.solidStool}}</text>
             </view>
             <view class="sample {{record.stoolTexture === '黏液便' ? 'on' : ''}}" data-field="stoolTexture" data-val="黏液便" bindtap="selectDiaperSample">
-              <image class="sample-img" src="/images/diaper/mucus.jpg" mode="aspectFill" /><text>黏液便</text>
+              <image class="sample-img" src="/images/diaper/mucus.jpg" mode="aspectFill" /><text>{{i18n.mucusStool}}</text>
             </view>
             <view class="sample {{record.stoolTexture === '硬便' ? 'on' : ''}}" data-field="stoolTexture" data-val="硬便" bindtap="selectDiaperSample">
               <image class="sample-img" src="/images/diaper/hard.jpg" mode="aspectFill" /><text>硬便</text>
@@ -774,7 +774,7 @@ module.exports = {
         </view>
         <!-- 纸尿裤尺码选择（可选填，放在扣除数量上方） -->
         <view class="sec-block">
-          <text class="sec-label">纸尿裤尺码</text>
+          <text class="sec-label">{{i18n.diaperSize}}</text>
           <view class="diaper-size-row">
             <view
               wx:for="{{diaperSizes}}"
@@ -788,8 +788,8 @@ module.exports = {
         </view>
         <view class="diaper-count" wx:if="{{record.diaperStock > 0}}">
           <view class="dc-info">
-            <text class="dc-title">尿布扣除数量</text>
-            <text class="dc-sub">库存剩余 <text class="dc-strong">{{record.diaperStock}}</text> 片</text>
+            <text class="dc-title">{{i18n.diaperDeduct}}</text>
+            <text class="dc-sub">{{i18n.stockLeft}} <text class="dc-strong">{{record.diaperStock}}</text> {{i18n.pieces}}</text>
           </view>
           <view class="dc-stepper">
             <view class="dc-btn" data-delta="-1" bindtap="adjustDiaperAmount">−</view>
@@ -799,7 +799,7 @@ module.exports = {
         </view>
         <!-- 记录时间：更换时间（按设计稿：记录时间 + 更换时间 标签） -->
         <view class="record-time-block">
-          <text class="sec-label">记录时间</text>
+          <text class="sec-label">{{lang === 'en' ? 'Record Time' : '记录时间'}}</text>
           <view class="rt-row">
             <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange" class="rt-box">
               <view class="date-row" style="margin-top:0;border:none;padding:0;height:100%;display:flex;align-items:center;justify-content:center;">{{record.recordDate}}</view>
@@ -816,27 +816,27 @@ module.exports = {
         <view class="sec-head">
           <view>
             <text class="sec-label">睡眠</text>
-            <text class="sec-hint-sm">可计时或手动填写起止时间，自动统计时长</text>
+            <text class="sec-hint-sm">{{i18n.sleepHint}}</text>
           </view>
           <view class="chip chip-purple">本次 <text class="chip-strong">{{fmt.duration(record.sleepSeconds)}}</text></view>
         </view>
-        <view class="sleep-tip">点击「睡了」后点保存可持续计时；睡醒后点击时间轴上的这条记录，继续编辑「醒了」并保存，即可完成本次睡眠统计</view>
+        <view class="sleep-tip">{{i18n.sleepTip}}</view>
         <view class="sleep-big-btn {{record.sleepRunning ? 'on' : ''}}" bindtap="toggleSleep">
-          <text class="sleep-big-txt">{{record.sleepRunning ? '正在睡眠 · 点击记录「醒了」' : '睡着了'}}</text>
-          <text class="sleep-big-sub">{{record.sleepRunning ? '点击「醒了」自动记录结束时间' : '点击自动记录开始时间'}}</text>
+          <text class="sleep-big-txt">{{record.sleepRunning ? i18n.sleepRunningTxt : i18n.fallAsleep}}</text>
+          <text class="sleep-big-sub">{{record.sleepRunning ? i18n.wakeUpTxt : i18n.tapStartSleep}}</text>
         </view>
         <view class="sec-block">
-          <text class="sec-label">记录时间</text>
+          <text class="sec-label">{{lang === 'en' ? 'Record Time' : '记录时间'}}</text>
           <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange">
             <view class="date-row">{{record.recordDate}}</view>
           </picker>
           <view class="time-row">
             <view class="time-box" bindtap="openRecordTimePicker" data-field="sleepStart" data-val="{{record.sleepStart}}">
-              <text class="time-label">睡了</text>
+              <text class="time-label">{{i18n.asleep}}</text>
               <text class="time-value">{{record.sleepStart || '--:--'}}</text>
             </view>
             <view class="time-box" bindtap="openRecordTimePicker" data-field="sleepEnd" data-val="{{record.sleepEnd}}">
-              <text class="time-label">醒了</text>
+              <text class="time-label">{{i18n.awake}}</text>
               <text class="time-value">{{record.sleepEnd || '--:--'}}</text>
             </view>
           </view>
@@ -846,17 +846,17 @@ module.exports = {
       <!-- 辅食 -->
       <view wx:if="{{record.type === '辅食'}}" class="sec">
         <view class="food-block">
-          <text class="sec-label">宝宝吃了什么</text>
+          <text class="sec-label">{{i18n.whatBabyAte}}</text>
           <view class="food-form">
             <view class="food-form-item">
-              <text class="ff-label">辅食名称</text>
+              <text class="ff-label">{{i18n.foodName}}</text>
               <view class="ff-input ff-pick" bindtap="openFoodPicker">
-                <text class="ff-input-txt {{record.selectedFoods.length ? '' : 'ff-ph'}}">{{record.selectedFoodsText || '点击选择（可多选）'}}</text>
+                <text class="ff-input-txt {{record.selectedFoods.length ? '' : 'ff-ph'}}">{{record.selectedFoodsText || i18n.tapSelectMulti}}</text>
                 <text class="ff-arrow">▾</text>
               </view>
             </view>
             <view class="food-form-item">
-              <text class="ff-label">重量</text>
+              <text class="ff-label">{{i18n.weight}}</text>
               <view class="ff-weight-row">
                 <input class="ff-input ff-num" type="number" value="{{record.foodWeight}}" bindinput="onFoodWeightInput" placeholder="0" />
                 <picker class="ff-picker" mode="selector" range="{{foodUnits}}" value="{{foodUnitIdx}}" bindchange="onFoodUnitChange">
@@ -868,7 +868,7 @@ module.exports = {
         </view>
         <!-- 记录时间 -->
         <view class="record-time-block" style="margin-top:20rpx;">
-          <text class="sec-label">记录时间</text>
+          <text class="sec-label">{{lang === 'en' ? 'Record Time' : '记录时间'}}</text>
           <view class="rt-row">
             <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange" class="rt-box">
               <view class="date-row" style="margin-top:0;border:none;padding:0;height:100%;display:flex;align-items:center;justify-content:center;">{{record.recordDate}}</view>
@@ -880,7 +880,7 @@ module.exports = {
         </view>
         <!-- 是否过敏：标题在食物过敏选择左上方 -->
         <view class="af-head">
-          <text class="sec-label">是否过敏</text>
+          <text class="sec-label">{{i18n.allergic}}</text>
         </view>
         <!-- 过敏判断：根据已选食材动态增减（已判断过的食材不再出现） -->
         <view class="af-list" wx:if="{{record.pendingAllergyFoods.length}}">
@@ -900,11 +900,11 @@ module.exports = {
         <view class="sec-head">
           <view>
             <text class="sec-label">喝水</text>
-            <text class="sec-hint-sm">填写饮水量ml</text>
+            <text class="sec-hint-sm">{{i18n.enterWaterMl}}</text>
           </view>
         </view>
         <view class="temp-head">
-          <text class="sec-label">喝水量</text>
+          <text class="sec-label">{{i18n.waterAmount}}</text>
           <view class="temp-num">
             <text wx:if="{{!waterEditing}}" class="temp-num-val" bindtap="onWaterNumTap">{{record.water}}</text>
             <input wx:else class="temp-input" type="number" focus="{{waterEditing}}" value="{{record.water}}" bindinput="onWaterInput" bindblur="onWaterBlur" placeholder="0" />
@@ -915,7 +915,7 @@ module.exports = {
         <view class="water-range"><text>0ML</text><text>330ML</text></view>
         <!-- 记录时间：饮水时间 -->
         <view class="record-time-block">
-          <text class="sec-label">记录时间</text>
+          <text class="sec-label">{{lang === 'en' ? 'Record Time' : '记录时间'}}</text>
           <view class="rt-row">
             <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange" class="rt-box">
               <view class="date-row" style="margin-top:0;border:none;padding:0;height:100%;display:flex;align-items:center;justify-content:center;">{{record.recordDate}}</view>
@@ -930,7 +930,7 @@ module.exports = {
       <!-- 体温：滑动选择温度，无右上角时间 -->
       <view wx:if="{{record.type === '体温'}}" class="sec">
         <view class="temp-head">
-          <text class="sec-label">宝宝体温</text>
+          <text class="sec-label">{{i18n.babyTemp}}</text>
           <view class="temp-num">
             <text wx:if="{{!tempEditing}}" class="temp-num-val" bindtap="onTempNumTap">{{record.temperature || '36.5'}}</text>
             <input wx:else class="temp-input" type="digit" focus="{{tempEditing}}" value="{{record.temperature}}" bindinput="onTemperature" bindblur="onTempBlur" placeholder="36.5" />
@@ -939,9 +939,9 @@ module.exports = {
         </view>
         <slider class="temp-slider" min="35" max="41" step="0.1" value="{{tempSliderVal}}" bindchanging="onTempSlider" bindchange="onTempSlider" activeColor="#e07b45" block-size="18" />
         <view class="temp-scale"><text>35℃</text><text>38℃</text><text>41℃</text></view>
-        <text class="sec-hint">滑动选择体温 · 正常范围 36.0 ~ 37.5 ℃</text>
+        <text class="sec-hint">{{i18n.tempHint}}</text>
         <view class="record-time-block" style="margin-top:20rpx;">
-          <text class="sec-label">记录时间</text>
+          <text class="sec-label">{{lang === 'en' ? 'Record Time' : '记录时间'}}</text>
           <view class="rt-row">
             <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange" class="rt-box">
               <view class="date-row" style="margin-top:0;border:none;padding:0;height:100%;display:flex;align-items:center;justify-content:center;">{{record.recordDate}}</view>
@@ -955,24 +955,24 @@ module.exports = {
 
       <!-- 洗澡 -->
       <view wx:if="{{record.type === '洗澡'}}" class="sec">
-        <text class="sec-label">洗澡时间</text>
+        <text class="sec-label">{{i18n.bathTime}}</text>
         <picker mode="date" value="{{record.recordDate}}" end="{{today}}" bindchange="onRecordDateChange">
           <view class="date-row">{{record.recordDate}}</view>
         </picker>
         <view class="rt-row" style="margin-top:16rpx;">
           <view class="rt-box" bindtap="openRecordTimePicker" data-field="bathStart" data-val="{{record.bathStart || ''}}">
-            <text class="rt-label">开始时间</text>
+            <text class="rt-label">{{i18n.startTime}}</text>
             <text class="rt-value">{{record.bathStart || '--:--'}}</text>
           </view>
           <view class="rt-box" bindtap="openRecordTimePicker" data-field="bathEnd" data-val="{{record.bathEnd || ''}}">
-            <text class="rt-label">结束时间</text>
+            <text class="rt-label">{{i18n.endTime}}</text>
             <text class="rt-value">{{record.bathEnd || '--:--'}}</text>
           </view>
         </view>
-        <text class="sec-hint-sm">时长按开始/结束时间自动计算</text>
+        <text class="sec-hint-sm">{{i18n.durationAutoCalc}}</text>
       </view>
 
-      <view class="save-btn {{record.editIndex >= 0 ? 'save-btn-edit' : ''}}" hover-class="btn-press" hover-stay-time="60" bindtap="saveRecord">{{record.editIndex >= 0 ? '保存修改' : '保存记录'}}</view>
+      <view class="save-btn {{record.editIndex >= 0 ? 'save-btn-edit' : ''}}" hover-class="btn-press" hover-stay-time="60" bindtap="saveRecord">{{record.editIndex >= 0 ? i18n.saveEdit : i18n.saveRecord}}</view>
       <view class="delete-btn" wx:if="{{record.editIndex >= 0}}" hover-class="btn-press" hover-stay-time="60" bindtap="deleteRecord">删除此记录</view>
     </scroll-view>
 </dialog>
@@ -1004,10 +1004,10 @@ module.exports = {
 </dialog>
 
 <!-- 辅食名称多选下拉 -->
-<dialog visible="{{showFoodPicker}}" title="选择辅食" kicker="可多选" bind:close="closeFoodPicker">
+<dialog visible="{{showFoodPicker}}" title="{{i18n.selectFood}}" kicker="{{i18n.multiSelect}}" bind:close="closeFoodPicker">
   <view class="fp-body">
     <view class="fp-add-row">
-      <input class="fp-add-input" value="{{foodNewName}}" bindinput="onFoodNewInput" placeholder="输入新辅食名称，如：玉米糊" confirm-type="done" bindconfirm="addFoodCustom" />
+      <input class="fp-add-input" value="{{foodNewName}}" bindinput="onFoodNewInput" placeholder="{{i18n.enterNewFood}}" confirm-type="done" bindconfirm="addFoodCustom" />
       <view class="fp-add-btn" bindtap="addFoodCustom">添加</view>
     </view>
     <scroll-view class="fp-scroll" scroll-y>
@@ -1029,12 +1029,12 @@ module.exports = {
 
 <dialog visible="{{showAllergyGuide}}" position="center" bind:close="closeAllergyGuide">
   <view class="allergy-guide-body">
-    <text class="ag-title">过敏统计手册</text>
+    <text class="ag-title">{{i18n.allergyGuide}}</text>
     <view class="ag-stats">
-      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.allergyCount}}</text><text class="ag-stat-label">过敏次数</text></view>
-      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.allergyFoods.length}}</text><text class="ag-stat-label">过敏食物</text></view>
-      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.safeCount}}</text><text class="ag-stat-label">不过敏次数</text></view>
-      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.safeFoods.length}}</text><text class="ag-stat-label">不过敏食物</text></view>
+      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.allergyCount}}</text><text class="ag-stat-label">{{i18n.allergyCount}}</text></view>
+      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.allergyFoods.length}}</text><text class="ag-stat-label">{{i18n.allergyFoods}}</text></view>
+      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.safeCount}}</text><text class="ag-stat-label">{{i18n.safeCount}}</text></view>
+      <view class="ag-stat"><text class="ag-stat-num">{{allergyStats.safeFoods.length}}</text><text class="ag-stat-label">{{i18n.safeFoods}}</text></view>
     </view>
     <view class="ag-sec" wx:if="{{allergyStats.allergyFoods.length}}">
       <text class="ag-sec-title">已记录的过敏食物</text>
@@ -1043,22 +1043,22 @@ module.exports = {
       </view>
     </view>
     <view class="ag-sec" wx:if="{{allergyStats.safeFoods.length}}">
-      <text class="ag-sec-title">已记录的不过敏食物</text>
+      <text class="ag-sec-title">{{i18n.recordedSafeFoods}}</text>
       <view class="ag-food-row">
         <text wx:for="{{allergyStats.safeFoods}}" wx:key="*this" class="ag-food-chip ag-safe">{{item}}</text>
       </view>
     </view>
     <view class="ag-sec">
-      <text class="ag-sec-title">常见易过敏食物</text>
+      <text class="ag-sec-title">{{i18n.commonAllergyFoods}}</text>
       <text class="ag-text">牛奶、鸡蛋、花生、大豆、小麦、鱼虾蟹贝、坚果等，首次添加建议单一少量，观察 3–5 天。</text>
     </view>
     <view class="ag-sec">
-      <text class="ag-sec-title">过敏常见表现</text>
+      <text class="ag-sec-title">{{i18n.allergySymptoms}}</text>
       <text class="ag-text">皮疹/荨麻疹、口周红肿、腹泻呕吐、呼吸异常。出现严重过敏（呼吸困难、面色发紫、意识异常）请立即就医。</text>
     </view>
     <view class="ag-sec">
-      <text class="ag-sec-title">温馨提示</text>
-      <text class="ag-text">辅食过敏与剂量、烹饪方式、是否空腹等有关，已过敏食物建议回避并咨询儿科医生后再尝试。</text>
+      <text class="ag-sec-title">{{i18n.tips}}</text>
+      <text class="ag-text">{{i18n.allergyTipText}}</text>
     </view>
   </view>
 </dialog>
@@ -1076,19 +1076,23 @@ module.exports = {
       <view class="wave-bar"></view>
       <view class="wave-bar"></view>
     </view>
-    <text class="voice-title">{{voiceState.recognizing ? '正在识别…' : (voiceState.recording ? '正在聆听' : '长按开始说话')}}</text>
-    <text class="voice-sub">{{voiceState.recognizing ? '正在解析语音内容' : (voiceState.recording ? '松开即可完成语音输入' : '长按麦克风开始说话')}}</text>
+    <text class="voice-title">{{voiceState.recognizing ? i18n.recognizing : (voiceState.recording ? i18n.listening : i18n.longPressToSpeak)}}</text>
+    <text class="voice-sub">{{voiceState.recognizing ? i18n.parsingVoice : (voiceState.recording ? i18n.releaseToFinish : i18n.longPressMicHint)}}</text>
     <view class="voice-timer" wx:if="{{voiceState.recording}}">{{voiceState.seconds}}″</view>
 
     <!-- 提示词 -->
     <view class="voice-tips" wx:if="{{voiceState.recording}}">
-      <text class="voice-tips-title">可以这样说：</text>
-      <text class="voice-tips-line">· 亲喂 15 分钟</text>
-      <text class="voice-tips-line">· 喝了 120 毫升奶粉</text>
-      <text class="voice-tips-line">· 换尿布 嘘嘘+臭臭</text>
-      <text class="voice-tips-line">· 睡了 40 分钟</text>
-      <text class="voice-tips-line">· 量体温 37.5 度</text>
-      <text class="voice-tips-line">· 洗澡 / 喝了 60 毫升水</text>
+      <text class="voice-tips-title">{{i18n.trySaying}}</text>
+      <text class="voice-tips-line">· {{i18n.example1}}</text>
+      <text class="voice-tips-line">· {{i18n.example2}}</text>
+      <text class="voice-tips-line">· {{i18n.example3}}</text>
+      <text class="voice-tips-line">· {{i18n.example4}}</text>
+      <text class="voice-tips-line">· {{i18n.example5}}</text>
+      <text class="voice-tips-line">· {{i18n.example6}}</text>
+      <text class="voice-tips-line">· {{i18n.example7}}</text>
+      <text class="voice-tips-line">· {{i18n.example8}}</text>
+      <text class="voice-tips-line">· {{i18n.example9}}</text>
+      <text class="voice-tips-line">· {{i18n.example10}}</text>
     </view>
 
     <view class="voice-fallback" wx:if="{{voiceState.authDenied}}">

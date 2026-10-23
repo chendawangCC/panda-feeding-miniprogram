@@ -15,6 +15,20 @@ function defaultStockItems() {
   return [];
 }
 
+/* 旧版本预置耗材（纸尿裤/奶粉/棉柔巾）判定：
+   这类条目是早前版本内置的示例数据，库存恒为 0，容易被云端同步再次带回。
+   判定条件从严：名称完全匹配 + 预置尺码 + 无任何用户填写过的耗材属性 + 库存为 0。 */
+function isLegacyPresetStock(s) {
+  if (!s || !s.name) return false;
+  const name = String(s.name).trim();
+  if (['纸尿裤', '奶粉', '棉柔巾'].indexOf(name) < 0) return false;
+  const size = String(s.size || '').trim().toUpperCase();
+  if (['', '通用'.toUpperCase(), 'NB', 'S', 'M', 'L', 'XL', 'XXL'].indexOf(size) < 0) return false;
+  if (s.produceDate || s.shelfLife || s.price || s.buyUrl || s.warrantyUntil) return false;
+  if (Number(s.count) > 0) return false;
+  return true;
+}
+
 /* 默认保质期提醒（喂养台） */
 function defaultShelfWarnings() {
   // 初始无预置提醒：保质期提醒由真实记录（吸奶 / 奶粉开罐）自动生成
@@ -51,6 +65,17 @@ App({
     safeTop: SAFE_TOP,
     pendingFlowers: [],   // 收到的新花队列（打开小程序弹送花动画弹窗）
     lastFlowerReadAt: 0,
+    lang: 'zh',
+    t: function(key) {
+      const lang = wx.getStorageSync('lang') || 'zh';
+      const dict = lang === 'en' ? require('./i18n/en.js') : require('./i18n/zh.js');
+      const keys = key.split('.');
+      let val = dict;
+      for (const k of keys) {
+        val = val && val[k];
+      }
+      return val || key;
+    },
     // 家庭急救跟做配置（并入急救模块）
     settings: {
       vibration: true,
@@ -378,6 +403,8 @@ App({
   },
 
   /* 保存当前宝宝数据到分 key 存储 */
+  isLegacyPresetStock,
+
   saveBabyData() {
     const g = this.globalData;
     if (!g.currentBabyId) return;

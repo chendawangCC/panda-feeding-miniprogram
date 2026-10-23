@@ -5,8 +5,8 @@
   <view class="page-header-back">
     <view class="back-btn" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">账号 · 宝宝 · 数据</text>
-      <view class="header-title header-title-sub">账号设置</view>
+      <text class="header-kicker">{{lang === 'en' ? 'Account · Baby · Data' : '账号 · 宝宝 · 数据'}}</text>
+      <view class="header-title header-title-sub">{{lang === 'en' ? 'Account Settings' : '账号设置'}}</view>
     </view>
   </view>
 
@@ -19,48 +19,56 @@
           <image wx:else class="st-acc-avatar" src="{{user.avatar || '/images/brand-logo.png'}}" mode="aspectFill" />
         </view>
         <view class="set-info">
-          <text class="set-title">{{user.logged ? '修改头像和用户名' : '登录账号'}}</text>
-          <text class="set-desc">{{user.logged ? (user.nickname || '微信用户') : '微信一键登录或手机号登录'}}</text>
+          <text class="set-title">{{user.logged ? (lang === 'en' ? 'Edit Avatar & Name' : '修改头像和用户名') : (lang === 'en' ? 'Sign In' : '登录账号')}}</text>
+          <text class="set-desc">{{user.logged ? (user.nickname || (lang === 'en' ? 'WeChat User' : '微信用户')) : (lang === 'en' ? 'WeChat one-tap sign in' : '微信一键登录或手机号登录')}}</text>
         </view>
         <text class="set-arrow">›</text>
       </view>
       <view class="set-item" data-action="baby" bindtap="onMenu">
         <view class="set-ico" style="background:#fff2b9"><image class="set-ico-img" src="/images/icons/mine-baby.png" mode="aspectFit" /></view>
         <view class="set-info">
-          <text class="set-title">我的宝贝</text>
-          <text class="set-desc">新建宝宝 · 切换与管理</text>
+          <text class="set-title">{{lang === 'en' ? 'My Baby' : '我的宝贝'}}</text>
+          <text class="set-desc">{{lang === 'en' ? 'Create baby · switch & manage' : '新建宝宝 · 切换与管理'}}</text>
         </view>
         <text class="set-arrow">›</text>
       </view>
       <view class="set-item" data-action="export" bindtap="onMenu">
         <view class="set-ico" style="background:#fff2b9"><image class="set-ico-img" src="/images/icons/mine-export.png" mode="aspectFit" /></view>
         <view class="set-info">
-          <text class="set-title">数据导出</text>
-          <text class="set-desc">导出喂养与成长记录</text>
+          <text class="set-title">{{lang === 'en' ? 'Data Export' : '数据导出'}}</text>
+          <text class="set-desc">{{lang === 'en' ? 'Export feeding & growth records' : '导出喂养与成长记录'}}</text>
         </view>
         <text class="set-arrow">›</text>
       </view>
       <view class="set-item" data-action="collab" bindtap="onMenu">
         <view class="set-ico" style="background:#ffe3cc"><image class="set-ico-img" src="/images/icons/mine-collab.png" mode="aspectFit" /></view>
         <view class="set-info">
-          <text class="set-title">多人协作与分享</text>
-          <text class="set-desc">邀请家人共同记录</text>
+          <text class="set-title">{{lang === 'en' ? 'Collaborators & Sharing' : '多人协作与分享'}}</text>
+          <text class="set-desc">{{lang === 'en' ? 'Invite family to record together' : '邀请家人共同记录'}}</text>
+        </view>
+        <text class="set-arrow">›</text>
+      </view>
+      <view class="set-item" bindtap="switchLang">
+        <view class="set-ico" style="background:#e0f7e9"><text style="font-size:24px">🌐</text></view>
+        <view class="set-info">
+          <text class="set-title">语言 / Language</text>
+          <text class="set-desc">简体中文 / English</text>
         </view>
         <text class="set-arrow">›</text>
       </view>
       <view class="set-item" data-action="service" bindtap="onMenu">
         <view class="set-ico" style="background:#fff2b9"><image class="set-ico-img" src="/images/icons/mine-service.png" mode="aspectFit" /></view>
         <view class="set-info">
-          <text class="set-title">联系客服</text>
-          <text class="set-desc">获取使用帮助</text>
+          <text class="set-title">{{lang === 'en' ? 'Contact Support' : '联系客服'}}</text>
+          <text class="set-desc">{{lang === 'en' ? 'Get usage help' : '获取使用帮助'}}</text>
         </view>
         <text class="set-arrow">›</text>
       </view>
       <view class="set-item" data-action="privacy" bindtap="onMenu">
         <view class="set-ico" style="background:#f3f0e7"><image class="set-ico-img" src="/images/icons/mine-privacy.png" mode="aspectFit" /></view>
         <view class="set-info">
-          <text class="set-title">隐私权限</text>
-          <text class="set-desc">管理数据访问权限</text>
+          <text class="set-title">{{lang === 'en' ? 'Privacy' : '隐私权限'}}</text>
+          <text class="set-desc">{{lang === 'en' ? 'Manage data access' : '管理数据访问权限'}}</text>
         </view>
         <text class="set-arrow">›</text>
       </view>
@@ -69,11 +77,11 @@
 
   <!-- 退出登录 -->
   <view class="st-logout" wx:if="{{user.logged}}" bindtap="logout">
-    <text>退出登录</text>
+    <text>{{lang === 'en' ? 'Sign Out' : '退出登录'}}</text>
   </view>
 
   <!-- ==================== 数据导出面板（设置页内直接弹出） ==================== -->
-  <dialog visible="{{exportVisible}}" title="数据导出" kicker="选择要导出的数据，可单独或全部导出" bind:close="closeExport">
+  <dialog visible="{{exportVisible}}" title="{{lang === 'en' ? 'Data Export' : '数据导出'}}" kicker="{{lang === 'en' ? 'Choose data to export, individually or all' : '选择要导出的数据，可单独或全部导出'}}" bind:close="closeExport">
     <view class="exp-list">
       <view
         wx:for="{{exportItems}}"
@@ -87,25 +95,25 @@
           <text class="exp-name">{{item.label}}</text>
           <text class="exp-desc">{{item.desc}}</text>
         </view>
-        <text class="exp-count">{{item.count}} 条</text>
+        <text class="exp-count">{{item.count}} {{lang === 'en' ? 'items' : '条'}}</text>
       </view>
     </view>
     <view class="exp-actions">
-      <view class="exp-btn ghost exp-btn-view" hover-class="btn-press" hover-stay-time="60" bindtap="previewExport">预览</view>
-      <view class="exp-btn solid exp-btn-view" hover-class="btn-press" hover-stay-time="60" bindtap="doExport">导出</view>
+      <view class="exp-btn ghost exp-btn-view" hover-class="btn-press" hover-stay-time="60" bindtap="previewExport">{{lang === 'en' ? 'Preview' : '预览'}}</view>
+      <view class="exp-btn solid exp-btn-view" hover-class="btn-press" hover-stay-time="60" bindtap="doExport">{{lang === 'en' ? 'Export' : '导出'}}</view>
     </view>
-    <view class="exp-tip">导出支持图片（PNG）与 PDF 两种格式 · 喂养记录以表格形式展示</view>
+    <view class="exp-tip">{{lang === 'en' ? 'Supports PNG image and PDF · Records shown as tables' : '导出支持图片（PNG）与 PDF 两种格式 · 喂养记录以表格形式展示'}}</view>
   </dialog>
 
   <!-- 导出预览弹窗 -->
-  <dialog visible="{{exportPreviewVisible}}" position="center" title="导出预览" kicker="长按图片保存或点击导出" bind:close="closePreview">
+  <dialog visible="{{exportPreviewVisible}}" position="center" title="{{lang === 'en' ? 'Export Preview' : '导出预览'}}" kicker="{{lang === 'en' ? 'Long press to save or tap Export' : '长按图片保存或点击导出'}}" bind:close="closePreview">
     <view class="preview-box">
       <scroll-view scroll-y class="preview-scroll">
         <image class="preview-img" src="{{previewImg}}" mode="widthFix" show-menu-by-longpress />
       </scroll-view>
       <view class="preview-actions">
-        <view class="exp-btn ghost exp-btn-view" catchtap="closePreview">返回</view>
-        <view class="exp-btn solid exp-btn-view" catchtap="doExport">导出</view>
+        <view class="exp-btn ghost exp-btn-view" catchtap="closePreview">{{lang === 'en' ? 'Back' : '返回'}}</view>
+        <view class="exp-btn solid exp-btn-view" catchtap="doExport">{{lang === 'en' ? 'Export' : '导出'}}</view>
       </view>
     </view>
   </dialog>
@@ -123,28 +131,28 @@
   ></canvas>
 
   <!-- 登录弹窗 -->
-  <dialog visible="{{loginVisible}}" title="登录" kicker="登录后设置头像昵称，管理你的宝宝" bind:close="closeLogin">
+  <dialog visible="{{loginVisible}}" title="{{lang === 'en' ? 'Sign In' : '登录'}}" kicker="{{lang === 'en' ? 'Sign in to set avatar, nickname and manage baby' : '登录后设置头像昵称，管理你的宝宝'}}" bind:close="closeLogin">
     <view class="lg-body">
       <view class="lg-wechat-icon">💬</view>
-      <text class="lg-desc">使用微信账号一键登录，自动获取登录标识。登录后可设置头像昵称并添加宝宝。</text>
-      <button class="lg-btn primary" bindtap="wechatLogin">微信一键登录</button>
+      <text class="lg-desc">{{lang === 'en' ? 'Sign in with WeChat, then set avatar and nickname and add your baby.' : '使用微信账号一键登录，自动获取登录标识。登录后可设置头像昵称并添加宝宝。'}}</text>
+      <button class="lg-btn primary" bindtap="wechatLogin">{{lang === 'en' ? 'Sign in with WeChat' : '微信一键登录'}}</button>
     </view>
   </dialog>
 
   <!-- 设置资料弹窗 -->
-  <dialog visible="{{profileVisible}}" title="设置头像和用户名" bind:close="closeProfile">
+  <dialog visible="{{profileVisible}}" title="{{lang === 'en' ? 'Set Avatar & Name' : '设置头像和用户名'}}" bind:close="closeProfile">
     <view class="pf-body">
       <view class="pf-avatar-btn" bindtap="onAvatarTap">
         <image wx:if="{{avatarUrl}}" class="pf-avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
         <image wx:else class="pf-avatar-plus" src="/images/icons/add-avatar-plus.png" mode="aspectFit" />
       </view>
-      <text class="pf-avatar-hint">点击选择头像</text>
+      <text class="pf-avatar-hint">{{lang === 'en' ? 'Tap to choose avatar' : '点击选择头像'}}</text>
       <view class="pf-field">
-        <text class="pf-label">用户名</text>
-        <input class="pf-input" type="nickname" placeholder="请输入用户名" value="{{nickname}}" bindinput="onNickInput" />
+        <text class="pf-label">{{lang === 'en' ? 'Nickname' : '用户名'}}</text>
+        <input class="pf-input" type="nickname" placeholder="{{lang === 'en' ? 'Enter nickname' : '请输入用户名'}}" value="{{nickname}}" bindinput="onNickInput" />
       </view>
       <view class="pf-actions">
-        <view class="lg-btn primary lg-btn-view" hover-class="btn-press" hover-stay-time="60" bindtap="saveProfile">保存</view>
+        <view class="lg-btn primary lg-btn-view" hover-class="btn-press" hover-stay-time="60" bindtap="saveProfile">{{lang === 'en' ? 'Save' : '保存'}}</view>
       </view>
     </view>
   </dialog>

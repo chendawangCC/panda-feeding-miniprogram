@@ -246,6 +246,8 @@ Page({
     const dismissed = wx.getStorageSync('dismissed_stock_warn') || {};
     const seen = {};
     const list = (app.globalData.stockItems || []).map(s => {
+      // 旧版本预置示例（纸尿裤/奶粉/棉柔巾，库存 0 且无耗材属性）不产生库存提醒
+      if (app.isLegacyPresetStock && app.isLegacyPresetStock(s)) return null;
       const cnt = Number(s.count) || 0;
       const dk = this.detectKind(s.name);
       const t = th(s.name, dk.kind);

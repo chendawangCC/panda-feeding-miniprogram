@@ -215,7 +215,8 @@ Page({
     for (const r of list) {
       if (latestByType[r.type] === r && r._ts) {
         const agoMin = Math.round((nowTs - r._ts) / 60000);
-        r.prevText = agoMin < 1 ? '刚刚' : '已过去 ' + this.fmtInterval(agoMin);
+        if (this._tlEn()) r.prevText = agoMin < 1 ? 'just now' : this.fmtInterval(agoMin) + ' ago';
+        else r.prevText = agoMin < 1 ? '刚刚' : '已过去 ' + this.fmtInterval(agoMin);
         r.isLatest = true;
       } else {
         r.prevText = '';
@@ -248,6 +249,17 @@ Page({
   /* 间隔展示 */
   fmtInterval(min) {
     if (min === null || min === undefined || min < 0) return '';
+    const en = this._tlEn();
+    if (en) {
+      if (min < 1) return '<1 min';
+      if (min < 60) return min + ' min';
+      const eh = Math.floor(min / 60);
+      const em = min % 60;
+      if (eh < 24) return em ? eh + ' hr ' + em + ' min' : eh + ' hr';
+      const ed = Math.floor(eh / 24);
+      const erh = eh % 24;
+      return erh ? ed + ' d ' + erh + ' hr' : ed + ' d';
+    }
     if (min < 1) return '不到 1 分钟';
     if (min < 60) return min + ' 分钟';
     const h = Math.floor(min / 60);
@@ -258,100 +270,383 @@ Page({
     return rh ? d + ' 天 ' + rh + ' 小时' : d + ' 天';
   },
 
+  /* 当前是否英文界面（时间轴卡片在 onLoad 阶段构建，需回退读 storage） */
+  _tlEn() {
+    const stored = wx.getStorageSync('lang');
+    return (stored || (this.data && this.data.lang) || 'zh') === 'en';
+  },
+
+  /* 时间轴通用词表（显示层英译，底层记录值仍保持中文） */
+  _tlWords() {
+    const en = this._tlEn();
+    return {
+      en: en,
+      T: (zh, enTxt) => (en ? enTxt : zh),
+      v: (map, val) => (en && val && map[val] ? map[val] : val),
+      diaper: { '嘘嘘': 'Wet', '臭臭': 'Dirty', '嘘嘘+臭臭': 'Wet + Dirty', '未选择': 'Not set' },
+      pee: { '黄色': 'Yellow', '浅黄': 'Pale yellow', '无色': 'Colorless', '橙色': 'Orange', '粉色': 'Pink', '红色': 'Red', '棕色': 'Brown' },
+      stool: { '水样': 'Watery', '糊状': 'Pasty', '软便': 'Soft', '奶瓣': 'Curds', '成形': 'Formed', '黏液': 'Mucus', '硬便': 'Hard', '稀': 'Loose' },
+      stoolColor: { '黄色': 'Yellow', '金黄': 'Golden', '绿色': 'Green', '棕色': 'Brown', '黑色': 'Black', '红色': 'Red', '白色': 'White', '灰白': 'Pale' },
+      supp: { 'AD': 'Vitamin AD', 'DHA': 'DHA', '钙片': 'Calcium', '鱼油': 'Fish oil', '乳糖酶': 'Lactase', '益生菌': 'Probiotics', '维生素D': 'Vitamin D', '铁剂': 'Iron' },
+      food: {
+        '高铁米粉': 'Iron-fortified cereal', '米糊': 'Rice cereal', '粥': 'Congee', '面条': 'Noodles',
+        '土豆泥': 'Mashed potato', '南瓜泥': 'Pumpkin puree', '胡萝卜泥': 'Carrot puree', '西兰花泥': 'Broccoli puree',
+        '牛肉': 'Beef', '鸡肉': 'Chicken', '鱼肉': 'Fish', '蛋黄': 'Egg yolk', '苹果泥': 'Apple puree',
+        '香蕉泥': 'Banana puree', '猪肝泥': 'Pork liver puree', '米粉': 'Rice cereal', '鸡蛋': 'Egg', '豆腐': 'Tofu'
+      },
+      unit: { '克': 'g', '毫升': 'ml' }
+    };
+  },
+
   /* 将一条真实记录映射为时间轴卡片 */
   mapRecordToCard(r, idx) {
+    const W = this._tlWords();
+    const { T, v } = W;
     const by = r.by || null;
     // 记录者显示名：优先根据 openid 动态获取当前家庭身份/昵称，找不到则用记录快照（注销用户显示注销前名字）
-    const byDisplayName = by ? (app.getOpenidDisplayName(by.openid) || by.name || '亲友') : '';
+    let byDisplayName = by ? (app.getOpenidDisplayName(by.openid) || by.name || '亲友') : '';
+    if (W.en) {
+      if (byDisplayName === '我') byDisplayName = 'Me';
+      else if (byDisplayName === '亲友') byDisplayName = 'Family';
+    }
     const base = { recIdx: idx, time: r.time || '--:--', date: r.date, by, byDisplayName, _rawRecord: r, _cid: r._cid || '', id: r.id || '' };
     switch (r.type) {
       case '母乳':
         return Object.assign(base, {
-          type: 'nursing', title: '亲喂', icon: '🍼', iconImg: '/images/icons/rec-nursing.png', dot: '#b97b05', bg: '#fff2b9', border: '#f4d47b',
+          type: 'nursing', title: T('亲喂', 'Breastfeeding'), icon: '🍼', iconImg: '/images/icons/rec-nursing.png', dot: '#b97b05', bg: '#fff2b9', border: '#f4d47b',
           metrics: [
-            { label: '总时长', value: this.minutes(r.total || (r.nursingL || 0) + (r.nursingR || 0)), color: '#b97b05' },
-            { label: '左侧', value: this.minutes(r.nursingL || 0), color: '#c77b09' },
-            { label: '右侧', value: this.minutes(r.nursingR || 0), color: '#b97b05' }
+            { label: T('总时长', 'Total'), value: this.minutes(r.total || (r.nursingL || 0) + (r.nursingR || 0)), color: '#b97b05' },
+            { label: T('左侧', 'Left'), value: this.minutes(r.nursingL || 0), color: '#c77b09' },
+            { label: T('右侧', 'Right'), value: this.minutes(r.nursingR || 0), color: '#b97b05' }
           ]
         });
       case '配方奶':
         return Object.assign(base, {
-          type: 'bottle', title: r.milkType === '瓶喂母乳' ? '瓶喂-母乳' : '瓶喂-奶粉', icon: '🥛', iconImg: '/images/icons/rec-bottle.png', dot: '#587396', bg: '#e6edff', border: '#c6e2fb',
+          type: 'bottle', title: r.milkType === '瓶喂母乳' ? T('瓶喂-母乳', 'Bottle · Breastmilk') : T('瓶喂-奶粉', 'Bottle · Formula'), icon: '🥛', iconImg: '/images/icons/rec-bottle.png', dot: '#587396', bg: '#e6edff', border: '#c6e2fb',
           metrics: [
-            { label: '开始', value: r.bottleStart || '--:--', color: '#587396' },
-            { label: '结束', value: r.bottleEnd || '--:--', color: '#587396' }
+            { label: T('开始', 'Start'), value: r.bottleStart || '--:--', color: '#587396' },
+            { label: T('结束', 'End'), value: r.bottleEnd || '--:--', color: '#587396' }
           ],
-          note: (r.amount || 0) + ' ml', tag: r.milkType === '瓶喂母乳' ? '母乳' : '奶粉', tagColor: '#587396'
+          note: (r.amount || 0) + ' ml', tag: r.milkType === '瓶喂母乳' ? T('母乳', 'Breastmilk') : T('奶粉', 'Formula'), tagColor: '#587396'
         });
       case '吸奶':
         return Object.assign(base, {
-          type: 'pump', title: '吸奶', icon: '🫗', iconImg: '/images/icons/rec-pump.png', dot: '#a96017', bg: '#fff1df', border: '#f6d3ae',
+          type: 'pump', title: T('吸奶', 'Pumping'), icon: '🫗', iconImg: '/images/icons/rec-pump.png', dot: '#a96017', bg: '#fff1df', border: '#f6d3ae',
           metrics: [
-            { label: '总量', value: (r.pumpTotal || 0) + ' ml', color: '#bd6b1b' },
-            { label: '左侧', value: (r.pumpLeftAmt || 0) + ' ml', color: '#c77b09' },
-            { label: '右侧', value: (r.pumpRightAmt || 0) + ' ml', color: '#a96017' }
+            { label: T('总量', 'Total'), value: (r.pumpTotal || 0) + ' ml', color: '#bd6b1b' },
+            { label: T('左侧', 'Left'), value: (r.pumpLeftAmt || 0) + ' ml', color: '#c77b09' },
+            { label: T('右侧', 'Right'), value: (r.pumpRightAmt || 0) + ' ml', color: '#a96017' }
           ]
         });
       case '换尿布':
         return Object.assign(base, {
-          type: 'diaper', title: '换尿布' + (r.diaperSize ? ' · ' + r.diaperSize + '码' : ''), icon: '🧷', iconImg: '/images/icons/rec-diaper.png', dot: '#478163', bg: '#e8f4e4', border: '#b8e8e3',
+          type: 'diaper', title: T('换尿布', 'Diaper Change') + (r.diaperSize ? (W.en ? ' · Size ' + r.diaperSize : ' · ' + r.diaperSize + '码') : ''), icon: '🧷', iconImg: '/images/icons/rec-diaper.png', dot: '#478163', bg: '#e8f4e4', border: '#b8e8e3',
           fields: [
-            { label: '状态', value: r.diaperChoice || '未选择' },
-            { label: '嘘嘘颜色', value: r.peeColor || '-' },
-            { label: '便便性状', value: r.stoolTexture || '-' },
-            { label: '便便颜色', value: r.stoolColor || '-' }
+            { label: T('状态', 'Status'), value: v(W.diaper, r.diaperChoice || '未选择') },
+            { label: T('嘘嘘颜色', 'Pee color'), value: v(W.pee, r.peeColor) || '-' },
+            { label: T('便便性状', 'Stool texture'), value: v(W.stool, r.stoolTexture) || '-' },
+            { label: T('便便颜色', 'Stool color'), value: v(W.stoolColor, r.stoolColor) || '-' }
           ]
         });
-      case '营养品':
+      case '营养品': {
+        const supps = (r.supps || []).map(x => v(W.supp, x));
         return Object.assign(base, {
-          type: 'supplement', title: '营养品', icon: '💊', iconImg: '/images/icons/rec-supplement.png', dot: '#478163', bg: '#e8f4e4', border: '#c9e8c7',
-          value: (r.supps || []).join('、') || '未选择'
+          type: 'supplement', title: T('营养品', 'Supplements'), icon: '💊', iconImg: '/images/icons/rec-supplement.png', dot: '#478163', bg: '#e8f4e4', border: '#c9e8c7',
+          value: supps.join(W.en ? ' / ' : '、') || T('未选择', 'Not set')
         });
+      }
       case '睡眠':
         return Object.assign(base, {
-          type: 'sleep', title: '睡眠', icon: '🌙', iconImg: '/images/icons/rec-sleep.png', dot: '#6657bf', bg: '#eee9ff', border: '#ddd1fb',
+          type: 'sleep', title: T('睡眠', 'Sleep'), icon: '🌙', iconImg: '/images/icons/rec-sleep.png', dot: '#6657bf', bg: '#eee9ff', border: '#ddd1fb',
           sleepRunning: !!r.sleepRunning,
           metrics: [
-            { label: '时长', value: this.minutes(r.sleepSeconds || 0), color: '#6657bf' },
-            { label: '开始', value: r.sleepStart || '--:--', color: '#6657bf' },
-            { label: '醒来', value: r.sleepRunning ? ('计时中 ' + this.minutes(r.sleepSeconds || 0)) : (r.sleepEnd || '--:--'), color: '#6657bf' }
+            { key: 'dur', label: T('时长', 'Duration'), value: this.minutes(r.sleepSeconds || 0), color: '#6657bf' },
+            { key: 'start', label: T('开始', 'Start'), value: r.sleepStart || '--:--', color: '#6657bf' },
+            { key: 'wake', label: T('醒来', 'Wake up'), value: r.sleepRunning ? (T('计时中 ', 'Timing ') + this.minutes(r.sleepSeconds || 0)) : (r.sleepEnd || '--:--'), color: '#6657bf' }
           ]
         });
       case '喝水':
         return Object.assign(base, {
-          type: 'water', title: '喝水', icon: '💧', iconImg: '/images/icons/rec-water.png', dot: '#587396', bg: '#e6edff', border: '#c6e2fb',
-          note: (r.water || 0) + ' ml', tag: '喝水', tagColor: '#587396'
+          type: 'water', title: T('喝水', 'Water'), icon: '💧', iconImg: '/images/icons/rec-water.png', dot: '#587396', bg: '#e6edff', border: '#c6e2fb',
+          note: (r.water || 0) + ' ml', tag: T('喝水', 'Water'), tagColor: '#587396'
         });
       case '体温':
         return Object.assign(base, {
-          type: 'temp', title: '体温', icon: '🌡️', dot: '#c9573a', bg: '#ffe7e0', border: '#f7c8b4',
-          note: (r.temperature || '--') + ' ℃', tag: '体温', tagColor: '#c9573a'
+          type: 'temp', title: T('体温', 'Temperature'), icon: '🌡️', dot: '#c9573a', bg: '#ffe7e0', border: '#f7c8b4',
+          note: (r.temperature || '--') + ' ℃', tag: T('体温', 'Temperature'), tagColor: '#c9573a'
         });
       case '洗澡':
         return Object.assign(base, {
-          type: 'bath', title: '洗澡', icon: '🛁', dot: '#4387bd', bg: '#d6f4f0', border: '#c6e2fb',
+          type: 'bath', title: T('洗澡', 'Bath Time'), icon: '🛁', dot: '#4387bd', bg: '#d6f4f0', border: '#c6e2fb',
           metrics: [
-            { label: '开始', value: r.bathStart || '--:--', color: '#4387bd' },
-            { label: '结束', value: r.bathEnd || '--:--', color: '#4387bd' },
-            { label: '时长', value: this.minutesHM(r.bathSeconds || 0), color: '#4387bd' }
+            { label: T('开始', 'Start'), value: r.bathStart || '--:--', color: '#4387bd' },
+            { label: T('结束', 'End'), value: r.bathEnd || '--:--', color: '#4387bd' },
+            { label: T('时长', 'Duration'), value: this.minutesHM(r.bathSeconds || 0), color: '#4387bd' }
           ]
         });
-      case '辅食':
+      case '辅食': {
+        const names = (r.foodNames || []).map(x => v(W.food, x));
+        const unit = W.unit[r.foodUnit] || r.foodUnit || 'g';
         return Object.assign(base, {
-          type: 'food', title: '辅食', icon: '🥄', iconImg: '/images/icons/rec-food.png', dot: '#a96017', bg: '#fff1df', border: '#f6d3ae',
-          note: ((r.foodNames || []).join('+ ') ? (r.foodNames || []).join('+ ') + ' · ' : '') + (r.foodWeight || r.simpleAmount || 0) + (r.foodUnit || 'g'), tag: '辅食', tagColor: '#a96017'
+          type: 'food', title: T('辅食', 'Solid Food'), icon: '🥄', iconImg: '/images/icons/rec-food.png', dot: '#a96017', bg: '#fff1df', border: '#f6d3ae',
+          note: (names.join(W.en ? ' + ' : '+ ') ? (names.join(W.en ? ' + ' : '+ ') + ' · ') : '') + (r.foodWeight || r.simpleAmount || 0) + unit,
+          tag: T('辅食', 'Solid Food'), tagColor: '#a96017'
         });
+      }
       case '语音记录':
         return Object.assign(base, {
-          type: 'voice', title: '语音记录', icon: '🎙️', dot: '#ffb2a6', bg: '#fff5f2', border: '#f8d3cb',
-          note: r.note || '', tag: '语音'
+          type: 'voice', title: T('语音记录', 'Voice Note'), icon: '🎙️', dot: '#ffb2a6', bg: '#fff5f2', border: '#f8d3cb',
+          note: r.note || '', tag: T('语音', 'Voice')
         });
       default:
-        return Object.assign(base, { type: 'other', title: r.type || '记录', icon: '📝', dot: '#e8e1d0', bg: '#ffffff', border: '#f3f0e7', note: r.note || '' });
+        return Object.assign(base, { type: 'other', title: r.type || T('记录', 'Record'), icon: '📝', dot: '#e8e1d0', bg: '#ffffff', border: '#f3f0e7', note: r.note || '' });
     }
   },
 
   onShow() {
+    const lang = wx.getStorageSync('lang') || 'zh';
+    const i18n = lang === 'en' ? {
+      breastfed: 'Breastfeeding',
+      breastfedSub: 'Left/right timing',
+      bottleFed: 'Bottle Feeding',
+      bottleFedSub: 'Record milk amount',
+      pump: 'Pumping',
+      pumpSub: 'Left/right volume & time',
+      supplement: 'Supplements',
+      supplementSub: 'Multi-select allowed',
+      solidFood: 'Solid Food',
+      solidFoodSub: 'Record meal portion',
+      water: 'Water',
+      waterSub: 'Record water intake',
+      diaper: 'Diaper Change',
+      diaperSub: 'Select wet/dirty status',
+      sleep: 'Sleep',
+      sleepSub: 'Record sleep time',
+      temp: 'Temperature',
+      tempSub: 'Record baby temperature',
+      bath: 'Bath Time',
+      bathSub: 'Record bath duration',
+      voiceInput: 'Voice Input',
+      listening: 'Listening, release to stop',
+      recognizing: 'Recognizing…',
+      fillDetail: 'Fill in details',
+      bottleBreastmilk: 'Expressed Breastmilk',
+      slideBottleAmount: 'Slide to set bottle amount',
+      per5mlStep: '5ml per step',
+      milkOpened: 'Formula can opened',
+      opened: 'Opened',
+      notOpened: 'Not opened',
+      startTime: 'Start Time',
+      endTime: 'End Time',
+      leftRightTimer: 'Tap left/right to start timer',
+      totalFeedDuration: 'Total feeding time',
+      leftRightRecord: 'Record left/right separately',
+      totalAmount: 'Total amount',
+      slidePumpAmount: 'Slide to set pumped amount',
+      milkStorage: 'Breastmilk storage',
+      roomTemp: 'Room temp 4h',
+      fridge: 'Fridge 48h',
+      freezer: 'Freezer 3 months',
+      storageHint: 'Per national standard: room temp ≤25°C 4h / fridge 4°C 48h / freezer -18°C 3 months',
+      saveEdit: 'Save Changes',
+      saveRecord: 'Save Record',
+      selectSupplements: 'Select supplements (multi-select)',
+      addMore: 'Add more',
+      nextReminder: 'Next reminder setting',
+      setUpOptional: 'Set up (optional)',
+      urineColor: 'Urine color',
+      stoolColor: 'Stool color',
+      wateryStool: 'Watery',
+      pasteStool: 'Pasty',
+      softStool: 'Soft',
+      curdStool: 'Curdy',
+      solidStool: 'Formed',
+      mucusStool: 'Mucousy',
+      diaperSize: 'Diaper size',
+      diaperDeduct: 'Diapers used',
+      stockLeft: 'Stock left',
+      pieces: 'pcs',
+      whatBabyAte: 'What baby ate',
+      foodName: 'Food',
+      tapSelectMulti: 'Tap to select (multi-select)',
+      weight: 'Weight',
+      allergic: 'Allergic reaction?',
+      enterWaterMl: 'Enter water amount (ml)',
+      waterAmount: 'Water amount',
+      allergyGuide: 'Allergy Guide',
+      allergyCount: 'Allergy events',
+      allergyFoods: 'Allergy foods',
+      safeCount: 'No allergy events',
+      safeFoods: 'Safe foods',
+      recordedSafeFoods: 'Recorded safe foods',
+      commonAllergyFoods: 'Common allergenic foods',
+      allergySymptoms: 'Common allergy symptoms',
+      tips: 'Tips',
+      allergyTipText: 'Food allergy depends on amount, cooking method, and fasting state. Avoid known allergens and consult a pediatrician before reintroducing.',
+      selectFood: 'Select Food',
+      multiSelect: 'Multi-select',
+      enterNewFood: 'Enter new food name, e.g. porridge',
+      sleepHint: 'Timer or manual start/end time, auto-calculate duration',
+      sleepTip: 'Tap "Asleep" then save to continue timing; after waking, tap this record on the timeline, edit "Awake" and save to finish the sleep entry',
+      sleepRunningTxt: 'Sleeping · tap to record "Awake"',
+      fallAsleep: 'Fall Asleep',
+      wakeUpTxt: 'Tap "Awake" to auto-record end time',
+      tapStartSleep: 'Tap to auto-record start time',
+      asleep: 'Asleep',
+      awake: 'Awake',
+      babyTemp: 'Baby Temperature',
+      tempHint: 'Slide to select temperature · Normal range 36.0 ~ 37.5 ℃',
+      bathTime: 'Bath Time',
+      durationAutoCalc: 'Duration auto-calculated from start/end time',
+      longPressToSpeak: 'Long press to speak',
+      parsingVoice: 'Parsing voice content',
+      releaseToFinish: 'Release to finish voice input',
+      longPressMicHint: 'Long press the mic to start speaking',
+      trySaying: 'Try saying:',
+      example1: 'Breastfeeding for 15 minutes',
+      example2: 'Had 120ml formula',
+      example3: 'Diaper change: wet + dirty',
+      example4: 'Slept for 40 minutes',
+      example5: 'Temperature 37.5°C',
+      example6: 'Bath time',
+      example7: 'Drank 60ml water',
+      example8: 'Temperature 37.2°C, baby feels warm',
+      example9: 'Pumped 80ml breastmilk total',
+      example10: 'Took vitamin D3 and probiotics'
+    } : {
+      breastfed: '亲喂',
+      breastfedSub: '左右分别计时',
+      bottleFed: '瓶喂',
+      bottleFedSub: '记录喂奶量',
+      pump: '吸奶',
+      pumpSub: '左右量与计时',
+      supplement: '营养品',
+      supplementSub: '可多选记录',
+      solidFood: '辅食',
+      solidFoodSub: '记录辅食份量',
+      water: '喝水',
+      waterSub: '记录喝水量',
+      diaper: '换尿布',
+      diaperSub: '选择尿便情况',
+      sleep: '睡眠',
+      sleepSub: '记录睡眠时段',
+      temp: '体温',
+      tempSub: '记录宝宝体温',
+      bath: '洗澡',
+      bathSub: '记录洗澡时长',
+      voiceInput: '语音录入',
+      listening: '正在聆听，松开结束',
+      recognizing: '正在识别…',
+      fillDetail: '填写本次详情',
+      bottleBreastmilk: '瓶喂母乳',
+      slideBottleAmount: '滑动选择瓶喂量',
+      per5mlStep: '每5ML一个档位',
+      milkOpened: '本次奶粉开罐',
+      opened: '已开罐',
+      notOpened: '未开罐',
+      startTime: '开始时间',
+      endTime: '结束时间',
+      leftRightTimer: '左右点击计时',
+      totalFeedDuration: '两侧喂奶总时长',
+      leftRightRecord: '左右分别记录',
+      totalAmount: '总量',
+      slidePumpAmount: '滑动选择吸奶量',
+      milkStorage: '本次母乳储存',
+      roomTemp: '室温 4h',
+      fridge: '冷藏 48h',
+      freezer: '冷冻 3个月',
+      storageHint: '按国标：室温≤25℃ 4小时 / 冷藏4℃ 48小时 / 冷冻-18℃ 3个月',
+      saveEdit: '保存修改',
+      saveRecord: '保存记录',
+      selectSupplements: '选择本次营养品 可多选',
+      addMore: '添加更多',
+      nextReminder: '下次补充提醒设置',
+      setUpOptional: '去设置（可不填）',
+      urineColor: '嘘嘘颜色',
+      stoolColor: '便便颜色',
+      wateryStool: '水样便',
+      pasteStool: '糊状便',
+      softStool: '软便',
+      curdStool: '奶瓣便',
+      solidStool: '成形便',
+      mucusStool: '黏液便',
+      diaperSize: '纸尿裤尺码',
+      diaperDeduct: '尿布扣除数量',
+      stockLeft: '库存剩余',
+      pieces: '片',
+      whatBabyAte: '宝宝吃了什么',
+      foodName: '辅食名称',
+      tapSelectMulti: '点击选择（可多选）',
+      weight: '重量',
+      allergic: '是否过敏',
+      enterWaterMl: '填写饮水量ml',
+      waterAmount: '喝水量',
+      allergyGuide: '过敏统计手册',
+      allergyCount: '过敏次数',
+      allergyFoods: '过敏食物',
+      safeCount: '不过敏次数',
+      safeFoods: '不过敏食物',
+      recordedSafeFoods: '已记录的不过敏食物',
+      commonAllergyFoods: '常见易过敏食物',
+      allergySymptoms: '过敏常见表现',
+      tips: '温馨提示',
+      allergyTipText: '辅食过敏与剂量、烹饪方式、是否空腹等有关，已过敏食物建议回避并咨询儿科医生后再尝试。',
+      selectFood: '选择辅食',
+      multiSelect: '可多选',
+      enterNewFood: '输入新辅食名称，如：玉米糊',
+      sleepHint: '可计时或手动填写起止时间，自动统计时长',
+      sleepTip: '点击「睡了」后点保存可持续计时；睡醒后点击时间轴上的这条记录，继续编辑「醒了」并保存，即可完成本次睡眠统计',
+      sleepRunningTxt: '正在睡眠 · 点击记录「醒了」',
+      fallAsleep: '睡着了',
+      wakeUpTxt: '点击「醒了」自动记录结束时间',
+      tapStartSleep: '点击自动记录开始时间',
+      asleep: '睡了',
+      awake: '醒了',
+      babyTemp: '宝宝体温',
+      tempHint: '滑动选择体温 · 正常范围 36.0 ~ 37.5 ℃',
+      bathTime: '洗澡时间',
+      durationAutoCalc: '时长按开始/结束时间自动计算',
+      longPressToSpeak: '长按开始说话',
+      parsingVoice: '正在解析语音内容',
+      releaseToFinish: '松开即可完成语音输入',
+      longPressMicHint: '长按麦克风开始说话',
+      trySaying: '可以这样说：',
+      example1: '亲喂 15 分钟',
+      example2: '喝了 120 毫升奶粉',
+      example3: '换尿布 嘘嘘+臭臭',
+      example4: '睡了 40 分钟',
+      example5: '量体温 37.5 度',
+      example6: '洗澡',
+      example7: '喝了 60 毫升水',
+      example8: '宝宝体温37.2度，有点发烫',
+      example9: '吸奶一共80毫升母乳',
+      example10: '吃了D3和益生菌营养品'
+    };
+    const typeMap = {
+  '母乳': 'Breastfeeding', '配方奶': 'Bottle Feeding', '瓶喂母乳': 'Bottle Feeding',
+  '吸奶': 'Pumping', '营养品': 'Supplements', '辅食': 'Solid Food',
+  '喝水': 'Water', '换尿布': 'Diaper Change', '睡眠': 'Sleep',
+  '体温': 'Temperature', '洗澡': 'Bath Time'
+};
+    const hintMap = {
+      '母乳': 'Tap left/right to start/pause timer',
+      '配方奶': 'Fill in details and save',
+      '瓶喂母乳': 'Fill in details and save',
+      '吸奶': 'Enter left/right pumped amount, or time separately',
+      '营养品': 'Select multiple supplements',
+      '换尿布': 'Select wet/dirty status and save',
+      '睡眠': 'Timer or manual start/end, auto-calc duration',
+      '辅食': 'Enter food portion and save',
+      '喝水': 'Slide to set water amount',
+      '体温': 'Record baby temperature (°C)',
+      '洗澡': 'Record bath time and duration'
+    };
+    const weekMap = {
+  '周一': 'Mon', '周二': 'Tue', '周三': 'Wed', '周四': 'Thu',
+  '周五': 'Fri', '周六': 'Sat', '周日': 'Sun'
+};
+    this.setData({ i18n, lang: lang, typeMap: typeMap, hintMap: hintMap, weekMap: weekMap });
+
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       // 我的=记录页：第三项高亮
       this.getTabBar().setData({ selected: 2, hidden: (this._ovl || 0) > 0 });
@@ -600,7 +895,12 @@ Page({
       months -= 1;
       days += new Date(n.getFullYear(), n.getMonth(), 0).getDate();
     }
-    if (months < 1) return days + ' 天';
+    const en = (this.data && this.data.lang ? this.data.lang : (wx.getStorageSync('lang') || 'zh')) === 'en';
+    if (months < 1) return en ? (days + (days === 1 ? ' day' : ' days')) : (days + ' 天');
+    if (en) {
+      if (days === 0) return months + (months === 1 ? ' month' : ' months');
+      return months + (months === 1 ? ' month ' : ' months ') + days + (days === 1 ? ' day' : ' days');
+    }
     if (days === 0) return months + ' 个月';
     return months + ' 个月 ' + days + ' 天';
   },
@@ -618,9 +918,15 @@ Page({
 
   minutes(sec) {
     sec = Math.max(0, Math.round(sec || 0));
+    const en = this._tlEn();
     const h = Math.floor(sec / 3600);
     const m = Math.floor((sec % 3600) / 60);
     const s = sec % 60;
+    if (en) {
+      if (h > 0) return h + 'h ' + m + 'm' + (s ? ' ' + s + 's' : '');
+      if (m > 0) return m + 'm' + (s ? ' ' + s + 's' : '');
+      return s + 's';
+    }
     if (h > 0) return h + '小时' + m + '分' + s + '秒';
     if (m > 0) return m + '分' + s + '秒';
     return s + '秒';
@@ -629,8 +935,13 @@ Page({
   /* 时长显示到时/分（洗澡等不需精确到秒） */
   minutesHM(sec) {
     sec = Math.max(0, Math.round(sec || 0));
+    const en = this._tlEn();
     const h = Math.floor(sec / 3600);
     const m = Math.floor((sec % 3600) / 60);
+    if (en) {
+      if (h > 0) return h + 'h ' + m + 'm';
+      return m + 'm';
+    }
     if (h > 0) return h + '小时' + m + '分';
     return m + '分';
   },
@@ -1067,7 +1378,6 @@ Page({
   toggleCalendar() {
     this.setData({ calendarOpen: !this.data.calendarOpen });
   },
-
   goToday() {
     // 跳转到今天，折叠日历和展开日历都跳转到今天
     const today = new Date();
@@ -1186,7 +1496,33 @@ Page({
     this.clearTimers();
     const icons = { 母乳: '🍼', 配方奶: '🥛', 瓶喂母乳: '🥛', 吸奶: '🫗', 营养品: '💊', 睡眠: '🌙', 辅食: '🥄', 喝水: '💧', 换尿布: '🧷', 体温: '🌡️', 洗澡: '🛁' };
     const iconsImg = { 母乳: '/images/icons/rec-nursing.png', 配方奶: '/images/icons/rec-bottle.png', 瓶喂母乳: '/images/icons/rec-bottle.png', 吸奶: '/images/icons/rec-pump.png', 营养品: '/images/icons/rec-supplement.png', 睡眠: '/images/icons/rec-sleep.png', 辅食: '/images/icons/rec-food.png', 喝水: '/images/icons/rec-water.png', 换尿布: '/images/icons/rec-diaper.png' };
-    const hints = {
+    const lang = wx.getStorageSync('lang') || 'zh';
+    const typeMap = lang === 'en' ? {
+      '母乳': 'Breastfeeding',
+      '配方奶': 'Bottle Feeding',
+      '瓶喂母乳': 'Bottle Feeding',
+      '吸奶': 'Pumping',
+      '营养品': 'Supplements',
+      '换尿布': 'Diaper Change',
+      '睡眠': 'Sleep',
+      '辅食': 'Solid Food',
+      '喝水': 'Water',
+      '体温': 'Temperature',
+      '洗澡': 'Bath Time'
+    } : {};
+    const hints = lang === 'en' ? {
+      '母乳': 'Tap left/right to start/pause timer',
+      '配方奶': 'Fill in details and save',
+      '瓶喂母乳': 'Fill in details and save',
+      '吸奶': 'Enter left/right pumped amount, or time separately',
+      '营养品': 'Select multiple supplements',
+      '换尿布': 'Select wet/dirty status and save',
+      '睡眠': 'Timer or manual start/end, auto-calc duration',
+      '辅食': 'Enter food portion and save',
+      '喝水': 'Slide to set water amount',
+      '体温': 'Record baby temperature (°C)',
+      '洗澡': 'Record bath time and duration'
+    } : {
       母乳: '轻点左右一侧开始或暂停计时',
       配方奶: '补充完成后，保存本次记录',
       瓶喂母乳: '补充完成后，保存本次记录',
@@ -1199,6 +1535,33 @@ Page({
       体温: '记录宝宝体温（℃）',
       洗澡: '记录洗澡时间与时长'
     };
+    const displayType = typeMap[type] || type;
+    const titleMap = lang === 'en' ? {
+      '母乳': 'Record Breastfeeding',
+      '配方奶': 'Record Bottle Feeding',
+      '瓶喂母乳': 'Record Expressed Milk',
+      '吸奶': 'Record Pumping',
+      '营养品': 'Record Supplements',
+      '睡眠': 'Record Sleep',
+      '辅食': 'Record Solid Food',
+      '喝水': 'Record Water',
+      '换尿布': 'Record Diaper Change',
+      '体温': 'Record Temperature',
+      '洗澡': 'Record Bath Time'
+    } : {
+      '母乳': '记录母乳',
+      '配方奶': '记录配方奶',
+      '瓶喂母乳': '记录瓶喂母乳',
+      '吸奶': '记录吸奶',
+      '营养品': '记录营养品',
+      '睡眠': '记录睡眠',
+      '辅食': '记录辅食',
+      '喝水': '记录喝水',
+      '换尿布': '记录换尿布',
+      '体温': '记录体温',
+      '洗澡': '记录洗澡'
+    };
+    const recordTitle = titleMap[type] || ('记录' + type);
     const now = this.nowTime();
     // 辅食：重量默认上一次记录（新增时），名称不预设默认值
     let lastFood = null;
@@ -1711,8 +2074,10 @@ Page({
     if (ci < 0) return;
     const card = tl[ci];
     const metrics = (card.metrics || []).map(m => {
-      if (m.label === '时长') return Object.assign({}, m, { value: this.minutes(secs) });
-      if (m.label === '醒来' && card.sleepRunning) return Object.assign({}, m, { value: '计时中 ' + this.minutes(secs) });
+      const isDur = m.key ? m.key === 'dur' : m.label === '时长';
+      const isWake = m.key ? m.key === 'wake' : m.label === '醒来';
+      if (isDur) return Object.assign({}, m, { value: this.minutes(secs) });
+      if (isWake && card.sleepRunning) return Object.assign({}, m, { value: (this._tlEn() ? 'Timing ' : '计时中 ') + this.minutes(secs) });
       return m;
     });
     this.setData({ ['timeline[' + ci + '].metrics']: metrics });
@@ -2130,7 +2495,33 @@ Page({
     if (!rec) return;
     const icons = { 母乳: '🍼', 配方奶: '🥛', 瓶喂母乳: '🥛', 吸奶: '🫗', 营养品: '💊', 睡眠: '🌙', 辅食: '🥄', 喝水: '💧', 换尿布: '🧷', 体温: '🌡️', 洗澡: '🛁' };
     const iconsImg = { 母乳: '/images/icons/rec-nursing.png', 配方奶: '/images/icons/rec-bottle.png', 瓶喂母乳: '/images/icons/rec-bottle.png', 吸奶: '/images/icons/rec-pump.png', 营养品: '/images/icons/rec-supplement.png', 睡眠: '/images/icons/rec-sleep.png', 辅食: '/images/icons/rec-food.png', 喝水: '/images/icons/rec-water.png', 换尿布: '/images/icons/rec-diaper.png' };
-    const hints = {
+    const lang = wx.getStorageSync('lang') || 'zh';
+    const typeMap = lang === 'en' ? {
+      '母乳': 'Breastfeeding',
+      '配方奶': 'Bottle Feeding',
+      '瓶喂母乳': 'Bottle Feeding',
+      '吸奶': 'Pumping',
+      '营养品': 'Supplements',
+      '换尿布': 'Diaper Change',
+      '睡眠': 'Sleep',
+      '辅食': 'Solid Food',
+      '喝水': 'Water',
+      '体温': 'Temperature',
+      '洗澡': 'Bath Time'
+    } : {};
+    const hints = lang === 'en' ? {
+      '母乳': 'Tap left/right to start/pause timer',
+      '配方奶': 'Fill in details and save',
+      '瓶喂母乳': 'Fill in details and save',
+      '吸奶': 'Enter left/right pumped amount, or time separately',
+      '营养品': 'Select multiple supplements',
+      '换尿布': 'Select wet/dirty status and save',
+      '睡眠': 'Timer or manual start/end, auto-calc duration',
+      '辅食': 'Enter food portion and save',
+      '喝水': 'Slide to set water amount',
+      '体温': 'Record baby temperature (°C)',
+      '洗澡': 'Record bath time and duration'
+    } : {
       母乳: '轻点左右一侧开始或暂停计时',
       配方奶: '补充完成后，保存本次记录',
       瓶喂母乳: '补充完成后，保存本次记录',
@@ -2143,6 +2534,33 @@ Page({
       体温: '记录宝宝体温（℃）',
       洗澡: '记录洗澡时间与时长'
     };
+    const displayType = typeMap[type] || type;
+    const titleMap = lang === 'en' ? {
+      '母乳': 'Record Breastfeeding',
+      '配方奶': 'Record Bottle Feeding',
+      '瓶喂母乳': 'Record Expressed Milk',
+      '吸奶': 'Record Pumping',
+      '营养品': 'Record Supplements',
+      '睡眠': 'Record Sleep',
+      '辅食': 'Record Solid Food',
+      '喝水': 'Record Water',
+      '换尿布': 'Record Diaper Change',
+      '体温': 'Record Temperature',
+      '洗澡': 'Record Bath Time'
+    } : {
+      '母乳': '记录母乳',
+      '配方奶': '记录配方奶',
+      '瓶喂母乳': '记录瓶喂母乳',
+      '吸奶': '记录吸奶',
+      '营养品': '记录营养品',
+      '睡眠': '记录睡眠',
+      '辅食': '记录辅食',
+      '喝水': '记录喝水',
+      '换尿布': '记录换尿布',
+      '体温': '记录体温',
+      '洗澡': '记录洗澡'
+    };
+    const recordTitle = titleMap[type] || ('记录' + type);
     this.clearTimers();
     this.setData({
       record: {
@@ -2726,7 +3144,7 @@ Page({
       name: b.name || '未命名宝宝',
       avatar: b.avatar || '/images/brand-logo.png',
       birthday: b.birthday || '',
-      ageText: this.calcAge(b.birthday) || '待填写出生日期'
+      ageText: this.calcAge(b.birthday) || ((this.data.lang === 'en') ? 'Birthday not set' : '待填写出生日期')
     }));
     // 宝宝头像已删除，统一使用默认 logo
     const avatarSrc = '/images/brand-logo.png';
@@ -2806,7 +3224,7 @@ Page({
         name: b.name || '未命名宝宝',
         avatar: b.avatar || '/images/brand-logo.png',
         birthday: b.birthday || '',
-        ageText: this.calcAge(b.birthday) || '待填写出生日期',
+        ageText: this.calcAge(b.birthday) || ((this.data.lang === 'en') ? 'Birthday not set' : '待填写出生日期'),
         isShared: !!(b.ownerOpenid && b.ownerOpenid !== myOpenid)
       }));
     this.setData({

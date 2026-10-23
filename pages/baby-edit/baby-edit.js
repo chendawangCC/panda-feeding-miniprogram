@@ -26,6 +26,7 @@ Page({
     return { title: '熊宝喂养 · 宝宝档案' };
   },
   data: {
+    lang: 'zh',
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     isEdit: false,
     babyId: '',
@@ -34,14 +35,23 @@ Page({
     relations: ['妈妈', '爸爸', '奶奶', '姥姥', '爷爷'],
     deliveries: ['顺产', '剖宫产', '其他'],
     bloodTypes: ['A型', 'B型', 'AB型', 'O型', '未知'],
+    // 显示层英译（底层存储值仍为中文，逻辑判断不受影响）
+    genderMap: { '男宝宝': 'Boy', '女宝宝': 'Girl', '暂不填写': 'Not now' },
+    relationMap: { '妈妈': 'Mom', '爸爸': 'Dad', '奶奶': 'Grandma', '姥姥': 'Grandma (maternal)', '爷爷': 'Grandpa' },
+    deliveryMap: { '顺产': 'Natural', '剖宫产': 'C-section', '其他': 'Other' },
+    bloodMap: { 'A型': 'Type A', 'B型': 'Type B', 'AB型': 'Type AB', 'O型': 'Type O', '未知': 'Unknown', '待填写': 'Not set' },
+    bloodLabels: ['A型', 'B型', 'AB型', 'O型', '未知'],
   },
 
   onLoad(options) {
+    const lang = wx.getStorageSync('lang') || 'zh';
+    const bloodEn = ['Type A', 'Type B', 'Type AB', 'Type O', 'Unknown'];
+    this.setData({ lang: lang, bloodLabels: lang === 'en' ? bloodEn : ['A型', 'B型', 'AB型', 'O型', '未知'] });
     const isEdit = !!(options && options.id);
     if (isEdit) {
       const baby = (app.globalData.babies || []).find(b => b.id === options.id);
       if (!baby) {
-        wx.showToast({ title: '未找到该宝宝', icon: 'none' });
+        wx.showToast({ title: wx.getStorageSync('lang') === 'en' ? 'Baby not found' : '未找到该宝宝', icon: 'none' });
         setTimeout(() => wx.navigateBack(), 600);
         return;
       }
@@ -74,9 +84,9 @@ Page({
   /* 增加自定义角色 */
   addRelation() {
     wx.showModal({
-      title: '新增角色',
+      title: this.data.lang === 'en' ? 'Add Role' : '新增角色',
       editable: true,
-      placeholderText: '请输入角色，如：阿姨、姑姑',
+      placeholderText: this.data.lang === 'en' ? 'e.g. Aunt, Sister' : '请输入角色，如：阿姨、姑姑',
       success: (res) => {
         if (!res.confirm || !res.content) return;
         const name = res.content.trim();
@@ -105,25 +115,25 @@ Page({
 
   save() {
     if (!perm.canEdit('profile', this.data.babyId)) {
-      wx.showToast({ title: '当前账号仅有查看权限，无法修改档案', icon: 'none' });
+      wx.showToast({ title: this.data.lang === 'en' ? 'View-only account cannot edit' : '当前账号仅有查看权限，无法修改档案', icon: 'none' });
       return;
     }
     const f = this.data.form;
     // 必填：小名 / 性别 / 出生日期 / 关系；生产方式等其余选填
     if (!f.name) {
-      wx.showToast({ title: '请填写宝宝小名', icon: 'none' });
+      wx.showToast({ title: this.data.lang === 'en' ? 'Please enter baby nickname' : '请填写宝宝小名', icon: 'none' });
       return;
     }
     if (!f.gender || f.gender === '暂不填写') {
-      wx.showToast({ title: '请选择宝宝性别', icon: 'none' });
+      wx.showToast({ title: this.data.lang === 'en' ? 'Please select gender' : '请选择宝宝性别', icon: 'none' });
       return;
     }
     if (!f.birthday) {
-      wx.showToast({ title: '请选择宝宝出生日期', icon: 'none' });
+      wx.showToast({ title: this.data.lang === 'en' ? 'Please select birthday' : '请选择宝宝出生日期', icon: 'none' });
       return;
     }
     if (!f.relation) {
-      wx.showToast({ title: '请选择我是宝宝的', icon: 'none' });
+      wx.showToast({ title: this.data.lang === 'en' ? 'Please select your role' : '请选择我是宝宝的', icon: 'none' });
       return;
     }
     const profile = {
@@ -140,13 +150,13 @@ Page({
       // 头像独立 key 双保险（主包写入可能因总量超限失败，独立 key 永不失败）
       if (f.avatar) { try { wx.setStorageSync('panda_avatar_' + this.data.babyId, f.avatar); } catch (e) {} }
       if (app.loadAvatars) app.loadAvatars();
-      wx.showToast({ title: '宝宝信息已更新', icon: 'none' });
+      wx.showToast({ title: this.data.lang === 'en' ? 'Baby info updated' : '宝宝信息已更新', icon: 'none' });
     } else {
       const p = app.addBaby(profile, true);
       this.syncBirthMeasure(p && p.id);
       if (p && p.id && f.avatar) { try { wx.setStorageSync('panda_avatar_' + p.id, f.avatar); } catch (e) {} }
       if (app.loadAvatars) app.loadAvatars();
-      wx.showToast({ title: '宝宝档案已创建', icon: 'none' });
+      wx.showToast({ title: this.data.lang === 'en' ? 'Baby profile created' : '宝宝档案已创建', icon: 'none' });
     }
     // 同步头像/信息：立即刷新页面栈中展示宝宝头像的页面（我的宝贝 / 成长档案等），返回即见最新头像
     try {
@@ -197,17 +207,18 @@ Page({
 
   /* 移除宝宝：确认后删除真实数据 */
   removeBaby() {
-    const name = this.data.form.name || '该宝宝';
+    const en = this.data.lang === 'en';
+    const name = this.data.form.name || (en ? 'this baby' : '该宝宝');
     wx.showModal({
-      title: '移除宝宝',
-      content: '确定移除「' + name + '」吗？该宝宝的记录等数据将一并删除，且无法恢复。',
-      confirmText: '移除',
+      title: en ? 'Remove Baby' : '移除宝宝',
+      content: en ? ('Remove "' + name + '"? All records of this baby will be deleted permanently.') : ('确定移除「' + name + '」吗？该宝宝的记录等数据将一并删除，且无法恢复。'),
+      confirmText: en ? 'Remove' : '移除',
       confirmColor: '#e0554e',
-      cancelText: '取消',
+      cancelText: en ? 'Cancel' : '取消',
       success: (res) => {
         if (!res.confirm) return;
         app.removeBaby(this.data.babyId);
-        wx.showToast({ title: '已删除该宝宝档案', icon: 'none' });
+        wx.showToast({ title: en ? 'Baby profile deleted' : '已删除该宝宝档案', icon: 'none' });
         setTimeout(() => wx.navigateBack(), 700);
       }
     });

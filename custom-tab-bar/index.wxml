@@ -7,7 +7,7 @@
     <view class="tab-icon {{selected === 0 ? 'active' : ''}}">
       <image class="tab-ico {{selected === 0 ? 'active' : ''}}" src="{{selected === 0 ? '/images/icons/tab-home-active.png' : '/images/icons/tab-home.png'}}" mode="aspectFit" />
     </view>
-    <text class="tab-label {{selected === 0 ? 'active' : ''}}">首页</text>
+    <text class="tab-label {{selected === 0 ? 'active' : ''}}">{{homeLabel}}</text>
   </view>
 
   <view
@@ -26,6 +26,6 @@
     <view class="tab-icon {{selected === 2 ? 'active' : ''}}">
       <image class="tab-ico {{selected === 2 ? 'active' : ''}}" src="{{selected === 2 ? '/images/icons/tab-mine-active.png' : '/images/icons/tab-mine.png'}}" mode="aspectFit" />
     </view>
-    <text class="tab-label {{selected === 2 ? 'active' : ''}}">我的</text>
+    <text class="tab-label {{selected === 2 ? 'active' : ''}}">{{meLabel}}</text>
   </view>
 </view>
