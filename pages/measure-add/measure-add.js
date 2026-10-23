@@ -18,9 +18,17 @@ Page({
     const today = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
     const baby = app.globalData.baby || {};
     // 编辑模式：回填已有测量记录（idx 由成长档案页传入）
-    let idx = -1, time = '';
-    if (options && options.idx !== undefined) {
-      idx = Number(options.idx);
+    let idx = -1;
+    // 优先用稳定 key 定位记录：成长档案列表按日期排序，显示序号不等于存储下标
+    if (options && options.key) {
+      let key = String(options.key);
+      try { key = decodeURIComponent(key); } catch (e) {}
+      const list = app.globalData.measures || [];
+      const found = list.findIndex(m => String(m._cid || m._u || (String(m.date || '') + '-' + String(m.time || ''))) === key);
+      if (found >= 0) idx = found;
+    }
+    if (idx < 0 && options && options.idx !== undefined) idx = Number(options.idx);
+    if (idx >= 0) {
       const rec = (app.globalData.measures || [])[idx];
       if (rec) {
         this.setData({ date: rec.date || today, time: rec.time || '', height: rec.height ? String(rec.height) : '', weight: rec.weight ? String(rec.weight) : '', head: rec.head ? String(rec.head) : '' });
@@ -41,7 +49,7 @@ Page({
       phWeight = '参考 ' + f1(w[0]) + '~' + f1(w[2]) + 'kg';
       phHead = '参考 ' + f1(hc[0]) + '~' + f1(hc[2]) + 'cm';
     }
-    this.setData({ baby, idx, time, date: this.data.date || today, refText, phHeight, phWeight, phHead });
+    this.setData({ baby, idx, date: this.data.date || today, refText, phHeight, phWeight, phHead });
   },
 
   monthAge(birthday, dateStr) {
@@ -85,11 +93,18 @@ Page({
     const measures = (g.measures || []).slice();
     const rec = { date: d.date, time: d.time || '', height: height || 0, weight: weight || 0, head: head || 0, _u: Date.now() };
     if (d.idx >= 0 && d.idx < measures.length) {
+      // 编辑时保留云端 _cid，避免同步时被当作新记录重复写入
+      const old = measures[d.idx] || {};
+      if (old._cid) rec._cid = old._cid;
       measures[d.idx] = rec;
     } else {
       measures.push(rec);
     }
-    measures.sort((a, b) => (a.date < b.date ? -1 : 1));
+    measures.sort((a, b) => {
+      const ka = String(a.date || '') + ' ' + String(a.time || '');
+      const kb = String(b.date || '') + ' ' + String(b.time || '');
+      return ka < kb ? -1 : (ka > kb ? 1 : 0);
+    });
     g.measures = measures;
     app.saveBabyData();
     wx.showToast({ title: '测量已保存', icon: 'none' });

@@ -213,6 +213,14 @@
   align-items: center;
   justify-content: center;
   font-size: 34rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+/* 图标必须限制在 72rpx 圆角框内，避免默认尺寸溢出相邻卡片导致误触 */
+.tool-ico {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 .tool-title {
   display: block;

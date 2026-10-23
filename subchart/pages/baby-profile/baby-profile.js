@@ -194,10 +194,7 @@ Page({
   /* ec-canvas 就绪后初始化 ECharts 生长曲线 */
   onReady() {
     setTimeout(() => {
-      const comp = this.selectComponent('#curveEc');
-      if (comp && comp.init) {
-        comp.init((canvas, width, height, dpr) => this.initCurveChart(canvas, width, height, dpr));
-      }
+      this.initCurveWithRetry(0);
       // 从提醒入口带 focus=vaccine 进来时，滚动定位到疫苗模块
       if (this._focus === 'vaccine') {
         wx.createSelectorQuery().in(this).select('#vaccine-section')
@@ -211,6 +208,18 @@ Page({
   onLoad(options) {
     // 从疫苗提醒等入口跳转过来时，滚动定位到疫苗模块
     this._focus = options && options.focus;
+  },
+
+  /* ec-canvas 组件可能晚于 onReady 就绪：最多重试 5 次，避免曲线空白 */
+  initCurveWithRetry(tryCount) {
+    const comp = this.selectComponent('#curveEc');
+    if (comp && comp.init) {
+      comp.init((canvas, width, height, dpr) => this.initCurveChart(canvas, width, height, dpr));
+      return;
+    }
+    if (tryCount < 5) {
+      setTimeout(() => this.initCurveWithRetry(tryCount + 1), 200);
+    }
   },
 
   onUnload() {
@@ -245,17 +254,36 @@ Page({
     }
     const g = app.globalData;
     const baby = (g.babies || []).find(b => b.id === g.currentBabyId) || g.baby || {};
-    const measures = (g.measures || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1));
+    const measures = (g.measures || []).slice().sort((a, b) => {
+      const ka = String(a.date || '') + ' ' + String(a.time || '');
+      const kb = String(b.date || '') + ' ' + String(b.time || '');
+      return ka < kb ? -1 : (ka > kb ? 1 : 0);
+    });
     const latest = measures.length ? measures[measures.length - 1] : null;
     const prev = measures.length > 1 ? measures[measures.length - 2] : null;
     const en = (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en';
     let deltaText = '';
     if (latest) {
       if (prev) {
-        const d = latest.height - prev.height;
-        deltaText = en
-          ? ('Grew ' + (d >= 0 ? d.toFixed(1) : (-d).toFixed(1)) + ' cm this time')
-          : ('这一次，长高了 ' + (d >= 0 ? d.toFixed(1) : (-d).toFixed(1)) + ' cm');
+        // 只有两次都填写的指标才能算差值，避免缺项被当成 0
+        const goal = [
+          { key: 'height', zh: '身高', en: 'Height', unit: 'cm' },
+          { key: 'weight', zh: '体重', en: 'Weight', unit: 'kg' },
+          { key: 'head', zh: '头围', en: 'Head', unit: 'cm' }
+        ].find(x => Number(latest[x.key]) > 0 && Number(prev[x.key]) > 0);
+        if (goal) {
+          const d = Number(latest[goal.key]) - Number(prev[goal.key]);
+          const av = Math.abs(d).toFixed(1);
+          if (Math.abs(d) < 0.05) {
+            deltaText = en ? (goal.en + ' unchanged vs last record') : (goal.zh + '与上次持平');
+          } else {
+            deltaText = en
+              ? (goal.en + ' ' + (d > 0 ? '+' : '-') + av + ' ' + goal.unit + ' vs last record')
+              : (goal.zh + '较上次' + (d > 0 ? '增加 ' : '减少 ') + av + goal.unit);
+          }
+        } else {
+          deltaText = en ? 'Measurement saved' : '已记录本次测量';
+        }
       } else {
         deltaText = en ? "Baby's very first measurement" : '这是宝宝的第一次测量';
       }
@@ -275,8 +303,16 @@ Page({
       hasBaby: !!(baby && baby.id && (baby.name || baby.birthday)),
       isShared,
       ageText: calcAge(baby.birthday, en ? 'en' : 'zh'),
-      latest: latest ? { height: latest.height, weight: latest.weight, head: latest.head } : { height: 0, weight: 0, head: 0 },
-      measureList: measures.slice().reverse().map((m, i) => ({ idx: measures.length - 1 - i, date: m.date, time: m.time || '', height: m.height, weight: m.weight, head: m.head })),
+      latest: {
+        height: latest && Number(latest.height) > 0 ? latest.height : '--',
+        weight: latest && Number(latest.weight) > 0 ? latest.weight : '--',
+        head: latest && Number(latest.head) > 0 ? latest.head : '--'
+      },
+      measureList: measures.slice().reverse().map((m, i) => ({
+        idx: measures.length - 1 - i,
+        key: m._cid || m._u || (String(m.date || '') + '-' + String(m.time || '')),
+        date: m.date, time: m.time || '', height: m.height, weight: m.weight, head: m.head
+      })),
       deltaText,
       curve: this.buildCurve(measures, baby.birthday),
       curveNote: this.curveNoteText(baby.gender, this.data.curveMode),
@@ -295,11 +331,12 @@ Page({
     this._curveSelected = null; // 清除选中查看
     const g = app.globalData;
     const measures = (g.measures || []).slice();
-    const birthday = (g.baby || {}).birthday;
+    // 亲友切换到的共享宝宝可能不是 g.baby，优先按 currentBabyId 取当前宝宝
+    const cur = (g.babies || []).find(b => b.id === g.currentBabyId) || g.baby || {};
     this.setData({
       curveMode: mode,
-      curve: this.buildCurveFor(measures, birthday, mode),
-      curveNote: this.curveNoteText((g.baby || {}).gender, mode)
+      curve: this.buildCurveFor(measures, cur.birthday, mode),
+      curveNote: this.curveNoteText(cur.gender, mode)
     }, () => this.drawCurve());
   },
 
@@ -315,9 +352,9 @@ Page({
   curveNoteText(gender, mode) {
     const tab = CURVE_TABS.find(t => t.key === mode) || CURVE_TABS[0];
     if (this._en()) {
-      return 'WHO ' + (gender === '女宝宝' ? 'girls' : 'boys') + ' ' + String(tab.labelEn).toLowerCase() + ' reference · grey band is the normal range (±2SD)';
+      return 'WHO ' + (gender === '女宝宝' ? 'girls' : 'boys') + ' ' + String(tab.labelEn).toLowerCase() + ' reference · dashed lines mark ±2SD';
     }
-    return 'WHO ' + (gender === '女宝宝' ? '女童' : '男童') + tab.label + '参考曲线 · 灰色区间为正常范围（±2SD）';
+    return 'WHO ' + (gender === '女宝宝' ? '女童' : '男童') + tab.label + '参考曲线 · 灰色虚线为正常范围上下限（±2SD）';
   },
 
   /* 生长曲线：按当前指标生成点（月龄 + 测量值） */
@@ -327,9 +364,11 @@ Page({
 
   monthAge(birthday, dateStr) {
     if (!birthday) return 0;
-    const b = String(birthday).split('-').map(Number);
-    const d = String(dateStr).split('-').map(Number);
-    return Math.max(0, (d[0] - b[0]) * 12 + (d[1] - b[1]));
+    const b = new Date(String(birthday).replace(/-/g, '/'));
+    const d = new Date(String(dateStr).replace(/-/g, '/'));
+    if (isNaN(b.getTime()) || isNaN(d.getTime())) return 0;
+    const days = (d.getTime() - b.getTime()) / 86400000;
+    return Math.max(0, Math.round((days / 30.4375) * 100) / 100);
   },
 
   /* 生长曲线（ECharts）：横轴月龄(0~24+)，纵轴当前指标，灰色 WHO 参考带(±2SD) + 中位数线，宝宝数据彩色叠加
@@ -372,12 +411,14 @@ Page({
           if (!params || !params.length) return '';
           const axis = params[0].axisValue;
           const baby = params.find(p => p.seriesName && (en ? p.seriesName.indexOf('Baby') === 0 : p.seriesName.indexOf('宝宝') === 0));
-          const lines = [en ? ('Age: ' + axis + ' mo') : ('月龄：' + axis + '月')];
+          const moTxt = String(Math.round(axisNum * 10) / 10);
+          const lines = [en ? ('Age: ' + moTxt + ' mo') : ('月龄：' + moTxt + ' 月')];
           if (baby && baby.value !== null && baby.value !== undefined) {
             const v = Array.isArray(baby.value) ? baby.value[1] : baby.value;
             lines.push(en ? (baby.seriesName + ': ' + v + tab.unit) : (baby.seriesName + '：' + v + tab.unit));
           }
-          const pt = curve.find(p => p.month === Number(axis));
+          const axisNum = Number(axis);
+          const pt = curve.find(p => Math.abs(p.month - axisNum) < 0.02);
           if (pt && pt.date) lines.push(en ? ('Measured on: ' + pt.date) : ('测量日期：' + pt.date));
           return lines.join('\n');
         }
@@ -671,7 +712,17 @@ Page({
   },
 
   closeBabySwitcher() {
-    this.setData({ babySwitchVisible: false });
+    this.setData({ babySwitchVisible: false }, () => {
+      setTimeout(() => this.redrawCurve(), 60);
+    });
+  },
+  /* 画布从 hidden 恢复或容器尺寸变化后重绘，避免曲线空白 */
+  redrawCurve() {
+    if (!this._curveChart) return;
+    try {
+      this._curveChart.resize();
+      this._curveChart.setOption(this.buildCurveOption(), true);
+    } catch (e) {}
   },
 
   selectBaby(e) {
@@ -708,8 +759,10 @@ Page({
 
   /* 编辑/查看某条测量记录（独立页面编辑模式） */
   openMeasureEdit(e) {
-    const idx = e.currentTarget.dataset.idx;
-    wx.navigateTo({ url: '/pages/measure-add/measure-add?idx=' + idx });
+    const ds = e.currentTarget.dataset || {};
+    const key = ds.key ? String(ds.key) : '';
+    // 用稳定 key 定位记录：列表按日期排序，不能把显示序号直接当成存储下标
+    wx.navigateTo({ url: '/pages/measure-add/measure-add?key=' + encodeURIComponent(key) + '&idx=' + (ds.idx === undefined ? -1 : ds.idx) });
   },
 
   /* ==================== 添加测量（独立页面） ==================== */

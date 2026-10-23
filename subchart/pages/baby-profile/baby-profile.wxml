@@ -44,15 +44,15 @@
   <view class="measure-cards">
     <view class="measure-card">
       <text class="measure-label">{{lang === 'en' ? 'Height' : '身高'}}</text>
-      <view class="measure-value"><text class="measure-num">{{latest.height}}</text><text class="measure-unit">cm</text></view>
+      <view class="measure-value"><text class="measure-num">{{latest.height}}</text><text class="measure-unit" wx:if="{{latest.height !== '--'}}">cm</text></view>
     </view>
     <view class="measure-card">
       <text class="measure-label">{{lang === 'en' ? 'Weight' : '体重'}}</text>
-      <view class="measure-value"><text class="measure-num">{{latest.weight}}</text><text class="measure-unit">kg</text></view>
+      <view class="measure-value"><text class="measure-num">{{latest.weight}}</text><text class="measure-unit" wx:if="{{latest.weight !== '--'}}">kg</text></view>
     </view>
     <view class="measure-card">
       <text class="measure-label">{{lang === 'en' ? 'Head' : '头围'}}</text>
-      <view class="measure-value"><text class="measure-num">{{latest.head}}</text><text class="measure-unit">cm</text></view>
+      <view class="measure-value"><text class="measure-num">{{latest.head}}</text><text class="measure-unit" wx:if="{{latest.head !== '--'}}">cm</text></view>
     </view>
   </view>
 
@@ -60,7 +60,7 @@
   <view class="latest-card">
     <view class="latest-top">
       <view>
-        <text class="latest-label">LATEST MEASURE</text>
+        <text class="latest-label">{{lang === 'en' ? 'LATEST MEASURE' : '最新测量'}}</text>
         <view class="latest-text">{{deltaText}}</view>
       </view>
       <view class="latest-add" bindtap="addMeasure">＋</view>
@@ -73,7 +73,7 @@
       <text class="ml-title">{{lang === 'en' ? 'Measurements' : '测量记录'}}</text>
       <text class="ml-count" wx:if="{{measureList.length}}">{{lang === 'en' ? (measureList.length + ' in total') : ('共 ' + measureList.length + ' 条')}}</text>
     </view>
-    <view class="ml-item" wx:for="{{measureList}}" wx:key="idx" data-idx="{{item.idx}}" bindtap="openMeasureEdit">
+    <view class="ml-item" wx:for="{{measureList}}" wx:key="key" data-key="{{item.key}}" data-idx="{{item.idx}}" bindtap="openMeasureEdit">
       <view class="ml-left">
         <text class="ml-date">{{item.date}}<text wx:if="{{item.time}}" class="ml-time">{{item.time}}</text></text>
         <view class="ml-vals">
@@ -88,7 +88,7 @@
   </view>
 
   <!-- 生长曲线 -->
-  <view class="curve-card {{measureDialog.visible ? 'curve-under-sheet' : ''}}">
+  <view class="curve-card">
     <view class="curve-head">
       <text class="curve-title">{{lang === 'en' ? 'Baby’s Growth Curve' : '宝宝的生长曲线'}}</text>
       <text class="curve-who">{{lang === 'en' ? 'WHO Standard' : 'WHO标准'}}</text>
@@ -217,7 +217,7 @@
   </dialog>
 
   <!-- 自定义日期选择器 -->
-  <picker-sheet visible="{{showMeasureDatePicker}}" mode="date" value="{{measureDialog.date}}" bind:confirm="onMeasureDate" bind:close="closeMeasureDatePicker" />
+
 
   <!-- 疫苗接种日期选择器 -->
   <picker-sheet visible="{{showVaccineDatePicker}}" mode="date" value="{{vaccineDoneDateTarget ? vaccineDoneDateTarget.date : ''}}" bind:confirm="onVaccineDateChange" bind:close="closeVaccineDatePicker" />
