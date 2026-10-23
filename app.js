@@ -745,54 +745,62 @@ App({
     } catch (e) {}
   },
 
-  /* 移除宝宝：档案与独立数据一并删除；若删的是当前宝宝则自动切换到剩余第一个 */
+  /* 移除宝宝：先确认云端删除成功，再删除本地；避免重新登录后从云端复活 */
   removeBaby(babyId) {
-    const i = this.globalData.babies.findIndex(b => b.id === babyId);
-    if (i < 0) return false;
-    this.globalData.babies.splice(i, 1);
-    wx.removeStorageSync(BABY_KEY + babyId);
-    if (babyId === this.globalData.currentBabyId) {
-      if (this.globalData.babies.length) {
-        this.globalData.currentBabyId = this.globalData.babies[0].id;
-        this.loadBabyData(this.globalData.currentBabyId);
-      } else {
-        // 最后一个宝宝也被移除：默认无宝宝（空状态）
-        this.globalData.babies = [];
-        this.globalData.currentBabyId = '';
-        this.globalData.records = [];
-        this.globalData.diaperStock = 0;
-        this.globalData.supplies = { milk: 0, milkFeeds: 0, d3Days: 0 };
-        this.globalData.vaccine = {};
-        this.globalData.vaccinePlan = [];
-        this.globalData.stockItems = [];
-        this.globalData.shelfWarnings = [];
-        this.globalData.measures = [];
-        this.globalData.vaccineDone = [];
-      }
-    }
-    wx.setStorageSync(STORAGE_KEY, this.packShared());
-    // 后端：彻底删除该宝宝云端数据（异步静默）
-    try {
-      if (cloudData.cloudReady()) {
-        const u = this.globalData.user || {};
-        if (u.logged || u.openid) {
-          cloudData.getOpenid().then(() => {
-            wx.cloud.callFunction({ name: 'cloudData', data: { action: 'wipe', babyId } }).then(r => {
-              if (r.result && r.result.code === 0) {
-                console.log('[removeBaby] wipe success babyId=', babyId);
-              } else {
-                console.log('[removeBaby] wipe fail', r.result);
-                wx.showToast({ title: '云端删除失败，已删除本地', icon: 'none' });
-              }
-            }).catch(e => {
-              console.log('[removeBaby] wipe error', e);
-              wx.showToast({ title: '网络错误，云端未删除', icon: 'none' });
-            });
-          }).catch(() => {});
+    const removeLocal = () => {
+      const i = this.globalData.babies.findIndex(b => b.id === babyId);
+      if (i < 0) return false;
+      this.globalData.babies.splice(i, 1);
+      wx.removeStorageSync(BABY_KEY + babyId);
+      wx.removeStorageSync('panda_avatar_' + babyId);
+      if (babyId === this.globalData.currentBabyId) {
+        if (this.globalData.babies.length) {
+          this.globalData.currentBabyId = this.globalData.babies[0].id;
+          this.loadBabyData(this.globalData.currentBabyId);
+        } else {
+          // 最后一个宝宝也被移除：默认无宝宝（空状态）
+          this.globalData.babies = [];
+          this.globalData.currentBabyId = '';
+          this.globalData.records = [];
+          this.globalData.diaperStock = 0;
+          this.globalData.supplies = { milk: 0, milkFeeds: 0, d3Days: 0 };
+          this.globalData.vaccine = {};
+          this.globalData.vaccinePlan = [];
+          this.globalData.stockItems = [];
+          this.globalData.shelfWarnings = [];
+          this.globalData.measures = [];
+          this.globalData.vaccineDone = [];
         }
       }
-    } catch (e) {}
-    return true;
+      wx.setStorageSync(STORAGE_KEY, this.packShared());
+      return true;
+    };
+
+    let canCloud = false;
+    try { canCloud = !!cloudData.cloudReady(); } catch (e) {}
+    const u = this.globalData.user || {};
+    if (!canCloud || (!u.logged && !u.openid)) return Promise.resolve(removeLocal());
+
+    return cloudData.getOpenid().then(() => new Promise(resolve => {
+      wx.cloud.callFunction({ name: 'cloudData', data: { action: 'wipe', babyId } }).then(r => {
+        if (r.result && r.result.code === 0) {
+          console.log('[removeBaby] wipe success babyId=', babyId);
+          resolve(removeLocal());
+        } else {
+          console.log('[removeBaby] wipe fail', r.result);
+          wx.showToast({ title: wx.getStorageSync('lang') === 'en' ? 'Cloud deletion failed; baby kept' : '云端删除失败，宝宝未移除', icon: 'none' });
+          resolve(false);
+        }
+      }).catch(e => {
+        console.log('[removeBaby] wipe error', e);
+        wx.showToast({ title: wx.getStorageSync('lang') === 'en' ? 'Network error; baby kept' : '网络错误，宝宝未移除', icon: 'none' });
+        resolve(false);
+      });
+    })).catch(e => {
+      console.log('[removeBaby] getOpenid error', e);
+      wx.showToast({ title: wx.getStorageSync('lang') === 'en' ? 'Network error; baby kept' : '网络错误，宝宝未移除', icon: 'none' });
+      return false;
+    });
   },
 
   getCurrentBaby() {

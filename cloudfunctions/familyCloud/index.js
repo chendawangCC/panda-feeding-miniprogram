@@ -504,6 +504,32 @@ exports.main = async (event) => {
         const r = await db.collection(FAM).doc(familyId).get().catch(() => null);
         if (!r || !r.data) return fail('家庭不存在');
         if (!pickMember(r.data, openid)) return fail('你不在该家庭中');
+        // 过滤掉已经被创建者删除、但亲友设备本地仍残留的宝宝，避免家庭数据包把它复活
+        const famOwner = r.data.ownerOpenid || '';
+        const live = {};
+        const hasBabyList = Array.isArray(data.babies);
+        if (hasBabyList) {
+          const kept = [];
+          for (const b of data.babies) {
+            if (!b || !b.id) continue;
+            let okBaby = true;
+            try {
+              const br = await db.collection('panda_babies').doc(b.id).get();
+              const baby = br && br.data;
+              const owner = baby && (baby.ownerOpenid || (baby.data && baby.data.ownerOpenid));
+              if (!baby || (owner && famOwner && owner !== famOwner)) okBaby = false;
+            } catch (e) { /* 查询失败时保守保留，避免误删成员数据 */ }
+            if (okBaby) { kept.push(b); live[b.id] = 1; }
+          }
+          data.babies = kept;
+        }
+        if (data.babiesData && typeof data.babiesData === 'object') {
+          const bd = {};
+          Object.keys(data.babiesData).forEach(k => {
+            if (!hasBabyList || live[k]) bd[k] = data.babiesData[k];
+          });
+          data.babiesData = bd;
+        }
         // 兼容旧嵌套结构：r.data.data 可能是 { data: 数据包, updatedAt } 或直接就是数据包
         const oldData = (r.data.data && r.data.data.data) ? r.data.data.data : (r.data.data || {});
         const cur = oldData || { version: 0 };

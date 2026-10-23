@@ -461,11 +461,12 @@ function mergeInto(app, data) {
       (g.myFamilies && g.myFamilies.length));
     const pick = (kind) => (data[kind] || []).filter(d => {
       if (!d) return false;
-      if (d.babyId) {
-        // 新数据按 babyId 匹配
-        if (d.babyId !== bid) return false;
+      const dataBabyId = d.babyId || (d.data && d.data.babyId);
+      if (dataBabyId) {
+        // 新数据按 babyId 匹配；旧文档若把 babyId 放在 data 里也要识别，避免串到其他宝宝
+        if (dataBabyId !== bid) return false;
       } else {
-        // 旧数据无 babyId → 归到第一个宝宝
+        // 旧数据确实没有 babyId → 归到第一个宝宝
         if (bid !== firstBid) return false;
       }
       // 未加入家庭时，只保留自己记录的内容

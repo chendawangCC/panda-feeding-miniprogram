@@ -456,10 +456,40 @@ async function doWipe(openid, babyId) {
     return fail('宝宝不存在');
   }
   for (const coll of [COLLS.records, COLLS.inventory, COLLS.measures, COLLS.vaccines, COLLS.tombs, COLLS.metas, COLLS.babies]) {
-    const docs = await getColl(coll, { babyId });
-    await removeMany(coll, docs.map(d => d._id));
+    // 除了 babyId 字段，还按 _id（babyId_cid / babyId）兜底清理旧数据，
+    // 避免旧版没有 babyId 的记录在重新登录后被归到另一个宝宝。
+    const docs = await getColl(coll, { _id: _.exists(true) }).catch(() => []);
+    const ids = (docs || []).filter(d => {
+      if (!d || !d._id) return false;
+      if (d._id === babyId || d.babyId === babyId) return true;
+      if (String(d._id).indexOf(babyId + '_') === 0) return true;
+      if (d.data && d.data.babyId === babyId) return true;
+      return false;
+    }).map(d => d._id);
+    await removeMany(coll, ids);
   }
   await db.collection(COLLS.babies).doc(babyId).remove().catch(() => {});
+
+  // 清理 familyCloud 旧数据包中缓存的该宝宝，避免 cloudData 拉取失败时
+  // 从家庭数据包降级恢复出已删除的宝宝。
+  const fams = await getColl('panda_families', { _id: _.exists(true) }).catch(() => []);
+  for (const f of (fams || [])) {
+    if (!f || !f._id || !f.data) continue;
+    const pkg = f.data;
+    let changed = false;
+    const next = Object.assign({}, pkg);
+    if (Array.isArray(pkg.babies)) {
+      const babies = pkg.babies.filter(b => !b || b.id !== babyId);
+      if (babies.length !== pkg.babies.length) { next.babies = babies; changed = true; }
+    }
+    if (pkg.babiesData && Object.prototype.hasOwnProperty.call(pkg.babiesData, babyId)) {
+      const babiesData = Object.assign({}, pkg.babiesData);
+      delete babiesData[babyId];
+      next.babiesData = babiesData;
+      changed = true;
+    }
+    if (changed) await db.collection('panda_families').doc(f._id).update({ data: { data: next } }).catch(() => {});
+  }
   console.log('[doWipe] success babyId=', babyId, 'babyOwner=', babyOwner);
   return ok({ wiped: babyId });
 }

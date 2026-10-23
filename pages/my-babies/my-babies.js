@@ -161,16 +161,23 @@ Page({
   removeBaby(e) {
     const id = e.currentTarget.dataset.id;
     const b = (app.globalData.babies || []).find(x => x.id === id);
+    const en = this.data.lang === 'en';
+    const name = (b && b.name) || (en ? 'this baby' : '该宝宝');
     wx.showModal({
-      title: '移除宝宝',
-      content: '确定移除「' + (b && b.name || '') + '」吗？该宝宝的记录等数据将一并删除，且无法恢复。',
-      confirmText: '移除',
+      title: en ? 'Remove Baby' : '移除宝宝',
+      content: en ? ('Remove "' + name + '"? All records of this baby will be deleted permanently.') : ('确定移除「' + name + '」吗？该宝宝的记录等数据将一并删除，且无法恢复。'),
+      confirmText: en ? 'Remove' : '移除',
+      cancelText: en ? 'Cancel' : '取消',
       confirmColor: '#d9534f',
       success: (res) => {
         if (!res.confirm) return;
-        app.removeBaby(id);
-        this.refresh();
-        wx.showToast({ title: '已移除', icon: 'none' });
+        wx.showLoading({ title: en ? 'Deleting...' : '正在删除...', mask: true });
+        app.removeBaby(id).then(ok => {
+          wx.hideLoading();
+          if (!ok) return;
+          this.refresh();
+          wx.showToast({ title: en ? 'Removed' : '已移除', icon: 'none' });
+        }).catch(() => { wx.hideLoading(); });
       }
     });
   }

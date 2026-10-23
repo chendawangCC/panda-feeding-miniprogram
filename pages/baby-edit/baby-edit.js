@@ -217,9 +217,13 @@ Page({
       cancelText: en ? 'Cancel' : '取消',
       success: (res) => {
         if (!res.confirm) return;
-        app.removeBaby(this.data.babyId);
-        wx.showToast({ title: en ? 'Baby profile deleted' : '已删除该宝宝档案', icon: 'none' });
-        setTimeout(() => wx.navigateBack(), 700);
+        wx.showLoading({ title: en ? 'Deleting...' : '正在删除...', mask: true });
+        app.removeBaby(this.data.babyId).then(ok => {
+          wx.hideLoading();
+          if (!ok) return;
+          wx.showToast({ title: en ? 'Baby profile deleted' : '已删除该宝宝档案', icon: 'none' });
+          setTimeout(() => wx.navigateBack(), 700);
+        }).catch(() => { wx.hideLoading(); });
       }
     });
   }
