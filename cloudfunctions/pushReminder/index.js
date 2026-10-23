@@ -238,11 +238,22 @@ async function collectReminders(openid, familyId) {
   const metas = [];
   const records = [];
   const inventory = [];
+  const seenBaby = {};
   for (const owner of owners) {
-    babies.push(...(await safeGet(BABIES, { ownerOpenid: owner })));
-    metas.push(...(await safeGet(METAS, { ownerOpenid: owner })));
-    records.push(...(await safeGet(RECORDS, { ownerOpenid: owner })));
-    inventory.push(...(await safeGet(INVENTORY, { ownerOpenid: owner })));
+    const list = await safeGet(BABIES, { ownerOpenid: owner });
+    list.forEach(b => {
+      if (!b || !b._id || seenBaby[b._id]) return;
+      seenBaby[b._id] = 1;
+      babies.push(b);
+    });
+  }
+  // 按 babyId 取数据：同一宝宝的记录/库存由创建者和亲友共同维护，
+  // 不能按 ownerOpenid 取，否则亲友录入的数据不会触发创建者提醒。
+  for (const b of babies) {
+    const bid = b._id;
+    metas.push(...(await safeGet(METAS, { _id: bid })));
+    records.push(...(await safeGet(RECORDS, { babyId: bid })));
+    inventory.push(...(await safeGet(INVENTORY, { babyId: bid })));
   }
 
   const babyNameOf = (id) => {
@@ -265,10 +276,11 @@ async function collectReminders(openid, familyId) {
       const gap = diffDays(today, due);
       if (gap < 0 || gap > 3) return;
       const dose = v.dose ? (' 第' + v.dose + '剂') : '';
+      const babyName = babyNameOf(meta._id);
       vaccine.push({
         name: String((v.group || v.short || '疫苗') + dose).slice(0, 20),
         date: due,
-        note: gap === 0 ? '今天应接种' : ('还有 ' + gap + ' 天'),
+        note: (babyName + (gap === 0 ? ' 今天应接种' : (' 还有 ' + gap + ' 天'))).slice(0, 20),
         value: gap
       });
     });
@@ -307,10 +319,11 @@ async function collectReminders(openid, familyId) {
     const nm = String(r.suppName || r.supplement || '营养品');
     const lastDate = r.suppLastDate || r.date || '';
     const gap = lastDate ? Math.max(0, diffDays(lastDate, today)) : 0;
+    const babyName = babyNameOf(rec.babyId);
     supplement.push({
       name: nm.slice(0, 20),
       date: today,
-      note: ('该补充 ' + nm).slice(0, 20),
+      note: (babyName + ' 该补充 ' + nm).slice(0, 20),
       extra: lastDate ? ('距上次 ' + gap + ' 天') : '今天该补充了',
       value: 1
     });
@@ -319,11 +332,22 @@ async function collectReminders(openid, familyId) {
   // 4) 库存不足：奶粉（配方奶）低于 2 罐；其他耗材低于等于 10 件
   const DEVICE_RE = /吸奶器|消毒器|温奶器|摇奶器|辅食机|料理机|恒温壶|烘干机|暖奶器/;
   const groups = {};
+  // 同一 cid 可能同时存在旧版无 babyId 文档与新版分宝宝文档，按 cid 优先保留有 babyId 的
+  const invByCid = {};
   inventory.forEach(doc => {
+    if (!doc) return;
+    const key = doc.cid || doc._id;
+    if (!key) return;
+    const prev = invByCid[key];
+    if (!prev || (doc.babyId && !prev.babyId)) invByCid[key] = doc;
+  });
+  Object.values(invByCid).forEach(doc => {
     const it = (doc && doc.data) || {};
     if (!it.name) return;
-    const key = it.name + '|' + (it.size || '');
-    if (!groups[key]) groups[key] = { name: it.name, size: it.size || '', unit: it.unit || '件', count: 0 };
+    // 按宝宝 + 商品 + 尺码分组，两个宝宝的库存不能相加
+    const bid = doc.babyId || '';
+    const key = bid + '|' + it.name + '|' + (it.size || '');
+    if (!groups[key]) groups[key] = { babyId: bid, name: it.name, size: it.size || '', unit: it.unit || '件', count: 0 };
     groups[key].count += Number(it.count) || 0;
   });
   Object.keys(groups).forEach(k => {
@@ -332,11 +356,13 @@ async function collectReminders(openid, familyId) {
     const th = isFormula ? 2 : 10;
     if (g.count >= th) return;
     const label = g.name + (g.size ? '（' + g.size + '）' : '');
+    const babyPrefix = g.babyId ? (babyNameOf(g.babyId) + ' · ') : '';
+    const stockDetail = isFormula
+      ? ('仅剩 ' + g.count + ' 罐 · 低于 ' + th + ' 罐')
+      : ('仅剩 ' + g.count + g.unit + ' · 低于 ' + th + g.unit);
     stock.push({
-      name: label.slice(0, 20),
-      note: (isFormula
-        ? ('仅剩 ' + g.count + ' 罐 · 低于 ' + th + ' 罐')
-        : ('仅剩 ' + g.count + g.unit + ' · 低于 ' + th + g.unit)).slice(0, 20),
+      name: (babyPrefix + label).slice(0, 20),
+      note: ((g.babyId ? (babyNameOf(g.babyId) + ' ') : '') + stockDetail).slice(0, 20),
       value: g.count
     });
   });

@@ -341,15 +341,18 @@ App({
     const baby = this.globalData.babies.find(b => b.id === babyId);
     if (baby) this.globalData.baby = baby;
     const data = wx.getStorageSync(BABY_KEY + babyId) || {};
-    this.globalData.records = data.records || [];
+    // 双宝宝隔离兜底：旧版本同步进来的条目若带的是其他 babyId，不进入当前宝宝
+    const onlyBaby = (arr) => (arr || []).filter(x => !x || !x.babyId || x.babyId === babyId);
+    this.globalData.records = onlyBaby(data.records);
     this.globalData.diaperStock = typeof data.diaperStock === 'number' ? data.diaperStock : 0;
     this.globalData.supplies = Object.assign({ milk: 0, milkFeeds: 0, d3Days: 0 }, data.supplies);
     this.globalData.vaccine = Object.assign({}, data.vaccine);
     // 耗材库存：未录入过（空数组）时也补默认商品，方便直接编辑尺码/数量
-    this.globalData.stockItems = (data.stockItems && data.stockItems.length) ? data.stockItems : defaultStockItems();
+    const stock = onlyBaby(data.stockItems);
+    this.globalData.stockItems = stock.length ? stock : defaultStockItems();
     this.globalData.shelfWarnings = data.shelfWarnings || defaultShelfWarnings();
-    this.globalData.measures = data.measures || defaultMeasures(baby && baby.birthday);
-    this.globalData.vaccineDone = data.vaccineDone || defaultVaccineDone();
+    this.globalData.measures = data.measures ? onlyBaby(data.measures) : defaultMeasures(baby && baby.birthday);
+    this.globalData.vaccineDone = onlyBaby(data.vaccineDone);
     // 疫苗计划：本地旧数据可能缺 group 中文字段（只存了 short 英文缩写），加载时按 short 反查补上中文名，
     // 否则日历红点/今日提醒会显示 MMR、JE-I 等英文缩写
     let vp = data.vaccinePlan;

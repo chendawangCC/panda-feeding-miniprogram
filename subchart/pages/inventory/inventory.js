@@ -694,6 +694,7 @@ Page({
     const list = this.data.stockItems.slice();
     list.push({
       id: 'st' + Date.now(),
+      babyId: app.globalData.currentBabyId,
       name: parsed.name,
       count: parsed.count,
       unit: parsed.unit || '个',
@@ -714,7 +715,7 @@ Page({
   },
 
   saveStock() {
-    // 库存是账号级别的，只要登录即可使用
+    // 库存按宝宝隔离；只要登录即可使用
     if (!app.globalData.user || !app.globalData.user.openid) {
       wx.showToast({ title: this._t('请先登录账号', 'Please sign in first'), icon: 'none' });
       return;
@@ -745,9 +746,9 @@ Page({
     const colors = ['#fff2b9', '#fff2b9', '#fff2b9', '#ffe3cc', '#f6dff0', '#f6f1e5'];
     let list = this.data.stockItems.slice();
     if (d.id) {
-      list = list.map(s => s.id === d.id ? Object.assign({}, s, { name, brand, count, unit: unit || s.unit, produceDate, shelfLife, price, size, grams, warrantyMonths: d.warrantyMonths || 0, warrantyUntil, _u: Date.now() }) : s);
+      list = list.map(s => s.id === d.id ? Object.assign({}, s, { babyId: app.globalData.currentBabyId, name, brand, count, unit: unit || s.unit, produceDate, shelfLife, price, size, grams, warrantyMonths: d.warrantyMonths || 0, warrantyUntil, _u: Date.now() }) : s);
     } else {
-      list.push({ id: 'st' + Date.now(), name, brand, count, unit: unit || '个', color: colors[list.length % colors.length], produceDate, shelfLife, price, size, grams, warrantyMonths: d.warrantyMonths || 0, warrantyUntil, _u: Date.now() });
+      list.push({ id: 'st' + Date.now(), babyId: app.globalData.currentBabyId, name, brand, count, unit: unit || '个', color: colors[list.length % colors.length], produceDate, shelfLife, price, size, grams, warrantyMonths: d.warrantyMonths || 0, warrantyUntil, _u: Date.now() });
     }
     this.setData({ stockItems: this.decorateStock(list), 'stockDialog.visible': false });
     // 库存录入后自动同步保质期提醒（无需手动添加），电器类不生成保质期提醒，走保修期提醒
@@ -771,7 +772,7 @@ Page({
   },
 
   removeStock() {
-    // 库存是账号级别的，只要登录即可使用
+    // 库存按宝宝隔离；只要登录即可使用
     if (!app.globalData.user || !app.globalData.user.openid) {
       wx.showToast({ title: this._t('请先登录账号', 'Please sign in first'), icon: 'none' });
       return;

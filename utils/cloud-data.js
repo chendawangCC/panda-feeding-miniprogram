@@ -146,19 +146,21 @@ function buildPush(g) {
       ownerOpenid: openid,
       babyId: b.id,
       cid: item._cid,
-      data: item,
+      // 数据体也写入 babyId：本地按宝宝存储/切换时可直接校验，避免旧数据串入
+      data: Object.assign({}, item, { babyId: b.id }),
       _u: item._u || now,
       updatedAt: now
     }));
     ups.records = ups.records.concat(map(d.records || []));
-    // 库存耗材：关联家庭ID，有家庭则家庭成员共享，_id 格式为 openid_cid
+    // 库存耗材：按宝宝分账；有家庭时同一宝宝的库存由家庭成员共享
     const familyId = (g.myFamily && g.myFamily._id) || '';
     const invMap = (arr) => ensureIds(arr).map(item => ({
-      _id: openid + '_' + item._cid,
+      _id: b.id + '_' + item._cid,
       ownerOpenid: openid,
+      babyId: b.id,
       familyId: familyId,
       cid: item._cid,
-      data: item,
+      data: Object.assign({}, item, { babyId: b.id }),
       _u: item._u || now,
       updatedAt: now
     }));
@@ -177,14 +179,16 @@ function buildPush(g) {
     Object.keys(m).forEach(cid => {
       const v = m[cid];
       const info = (v && typeof v === 'object') ? v : { ts: v || Date.now(), babyId: '' };
-      // 库存耗材：只跟随账号，不依赖 babyId
-      if (kind === 'inventory') {
-        ts[kind].push({ _id: myOpenid + '_' + cid, ownerOpenid: myOpenid, cid, updatedAt: info.ts });
-        return;
-      }
       const babyId = info.babyId || (g.currentBabyId || '');
       if (babyId && !perm.canAccessBaby(babyId)) return;
-      ts[kind].push({ babyId, cid, updatedAt: info.ts });
+      // 库存耗材同样按宝宝分账，墓碑必须带上 babyId，避免删 A 宝宝库存时误删 B 宝宝
+      ts[kind].push({
+        ownerOpenid: myOpenid,
+        babyId: babyId,
+        familyId: (g.myFamily && g.myFamily._id) || '',
+        cid: cid,
+        updatedAt: info.ts
+      });
     });
   });
 
@@ -481,13 +485,37 @@ function mergeInto(app, data) {
         return r.by.openid === myOpenid;
       });
     }
-    // 库存耗材：有家庭则家庭成员共享，云函数已按家庭过滤，直接合并所有拉取到的库存
-    local.stockItems = mergeList(local.stockItems, (data.inventory || []).filter(d => d));
+    // 库存耗材：按宝宝分账，只合并当前宝宝的库存
+    const pickedInventory = pick('inventory');
+    // 清理旧版本串入本宝宝的库存：同一 cid 只存在于其他宝宝、且不属于本宝宝的条目
+    const otherInvCids = {};
+    (data.inventory || []).forEach(d => {
+      if (d && d.babyId && d.babyId !== bid && d.cid) otherInvCids[d.cid] = 1;
+    });
+    const myInvCids = {};
+    pickedInventory.forEach(d => { if (d && d.cid) myInvCids[d.cid] = 1; });
+    local.stockItems = (local.stockItems || []).filter(item => {
+      if (!item) return false;
+      if (item.babyId && item.babyId !== bid) return false;
+      const cid = item._cid;
+      if (cid && otherInvCids[cid] && !myInvCids[cid]) return false;
+      return true;
+    });
+    local.stockItems = mergeList(local.stockItems, pickedInventory);
+    // 给本宝宝库存打上 babyId，后续推送/切换宝宝不会再次串账
+    local.stockItems.forEach(item => { if (item) item.babyId = bid; });
     local.measures = mergeList(local.measures, pick('measures'));
     local.vaccineDone = mergeList(local.vaccineDone, pick('vaccines'));
-    // 墓碑删除
-    // 库存墓碑不带 babyId（库存按账号/家庭共享），必须按 kind 放行
-    const cloudTombs = (data.tombs || []).filter(t => t && (t.kind === 'inventory' || t.babyId === bid));
+    // 墓碑删除：库存墓碑按 babyId 过滤，避免跨宝宝误删
+    const cloudTombs = (data.tombs || []).filter(t => {
+      if (!t) return false;
+      if (t.kind === 'inventory') {
+        // 旧版无 babyId 的库存墓碑对应旧版账号级库存，迁移后只归第一个宝宝
+        if (!t.babyId) return bid === firstBid;
+        return t.babyId === bid;
+      }
+      return t.babyId === bid;
+    });
     const tombByKind = { records: {}, inventory: {}, measures: {}, vaccines: {} };
     cloudTombs.forEach(t => {
       if (tombByKind[t.kind]) tombByKind[t.kind][t.cid] = t.updatedAt || 0;

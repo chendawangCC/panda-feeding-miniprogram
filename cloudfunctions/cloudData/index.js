@@ -240,6 +240,7 @@ async function doPull(openid) {
     const meta = await getColl(COLLS.metas, { _id: bid });
     data.metas = data.metas.concat(meta);
     data.vaccines = data.vaccines.concat(await getColl(COLLS.vaccines, { babyId: bid }));
+    data.inventory = data.inventory.concat(await getColl(COLLS.inventory, { babyId: bid }));
   }
   // records/measures 按可见宝宝过滤拉取（历史无 babyId 的数据只归属本人）
   // 修复越权：原先全表拉取会把陌生宝宝的数据返回给客户端
@@ -250,32 +251,24 @@ async function doPull(openid) {
   }
   data.records = data.records.concat(await getColl(COLLS.records, { ownerOpenid: openid }));
   data.measures = data.measures.concat(await getColl(COLLS.measures, { ownerOpenid: openid }));
-  // 库存耗材：有家庭则家庭成员共享，无家庭只跟随账号
+  // 库存耗材：按宝宝分账；同一宝宝的库存由家庭成员共享
   const fams = await myFamilies(openid);
   const invOwners = [openid];
   if (fams.length) {
-    // 有家庭：拉取家庭中所有成员的库存（familyId 匹配或 ownerOpenid 匹配兼容旧数据）
-    const familyIds = fams.map(f => f._id);
-    const allInv = await getColl(COLLS.inventory, {});
-    // 收集所有家庭成员的 openid（创建者 + 成员）
-    const memberOpenids = [];
     fams.forEach(f => {
-      memberOpenids.push(f.ownerOpenid);
-      (f.members || []).forEach(m => memberOpenids.push(m.openid));
+      if (f.ownerOpenid && invOwners.indexOf(f.ownerOpenid) < 0) invOwners.push(f.ownerOpenid);
+      (f.members || []).forEach(m => {
+        if (m && m.openid && invOwners.indexOf(m.openid) < 0) invOwners.push(m.openid);
+      });
     });
-    // 家庭成员的库存墓碑也要回传（成员删了创建者的库存，创建者才能同步消失）
-    memberOpenids.forEach(o => { if (o && invOwners.indexOf(o) < 0) invOwners.push(o); });
-    data.inventory = allInv.filter(inv => {
-      if (!inv) return false;
-      // 新数据：familyId 匹配
-      if (inv.familyId && familyIds.indexOf(inv.familyId) >= 0) return true;
-      // 旧数据兼容：ownerOpenid 是家庭成员
-      if (inv.ownerOpenid && memberOpenids.indexOf(inv.ownerOpenid) >= 0) return true;
-      return false;
+  }
+  // 兼容旧版本：没有 babyId 的库存文档只归到第一个可见宝宝，避免同时出现在两个宝宝账下
+  const legacyBabyId = babyIds[0] || '';
+  for (const o of invOwners) {
+    const oldInv = await getColl(COLLS.inventory, { ownerOpenid: o });
+    oldInv.forEach(inv => {
+      if (inv && !inv.babyId) data.inventory.push(Object.assign({}, inv, { babyId: legacyBabyId }));
     });
-  } else {
-    // 无家庭：只拉取自己的库存
-    data.inventory = await getColl(COLLS.inventory, { ownerOpenid: openid });
   }
   // 库存墓碑跟随账号 / 家庭成员
   for (const o of invOwners) {
@@ -324,7 +317,9 @@ async function doPush(openid, batches) {
       arr.forEach(t => {
         if (!t || !t.cid) return;
         const ts = t.updatedAt || 0;
-        if (!tombTs[kind][t.cid] || ts > tombTs[kind][t.cid]) tombTs[kind][t.cid] = ts;
+        // 新墓碑按 babyId+cid 隔离；旧墓碑无 babyId，保留 cid 兼容旧数据
+        const tkey = t.babyId ? (t.babyId + '_' + t.cid) : t.cid;
+        if (!tombTs[kind][tkey] || ts > tombTs[kind][tkey]) tombTs[kind][tkey] = ts;
       });
     } catch (e) {}
   }
@@ -350,21 +345,19 @@ async function doPush(openid, batches) {
         if (d.ownerOpenid && d.ownerOpenid !== openid) continue; // 有 ownerOpenid 且不是本人，才跳过
         writes.push(d);
       } else if (key === 'inventory') {
-        // 库存耗材：有家庭则家庭成员共享可写，无家庭只有 owner 本人可写
-        if (d.familyId) {
-          // 有 familyId：检查是否是该家庭成员
-          const fams = await myFamilies(openid);
-          const isMember = fams.some(f => f._id === d.familyId);
-          if (!isMember) { console.log('[push] inventory skip not family member d._id=', d._id); continue; }
-        } else {
-          // 无 familyId：只有 owner 本人可写
-          if (d.ownerOpenid !== openid) { console.log('[push] inventory skip not owner d._id=', d._id); continue; }
+        // 库存耗材：按宝宝分账；同一宝宝的库存由家庭成员共享可写
+        if (!babyId) { console.log('[push] inventory skip no babyId d._id=', d._id); continue; }
+        if (!(await canWrite(babyId, openid, 'inventory'))) {
+          console.log('[push] inventory skip no permission babyId=', babyId, 'openid=', openid);
+          continue;
         }
-        // 库存文档 id 以创建者 openid 拼接，成员编辑时会用自己 openid 另建一份重复文档
-        // → 按 cid 复用已有文档 id，保证同一条库存全家庭只有一份
+        d.babyId = babyId;
+        d.data = Object.assign({}, d.data || {}, { babyId: babyId });
+        // 文档 id 统一为 babyId_cid；同一宝宝下成员编辑复用同一文档，不同宝宝互不影响
+        d._id = babyId + '_' + d.cid;
         if (d.cid) {
           try {
-            const exist = await getColl(COLLS.inventory, { cid: d.cid });
+            const exist = await getColl(COLLS.inventory, { cid: d.cid, babyId: babyId });
             if (exist.length) d._id = exist[0]._id;
           } catch (e) {}
         }
@@ -377,7 +370,7 @@ async function doPush(openid, batches) {
       }
       // 墓碑优先：云端已删除且删除时间晚于本条修改时间 → 拒绝写回
       if (tombTs[key]) {
-        const deadTs = tombTs[key][d.cid] || 0;
+        const deadTs = tombTs[key][babyId ? (babyId + '_' + d.cid) : d.cid] || tombTs[key][d.cid] || 0;
         const localU = d._u || 0;
         if (deadTs && deadTs >= localU) {
           conflicts.push({ _id: d._id, kind: coll, localU: localU, cloudU: deadTs, reason: 'deleted' });
@@ -403,35 +396,35 @@ async function doPush(openid, batches) {
     const ids = [];
     for (const t of arr) {
       if (!t || !t.cid) continue;
-      // 库存耗材：有家庭则家庭成员共享可删除，无家庭只有 owner 本人可删除
+      // 库存耗材：按宝宝校验编辑权限，家庭成员可删除同一宝宝的库存
       if (key === 'inventory') {
-        if (t.familyId) {
-          const fams = await myFamilies(openid);
-          const isMember = fams.some(f => f._id === t.familyId);
-          if (!isMember) continue;
-        } else {
+        if (!t.babyId) {
+          // 旧墓碑没有 babyId：只允许原 owner 删除旧版无 babyId 文档
           if (t.ownerOpenid !== openid) continue;
+        } else if (!(await canWrite(t.babyId, openid, 'inventory'))) {
+          continue;
         }
       } else {
         if (!(await canWrite(t.babyId, openid, module))) continue; // 无删除权限跳过
       }
-      // 同步墓碑到 panda_tombs，并删除对应文档
-      // 库存墓碑用 inv_cid 稳定键：成员之间删除同一条不会写出多个墓碑
-      const tombId = key === 'inventory' ? ('inv_' + t.cid) : (t.babyId + '_' + t.cid);
+      // 同步墓碑到 panda_tombs，并按 babyId+cid 精确定位文档
+      const tombId = key === 'inventory'
+        ? (t.babyId ? (t.babyId + '_' + t.cid) : ('inv_' + t.cid))
+        : (t.babyId + '_' + t.cid);
       try {
         await db.collection(COLLS.tombs).doc(tombId).set({
           _id: tombId,
           ownerOpenid: openid,
           babyId: t.babyId || '',
+          familyId: t.familyId || '',
           cid: t.cid,
           kind: key,
           updatedAt: t.updatedAt || Date.now()
         });
       } catch (e) {}
       if (key === 'inventory') {
-        // 库存文档 _id 由创建者拼接（owner_cid），删除者 openid 可能不同
-        // → 按 cid 反查真实文档再删除（修复成员删除创建者库存无效）
-        const found = await getColl(COLLS.inventory, { cid: t.cid });
+        // 库存按宝宝分账：优先按 babyId+cid 精确删除，旧墓碑才按 cid 兼容
+        const found = await getColl(COLLS.inventory, t.babyId ? { cid: t.cid, babyId: t.babyId } : { cid: t.cid });
         found.forEach(x => { if (x && x._id) ids.push(x._id); });
         if (t._id) ids.push(t._id);
       } else {
