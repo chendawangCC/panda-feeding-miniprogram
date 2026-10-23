@@ -5,7 +5,7 @@
   <view class="page-header-back">
     <view class="back-btn" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">{{lang === 'en' ? ((baby.name || 'Unnamed baby') + '\u2019s feeding stock') : ((baby.name || '未命名宝宝') + '的喂养库存管理')}}</text>
+      <text class="header-kicker">{{lang === 'en' ? ((baby.name || 'Unnamed baby') + '’s Feeding Station') : ((baby.name || '未命名宝宝') + '的喂养台')}}</text>
       <view class="header-title header-title-sub">{{lang === 'en' ? 'Feeding Station' : '喂养台'}}</view>
     </view>
   </view>
