@@ -231,7 +231,16 @@ App({
       this._joinTimer = setInterval(() => this.checkJoinStatus(), 5000);
       // 前台时拉取家庭数据（亲友/创建者端数据同步）
       try {
-        cloudSync.pull().then(r => console.log('[onShow pull] result=', r)).catch(e => console.log('[onShow pull] fail', e));
+        cloudSync.pull().then(r => {
+          console.log('[onShow pull] result=', r);
+          // 补推：上次断网 / 关窗时未成功上云的改动（电脑端小程序常见），回到前台自动补一次
+          try {
+            if (cloudData.hasPendingPush && cloudData.hasPendingPush()) {
+              console.log('[onShow] 检测到未上云改动，补推');
+              cloudData.pushAll(true);
+            }
+          } catch (e) {}
+        }).catch(e => console.log('[onShow pull] fail', e));
         // 前台每2秒自动 pull 一次，实时同步家庭成员数据
         if (this._pullTimer) clearInterval(this._pullTimer);
         this._pullTimer = setInterval(() => {

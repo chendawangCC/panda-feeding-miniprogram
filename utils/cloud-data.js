@@ -14,6 +14,12 @@ const META_KEY = 'panda_cloud_meta';      // { openid }
 const BABY_KEY = 'panda_feeding_baby_';   // 宝宝分 key 存储（与 cloud-sync 一致）
 const TOMB_KEY = 'panda_cloud_tomb';      // { records: { cid: {ts, babyId} }, inventory: {...}, ... }
 const PUSH_DEBOUNCE = 50;                  // ms
+const DIRTY_KEY = 'panda_push_dirty';     // 1=本地有未成功上云的改动（断网/关窗后下次启动补推）
+
+function markPushDirty() { try { wx.setStorageSync(DIRTY_KEY, 1); } catch (e) {} }
+function clearPushDirty() { try { wx.setStorageSync(DIRTY_KEY, 0); } catch (e) {} }
+/** 是否存在未成功推送的本地改动（供 app.onShow 补推） */
+function hasPendingPush() { try { return !!wx.getStorageSync(DIRTY_KEY); } catch (e) { return false; } }
 
 function getMeta() {
   try { return wx.getStorageSync(META_KEY) || {}; } catch (e) { return {}; }
@@ -582,6 +588,7 @@ function handleConflicts(conflicts) {
 
 function pushAll(immediate) {
   if (!cloudReady()) return Promise.resolve();
+  markPushDirty();
   if (_pushTimer) { clearTimeout(_pushTimer); _pushTimer = null; }
   if (immediate) {
     // 立即执行，不等防抖
@@ -594,7 +601,7 @@ function pushAll(immediate) {
 
 /** 小程序切后台/退出前冲刷未推送的数据（避免防抖窗口内数据丢失） */
 function flushPush() {
-  if (!_pushTimer) return Promise.resolve();
+  if (!_pushTimer && !hasPendingPush()) return Promise.resolve();
   clearTimeout(_pushTimer);
   _pushTimer = null;
   return doPushNow();
@@ -620,6 +627,7 @@ function doPushNow(attempt) {
         callFn('cloudData', { action: 'push', batches }).then(r => {
           console.log('[push] 云函数返回', r && r.code, 'msg=', r && r.msg, 'conflicts=', (r && r.conflicts || []).length);
           if (r && r.code === 0) {
+            clearPushDirty(); // 已成功上云，清掉待推送标记
             // push 成功后清除已同步墓碑（避免无限重传）
             try {
               const t = getTombs();
@@ -679,6 +687,7 @@ module.exports = {
   ensure: ensureIds,
   pushAll,
   flushPush,
+  hasPendingPush,
   doPushNow,
   pullAll,
   deleteAccount,
