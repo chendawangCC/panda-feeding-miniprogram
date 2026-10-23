@@ -529,18 +529,18 @@ Page({
       longPressToSpeak: 'Long press to speak',
       parsingVoice: 'Parsing voice content',
       releaseToFinish: 'Release to finish voice input',
-      longPressMicHint: 'Long press the mic to start speaking',
+      longPressMicHint: 'Long press to speak (missing details will be asked)',
       trySaying: 'Try saying:',
       example1: 'Breastfeeding for 15 minutes',
       example2: 'Had 120ml formula',
       example3: 'Diaper change: wet + dirty',
       example4: 'Slept for 40 minutes',
       example5: 'Temperature 37.5°C',
-      example6: 'Bath time',
+      example6: 'Bath for 10 minutes',
       example7: 'Drank 60ml water',
-      example8: 'Temperature 37.2°C, baby feels warm',
-      example9: 'Pumped 80ml breastmilk total',
-      example10: 'Took vitamin D3 and probiotics'
+      example8: 'Ate 30g rice cereal',
+      example9: 'Pumped 60ml left, 40ml right',
+      example10: 'Took AD and probiotics'
     } : {
       breastfed: '亲喂',
       breastfedSub: '左右分别计时',
@@ -639,18 +639,18 @@ Page({
       longPressToSpeak: '长按开始说话',
       parsingVoice: '正在解析语音内容',
       releaseToFinish: '松开即可完成语音输入',
-      longPressMicHint: '长按麦克风开始说话',
+      longPressMicHint: '长按麦克风开始说话（缺关键信息会提示补充）',
       trySaying: '可以这样说：',
       example1: '亲喂 15 分钟',
       example2: '喝了 120 毫升奶粉',
       example3: '换尿布 嘘嘘+臭臭',
       example4: '睡了 40 分钟',
       example5: '量体温 37.5 度',
-      example6: '洗澡',
+      example6: '洗澡 10 分钟',
       example7: '喝了 60 毫升水',
-      example8: '宝宝体温37.2度，有点发烫',
-      example9: '吸奶一共80毫升母乳',
-      example10: '吃了D3和益生菌营养品'
+      example8: '吃了 30 克米粉',
+      example9: '左边吸60 右边吸40 毫升',
+      example10: '吃了AD和益生菌'
     };
     const typeMap = {
   '母乳': 'Breastfeeding', '配方奶': 'Bottle Feeding', '瓶喂母乳': 'Bottle Feeding',
@@ -2949,13 +2949,55 @@ Page({
       return;
     }
     this.stopVoiceTimer();
+    const _en = (wx.getStorageSync('lang') || 'zh') === 'en';
+    // 缺少关键信息：不自动保存，打开记录表单预填已知内容，提示用户补一句
+    if (parsed.missing && parsed.missing.length) {
+      this.openRecord(parsed.type, parsed.prefill);
+      this.setData({ 'voiceState.recognizing': false, 'voiceState.result': '', showVoice: false });
+      this.syncTabBar();
+      const missEn = {
+        '亲喂了多久（几分钟）': 'minutes breastfed',
+        '喂了多少毫升': 'amount in ml',
+        '左右各吸了多少毫升': 'ml pumped on each side',
+        '是嘘嘘、臭臭，还是都有': 'wet / dirty / both',
+        '具体是哪种营养品': 'which supplement',
+        '睡了多久（几分钟）': 'minutes slept',
+        '吃了多少（克或份）': 'amount eaten (g or servings)',
+        '喝了多少毫升水': 'ml of water',
+        '具体多少度': 'temperature value',
+        '洗了多久（几分钟）': 'minutes bathed'
+      };
+      const missList = parsed.missing.map(m => (_en ? (missEn[m] || m) : m)).join(_en ? ', ' : '、');
+      wx.showToast({
+        title: _en
+          ? ('Recognized ' + parsed.type + '. Please fill in: ' + missList)
+          : ('已识别为「' + parsed.type + '」，请补充：' + missList),
+        icon: 'none', duration: 3200
+      });
+      return;
+    }
     // 打开记录弹窗预填并直接保存（自动记录）
+    const before = (app.globalData.records || []).length;
     this.openRecord(parsed.type, parsed.prefill);
     this.setData({ 'voiceState.recognizing': false, 'voiceState.result': '', showVoice: false });
     this.saveRecord();
+    const saved = (app.globalData.records || []).length > before;
+    if (!saved) {
+      // 保存被校验拦截（如权限不足、必填缺失）：保留表单让用户补全，不再谎报成功
+      this.setData({ showQuick: false, quickMode: false });
+      this.syncTabBar();
+      wx.showToast({
+        title: _en ? 'Record not saved. Please complete the form.' : '记录未保存，请补全信息后再点保存',
+        icon: 'none', duration: 3000
+      });
+      return;
+    }
     this.setData({ 'record.visible': false, showQuick: false, quickMode: false });
     this.syncTabBar();
-    wx.showToast({ title: '已识别并保存「' + parsed.type + '」', icon: 'success' });
+    wx.showToast({
+      title: _en ? ('Saved: ' + parsed.type) : ('已识别并保存「' + parsed.type + '」'),
+      icon: 'success'
+    });
     this.loadRecords();
   },
 
@@ -3055,123 +3097,150 @@ Page({
   /* ==================== 语音识别结果智能解析 ==================== */
   parseVoiceText(text) {
     const t = (text || '').replace(/\s+/g, '');
-    const p = { type: null, prefill: {} };
-    const mins = (t.match(/(\d+)\s*(?:分钟|分)/) || [])[1];
-    const ml = (t.match(/(\d+)\s*(?:ml|毫升)/i) || [])[1];
-    const gram = (t.match(/(\d+)\s*(?:g|克)/i) || [])[1];
-    const fen = (t.match(/(\d+)\s*份/) || [])[1];
-    const left = (t.match(/左[^\d]*(\d+)/) || [])[1];
-    const right = (t.match(/右[^\d]*(\d+)/) || [])[1];
+    const p = { type: null, prefill: {}, missing: [] };
+    if (!t) return p;
+    const pick = re => { const m = t.match(re); return m ? Number(m[1]) : 0; };
+    const mins = pick(/(\d{1,3})\s*(?:分钟|分|min(?:ute)?s?)/i);
+    const ml = pick(/(\d{1,3})\s*(?:ml|毫升|cc)/i);
+    const gram = pick(/(\d{1,3})\s*(?:g|克|grams?)/i);
+    const fen = pick(/(\d{1,2})\s*份/);
+    const left = pick(/左[^\d]{0,6}(\d{1,3})/) || pick(/(\d{1,3})\s*(?:ml|毫升|cc)\s*(?:on\s*)?left/i);
+    const right = pick(/右[^\d]{0,6}(\d{1,3})/) || pick(/(\d{1,3})\s*(?:ml|毫升|cc)\s*(?:on\s*)?right/i);
+    const pad2 = n => ('0' + n).slice(-2);
+    const timeAgo = m => {
+      const d = new Date(Date.now() - Number(m) * 60000);
+      return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    };
 
-    const rules = [
-      {
-        key: '母乳',
-        re: /母乳|亲喂|喂奶/,
-        fill() {
-          if (left || right) {
-            if (left) p.prefill.nursingL = Number(left);
-            if (right) p.prefill.nursingR = Number(right);
-          } else if (mins) {
-            const l = Math.round(Number(mins) / 2);
-            p.prefill.nursingL = l;
-            p.prefill.nursingR = Number(mins) - l;
-          }
-        }
-      },
-      {
-        key: '配方奶',
-        re: /配方|奶粉|瓶喂/,
-        fill() { if (ml) p.prefill.amount = Math.min(240, Number(ml)); }
-      },
-      {
-        key: '吸奶',
-        re: /吸奶|泵奶|吸乳|左边吸|右边吸|左吸|右吸/,
-        fill() { if (left) p.prefill.pumpLeftAmt = Number(left); if (right) p.prefill.pumpRightAmt = Number(right); }
-      },
-      {
-        key: '换尿布',
-        re: /尿布|臭臭|嘘嘘|大便|小便|拉屎/,
-        fill() {
-          const hasPoop = /臭臭|大便|拉屎/.test(t);
-          const hasPee = /嘘嘘|小便/.test(t);
-          if (hasPoop && hasPee) p.prefill.diaperChoice = '嘘嘘+臭臭';
-          else if (hasPoop) p.prefill.diaperChoice = '臭臭';
-          else if (hasPee) p.prefill.diaperChoice = '嘘嘘';
-        }
-      },
-      {
-        key: '喝水',
-        re: /喝水|喂水|饮水/,
-        fill() { if (ml) p.prefill.water = Math.min(300, Number(ml)); }
-      },
-      {
-        key: '营养品',
-        re: /营养品|维生素|AD|DHA|钙片|鱼油|益生菌|乳糖酶/,
-        fill() {
-          const all = ['AD', 'DHA', '钙片', '鱼油', '乳糖酶', '益生菌'];
-          p.prefill.selectedSupps = all.filter(s => t.indexOf(s) >= 0);
-        }
-      },
-      {
-        key: '睡眠',
-        re: /睡眠|睡觉|睡了|睡着|午睡/,
-        fill() {
-          if (mins) {
-            const end = new Date();
-            const start = new Date(end.getTime() - Number(mins) * 60000);
-            const pad2 = n => ('0' + n).slice(-2);
-            p.prefill.sleepStart = pad2(start.getHours()) + ':' + pad2(start.getMinutes());
-            p.prefill.sleepEnd = pad2(end.getHours()) + ':' + pad2(end.getMinutes());
-            p.prefill.sleepSeconds = Number(mins) * 60;
-          }
-        }
-      },
-      {
-        key: '辅食',
-        re: /辅食|米粉|吃饭|喂食/,
-        fill() {
-          if (gram) p.prefill.simpleAmount = Number(gram);
-          else if (fen) p.prefill.simpleAmount = Number(fen);
-        }
-      },
-      {
-        key: '体温',
-        re: /体温|温度|发烧/,
-        fill() {
-          // 支持「38.5度」「38度5」「体温38.5」等常见说法
-          let deg = null;
-          const m1 = t.match(/(\d+(?:\.\d+)?)\s*(?:℃|°)/);
-          const m2 = t.match(/(\d+)\s*度\s*(\d)?/);
-          const m3 = t.match(/(\d+(?:\.\d+)?)/);
-          if (m1) deg = Number(m1[1]);
-          else if (m2) deg = m2[2] ? Number(m2[1]) + Number(m2[2]) / 10 : Number(m2[1]);
-          else if (m3) deg = Number(m3[1]);
-          if (deg && deg >= 30 && deg <= 45) p.prefill.temperature = Number(deg).toFixed(1);
-        }
-      },
-      {
-        key: '洗澡',
-        re: /洗澡|洗浴|沐浴|泡澡/,
-        fill() {
-          if (mins) {
-            const end = new Date();
-            const start = new Date(end.getTime() - Number(mins) * 60000);
-            const pad2 = n => ('0' + n).slice(-2);
-            p.prefill.bathStart = pad2(start.getHours()) + ':' + pad2(start.getMinutes());
-            p.prefill.bathEnd = pad2(end.getHours()) + ':' + pad2(end.getMinutes());
-            p.prefill.bathSeconds = Number(mins) * 60;
-          }
-        }
+    // 体温：支持「37.5度」「38度5」「体温38.2」「37.5℃」
+    const readTemp = () => {
+      let v = '';
+      let m = t.match(/(\d{2}(?:\.\d+)?)\s*(?:℃|°|度)/);
+      if (m) {
+        let base = Number(m[1]);
+        const m5 = t.match(/度\s*(\d)/);
+        if (m5 && base % 1 === 0) base += Number(m5[1]) / 10;
+        if (base >= 34 && base <= 43) v = base.toFixed(1);
       }
-    ];
+      if (!v) {
+        m = t.match(/(?:体温|温度|temperature|temp)(?:是|有|为|is|of)?\s*(\d{2}(?:\.\d+)?)/i);
+        if (m) { const n = Number(m[1]); if (n >= 34 && n <= 43) v = n.toFixed(1); }
+      }
+      return v;
+    };
 
-    for (let i = 0; i < rules.length; i++) {
-      if (rules[i].re.test(t)) {
-        p.type = rules[i].key;
-        rules[i].fill();
-        break;
-      }
+    if (/吸奶|泵奶|吸乳|pump(?:ed|ing)?/i.test(t) || /[左右]边?吸/.test(t)) {
+      p.type = '吸奶';
+      if (left) p.prefill.pumpLeftAmt = Math.min(300, left);
+      if (right) p.prefill.pumpRightAmt = Math.min(300, right);
+      if (!left && !right) p.missing.push('左右各吸了多少毫升');
+      return p;
     }
+
+    if (/(瓶喂|奶瓶|bottle\s*(?:of\s*)?(?:breast ?milk|expressed))/i.test(t) && !/奶粉|配方/.test(t)) {
+      p.type = '配方奶';
+      p.prefill.milkType = '瓶喂母乳';
+      if (ml) p.prefill.amount = Math.min(240, ml);
+      else p.missing.push('喂了多少毫升');
+      return p;
+    }
+
+    if (/配方|奶粉|formula|bottle/i.test(t) || (ml && /奶|milk/i.test(t) && !/母乳|亲喂|breast/i.test(t))) {
+      p.type = '配方奶';
+      if (ml) p.prefill.amount = Math.min(240, ml);
+      else p.missing.push('喂了多少毫升');
+      return p;
+    }
+
+    if (/母乳|亲喂|喂奶|吃奶|喝奶|吃(?:了|过)奶|喝(?:了|过)奶|breastfeed|nurs(?:e|ed|ing)|breast ?milk/i.test(t)) {
+      p.type = '母乳';
+      if (left || right) {
+        if (left) p.prefill.nursingL = Math.min(120, left);
+        if (right) p.prefill.nursingR = Math.min(120, right);
+      } else if (mins) {
+        const l = Math.round(mins / 2);
+        p.prefill.nursingL = l;
+        p.prefill.nursingR = mins - l;
+      } else {
+        p.missing.push('亲喂了多久（几分钟）');
+      }
+      return p;
+    }
+
+    if (/尿布|臭臭|嘘嘘|大便|小便|拉屎|换片|diaper|poo|poop|pee|wet|dirty/i.test(t)) {
+      p.type = '换尿布';
+      const hasPoop = /臭臭|大便|拉屎|poo|poop|dirty|stool/i.test(t);
+      const hasPee = /嘘嘘|小便|湿|pee|wet/i.test(t) || /尿(?!布)/.test(t);
+      if (hasPoop && hasPee) p.prefill.diaperChoice = '嘘嘘+臭臭';
+      else if (hasPoop) p.prefill.diaperChoice = '臭臭';
+      else if (hasPee) p.prefill.diaperChoice = '嘘嘘';
+      if (!p.prefill.diaperChoice) p.missing.push('是嘘嘘、臭臭，还是都有');
+      return p;
+    }
+
+    if (/营养品|补剂|维生素|益生菌|钙片|鱼油|乳糖酶|DHA|(^|[^a-z])AD([^a-z]|$)|D3|VD|supplement|vitamin|probiotic|calcium|fish oil|iron/i.test(t)) {
+      p.type = '营养品';
+      const alias = [
+        ['AD', /(^|[^a-z])AD([^a-z]|$)|维生素A|维生素D|维生素AD|VD|D3|维D|vitamin ?d|vitamin ?ad/i],
+        ['DHA', /DHA/i],
+        ['钙片', /钙|calcium/i],
+        ['鱼油', /鱼油|fish oil/i],
+        ['乳糖酶', /乳糖酶/],
+        ['益生菌', /益生菌|probiotic/i]
+      ];
+      const picked = alias.filter(a => a[1].test(t)).map(a => a[0]);
+      p.prefill.selectedSupps = picked;
+      if (!picked.length) p.missing.push('具体是哪种营养品');
+      return p;
+    }
+
+    if (/睡眠|睡觉|睡了|睡着|午睡|小睡|sleep|nap|slept/i.test(t)) {
+      p.type = '睡眠';
+      if (mins) {
+        p.prefill.sleepStart = timeAgo(mins);
+        p.prefill.sleepEnd = timeAgo(0);
+        p.prefill.sleepSeconds = mins * 60;
+      } else {
+        p.missing.push('睡了多久（几分钟）');
+      }
+      return p;
+    }
+
+    if (/辅食|米粉|米糊|吃饭|喂食|粥|面条|蛋黄|果泥|菜泥|肉泥|solid|puree|rice|porridge|oatmeal|yogurt/i.test(t)) {
+      p.type = '辅食';
+      if (gram) p.prefill.simpleAmount = Math.min(300, gram);
+      else if (fen) p.prefill.simpleAmount = fen;
+      else p.missing.push('吃了多少（克或份）');
+      return p;
+    }
+
+    if (/喝水|喂水|饮水|喝\S{0,6}水|water/i.test(t)) {
+      p.type = '喝水';
+      if (ml) p.prefill.water = Math.min(300, ml);
+      else p.missing.push('喝了多少毫升水');
+      return p;
+    }
+
+    if (/体温|温度|发烧|发热|℃|°|temperature|fever/i.test(t)) {
+      p.type = '体温';
+      const deg = readTemp();
+      if (deg) p.prefill.temperature = deg;
+      else p.missing.push('具体多少度');
+      return p;
+    }
+
+    if (/洗澡|洗浴|沐浴|泡澡|bath/i.test(t)) {
+      p.type = '洗澡';
+      if (mins) {
+        p.prefill.bathStart = timeAgo(mins);
+        p.prefill.bathEnd = timeAgo(0);
+        p.prefill.bathSeconds = mins * 60;
+      } else {
+        p.missing.push('洗了多久（几分钟）');
+      }
+      return p;
+    }
+
     return p;
   },
 
@@ -3185,7 +3254,7 @@ Page({
     if (!parsed.type) {
       wx.showModal({
         title: '未能识别记录类型',
-        content: '请尝试包含类型词，例如：母乳 15 分钟 / 喝了 120 毫升配方奶 / 换尿布 嘘嘘 / 宝宝睡了 40 分钟',
+        content: '请说清「类型 + 关键信息」，例如：亲喂 15 分钟 / 喝了 120 毫升奶粉 / 换尿布 嘘嘘+臭臭 / 睡了 40 分钟 / 喝了 60 毫升水 / 体温 37.5 度 / 吃了 30 克米粉 / 左边吸60 右边吸40 / 吃了AD和益生菌 / 洗澡 10 分钟。一次只能记一条；缺关键信息会打开表单并提示补充。',
         showCancel: false,
         confirmText: '知道了'
       });
@@ -3194,7 +3263,10 @@ Page({
     this.stopVoiceTimer();
     this.setData({ showVoice: false });
     this.openRecord(parsed.type, parsed.prefill);
-    wx.showToast({ title: '已识别为「' + parsed.type + '」，已预填', icon: 'none' });
+    const tipMiss = (parsed.missing && parsed.missing.length)
+      ? ('，请补充：' + parsed.missing.join('、'))
+      : '，已预填';
+    wx.showToast({ title: '已识别为「' + parsed.type + '」' + tipMiss, icon: 'none', duration: 2600 });
   },
 
   /* ==================== 宝宝切换 ==================== */
