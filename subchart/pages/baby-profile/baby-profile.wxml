@@ -6,8 +6,8 @@
   <view class="page-header-back">
     <view class="back-btn" bindtap="goBack">‹</view>
     <view class="page-header-left">
-      <text class="header-kicker">{{hasBaby ? ((baby.name || '未命名宝宝') + '的成长档案') : '添加宝宝后查看成长曲线'}}</text>
-      <view class="header-title header-title-sub">宝宝成长档案</view>
+      <text class="header-kicker">{{hasBaby ? ((baby.name || (lang === 'en' ? 'Unnamed baby' : '未命名宝宝')) + (lang === 'en' ? '’s Growth Profile' : '的成长档案')) : (lang === 'en' ? 'Add a baby to see growth curves' : '添加宝宝后查看成长曲线')}}</text>
+      <view class="header-title header-title-sub">{{lang === 'en' ? 'Baby Growth Profile' : '宝宝成长档案'}}</view>
     </view>
   </view>
 
@@ -15,8 +15,8 @@
   <view class="gp-yellow" wx:if="{{hasBaby}}">
   <view class="baby-info" wx:if="{{!isShared}}" bindtap="editBaby">
     <view class="baby-meta">
-      <text class="baby-name">{{baby.name || '未命名宝宝'}}</text>
-      <text class="baby-age">· {{ageText || '待填写出生日期'}}</text>
+      <text class="baby-name">{{baby.name || (lang === 'en' ? 'Unnamed baby' : '未命名宝宝')}}</text>
+      <text class="baby-age">· {{ageText || (lang === 'en' ? 'Birthday not set' : '待填写出生日期')}}</text>
     </view>
     <view class="baby-switch" catchtap="openBabySwitcher">
       <image class="baby-switch-ico" src="/images/icons/switch-baby.png" mode="aspectFit" />
@@ -26,8 +26,8 @@
   <!-- 共享宝宝：只显示信息，不可编辑 -->
   <view class="baby-info" wx:if="{{isShared}}">
     <view class="baby-meta">
-      <text class="baby-name">{{baby.name || '未命名宝宝'}}</text>
-      <text class="baby-age">· {{ageText || '待填写出生日期'}}</text>
+      <text class="baby-name">{{baby.name || (lang === 'en' ? 'Unnamed baby' : '未命名宝宝')}}</text>
+      <text class="baby-age">· {{ageText || (lang === 'en' ? 'Birthday not set' : '待填写出生日期')}}</text>
     </view>
   </view>
 
@@ -35,23 +35,23 @@
 
   <!-- 无宝宝空态：显示「去添加宝宝」，不显示头像/名称/切换宝宝 -->
   <view class="bp-empty" wx:if="{{!hasBaby}}" bindtap="goMyBabies">
-    <text class="bp-empty-title">还没有宝宝</text>
-    <text class="bp-empty-desc">添加宝宝后即可查看成长曲线与记录</text>
-    <view class="bp-empty-btn">去添加宝宝</view>
+    <text class="bp-empty-title">{{lang === 'en' ? 'No baby yet' : '还没有宝宝'}}</text>
+    <text class="bp-empty-desc">{{lang === 'en' ? 'Add a baby to view growth curves and records' : '添加宝宝后即可查看成长曲线与记录'}}</text>
+    <view class="bp-empty-btn">{{lang === 'en' ? 'Add Baby' : '去添加宝宝'}}</view>
   </view>
 
   <!-- 三项测量卡片 -->
   <view class="measure-cards">
     <view class="measure-card">
-      <text class="measure-label">身高</text>
+      <text class="measure-label">{{lang === 'en' ? 'Height' : '身高'}}</text>
       <view class="measure-value"><text class="measure-num">{{latest.height}}</text><text class="measure-unit">cm</text></view>
     </view>
     <view class="measure-card">
-      <text class="measure-label">体重</text>
+      <text class="measure-label">{{lang === 'en' ? 'Weight' : '体重'}}</text>
       <view class="measure-value"><text class="measure-num">{{latest.weight}}</text><text class="measure-unit">kg</text></view>
     </view>
     <view class="measure-card">
-      <text class="measure-label">头围</text>
+      <text class="measure-label">{{lang === 'en' ? 'Head' : '头围'}}</text>
       <view class="measure-value"><text class="measure-num">{{latest.head}}</text><text class="measure-unit">cm</text></view>
     </view>
   </view>
@@ -70,28 +70,28 @@
   <!-- 测量记录列表（可编辑/删除） -->
   <view class="ml-card">
     <view class="ml-head">
-      <text class="ml-title">测量记录</text>
-      <text class="ml-count" wx:if="{{measureList.length}}">共 {{measureList.length}} 条</text>
+      <text class="ml-title">{{lang === 'en' ? 'Measurements' : '测量记录'}}</text>
+      <text class="ml-count" wx:if="{{measureList.length}}">{{lang === 'en' ? (measureList.length + ' in total') : ('共 ' + measureList.length + ' 条')}}</text>
     </view>
     <view class="ml-item" wx:for="{{measureList}}" wx:key="idx" data-idx="{{item.idx}}" bindtap="openMeasureEdit">
       <view class="ml-left">
         <text class="ml-date">{{item.date}}<text wx:if="{{item.time}}" class="ml-time">{{item.time}}</text></text>
         <view class="ml-vals">
-          <text wx:if="{{item.height}}" class="ml-val">身高 {{item.height}}cm</text>
-          <text wx:if="{{item.weight}}" class="ml-val">体重 {{item.weight}}kg</text>
-          <text wx:if="{{item.head}}" class="ml-val">头围 {{item.head}}cm</text>
+          <text wx:if="{{item.height}}" class="ml-val">{{lang === 'en' ? ('Height ' + item.height + 'cm') : ('身高 ' + item.height + 'cm')}}</text>
+          <text wx:if="{{item.weight}}" class="ml-val">{{lang === 'en' ? ('Weight ' + item.weight + 'kg') : ('体重 ' + item.weight + 'kg')}}</text>
+          <text wx:if="{{item.head}}" class="ml-val">{{lang === 'en' ? ('Head ' + item.head + 'cm') : ('头围 ' + item.head + 'cm')}}</text>
         </view>
       </view>
-      <view class="ml-edit">编辑 ›</view>
+      <view class="ml-edit">{{lang === 'en' ? 'Edit ›' : '编辑 ›'}}</view>
     </view>
-    <view class="ml-empty" wx:if="{{!measureList.length}}">还没有测量记录，点击上方「＋」添加</view>
+    <view class="ml-empty" wx:if="{{!measureList.length}}">{{lang === 'en' ? 'No measurements yet — tap + above to add' : '还没有测量记录，点击上方「＋」添加'}}</view>
   </view>
 
   <!-- 生长曲线 -->
   <view class="curve-card {{measureDialog.visible ? 'curve-under-sheet' : ''}}">
     <view class="curve-head">
-      <text class="curve-title">宝宝的生长曲线</text>
-      <text class="curve-who">WHO标准</text>
+      <text class="curve-title">{{lang === 'en' ? 'Baby’s Growth Curve' : '宝宝的生长曲线'}}</text>
+      <text class="curve-who">{{lang === 'en' ? 'WHO Standard' : 'WHO标准'}}</text>
     </view>
     <!-- 指标切换：身高 / 体重 / 头围 -->
     <view class="curve-tabs">
@@ -107,32 +107,32 @@
     <view class="curve-canvas">
       <ec-canvas hidden="{{babySwitchVisible}}" id="curveEc" canvas-id="curveEc" ec="{{curveEc}}" echarts="{{echarts}}" />
     </view>
-    <view class="curve-gesture-hint">双指缩放 · 单指拖动查看 · 点击数据点查看月龄与数值</view>
+    <view class="curve-gesture-hint">{{lang === 'en' ? 'Pinch to zoom · drag to pan · tap a point for age and value' : '双指缩放 · 单指拖动查看 · 点击数据点查看月龄与数值'}}</view>
     <view class="curve-note">{{curveNote}}</view>
   </view>
 
   <!-- 疫苗记录与提醒（完整表格内嵌，无需再点全部记录跳页） -->
   <view class="vaccine-card" id="vaccine-section">
     <view class="vaccine-head">
-      <text class="vaccine-title">疫苗记录与提醒</text>
+      <text class="vaccine-title">{{lang === 'en' ? 'Vaccines & Reminders' : '疫苗记录与提醒'}}</text>
     </view>
 
     <block wx:if="{{baby.birthday}}">
       <!-- 下次接种提醒 -->
       <view class="vc-next" wx:if="{{vaccineNext}}">
-        <view class="vc-next-label">下次接种提醒</view>
+        <view class="vc-next-label">{{lang === 'en' ? 'Next Vaccination' : '下次接种提醒'}}</view>
         <view class="vc-next-body">
           <view class="vc-next-info">
             <text class="vc-next-title">{{vaccineNext.title}}</text>
-            <text class="vc-next-date">应种 {{vaccineNext.dueDate}}</text>
+            <text class="vc-next-date">{{lang === 'en' ? ('Due ' + vaccineNext.dueDate) : ('应种 ' + vaccineNext.dueDate)}}</text>
           </view>
           <view class="vc-next-days {{vaccineNext.over ? 'over' : ''}}">{{vaccineNext.daysText}}</view>
         </view>
       </view>
       <view class="vc-next vc-next-done" wx:if="{{!vaccineNext}}">
-        <view class="vc-next-label">下次接种提醒</view>
+        <view class="vc-next-label">{{lang === 'en' ? 'Next Vaccination' : '下次接种提醒'}}</view>
         <view class="vc-next-body">
-          <text class="vc-next-title">当前计划疫苗已全部处理 🎉</text>
+          <text class="vc-next-title">{{lang === 'en' ? 'All planned vaccines are done 🎉' : '当前计划疫苗已全部处理 🎉'}}</text>
         </view>
       </view>
 
@@ -154,12 +154,12 @@
           wx:key="id"
           class="tl-item {{item.status === 'done' ? 'done' : ''}} {{index === vaccinePlan.length - 1 ? 'tl-last' : ''}}"
         >
-          <text class="tl-time" data-index="{{index}}" bindtap="onTapVaccineDue">应种 {{item.dueDate}}</text>
+          <text class="tl-time" data-index="{{index}}" bindtap="onTapVaccineDue">{{lang === 'en' ? ('Due ' + item.dueDate) : ('应种 ' + item.dueDate)}}</text>
           <view class="tl-card vax-card {{item.status === 'done' ? 'done' : ''}}">
             <view class="tl-card-head">
               <view class="tl-card-title">
-                <text class="tl-type {{item.type === '免费' ? 'free' : 'paid'}}">{{item.type}}</text>
-                <text class="tl-name">{{item.group}} {{item.dose}}</text>
+                <text class="tl-type {{item.type === '免费' ? 'free' : 'paid'}}">{{item.typeText}}</text>
+                <text class="tl-name">{{item.groupText}} {{item.doseText}}</text>
               </view>
               <view
                 class="tl-check {{item.status === 'done' ? 'checked' : ''}}"
@@ -169,13 +169,13 @@
                 <text wx:if="{{item.status === 'done'}}" class="tl-check-mark">✓</text>
               </view>
             </view>
-            <view class="tl-sub">{{item.note}}</view>
-            <view class="tl-tip">点击应种日期可修改 · 点选勾框标记已接种 · 长按移除</view>
+            <view class="tl-sub">{{item.noteText}}</view>
+            <view class="tl-tip">{{lang === 'en' ? 'Tap the due date to edit · tick the box to mark as done · long press to remove' : '点击应种日期可修改 · 点选勾框标记已接种 · 长按移除'}}</view>
           </view>
         </view>
       </scroll-view>
       <view class="vc-tip">
-        免费疫苗依据《国家免疫规划疫苗儿童免疫程序及说明（2021年版）》；自费疫苗为常用推荐程序，具体剂次、间隔以当地接种门诊及疫苗说明书为准。
+        {{lang === 'en' ? 'Free vaccines follow China’s National Immunization Program (2021). Paid vaccines follow common recommended schedules; exact doses and intervals depend on your local clinic and the vaccine leaflet.' : '免费疫苗依据《国家免疫规划疫苗儿童免疫程序及说明（2021年版）》；自费疫苗为常用推荐程序，具体剂次、间隔以当地接种门诊及疫苗说明书为准。'}}
       </view>
     </block>
 
@@ -183,8 +183,8 @@
     <block wx:else>
       <view class="vc-empty">
         <image class="vc-empty-icon" src="/images/icons/vaccine-empty.png" mode="aspectFit" />
-        <text class="vc-empty-title">还没有宝宝档案</text>
-        <text class="vc-empty-desc">添加宝宝后，将自动按出生日期生成免费+自费完整接种计划</text>
+        <text class="vc-empty-title">{{lang === 'en' ? 'No baby profile yet' : '还没有宝宝档案'}}</text>
+        <text class="vc-empty-desc">{{lang === 'en' ? 'Add a baby and a full free + paid schedule will be generated from the birthday' : '添加宝宝后，将自动按出生日期生成免费+自费完整接种计划'}}</text>
         
       </view>
     </block>
@@ -194,7 +194,7 @@
 
 
   <!-- 切换宝宝抽屉（与记录页一致） -->
-  <dialog visible="{{babySwitchVisible}}" title="选择宝宝" kicker="切换当前查看的宝宝" bind:close="closeBabySwitcher">
+  <dialog visible="{{babySwitchVisible}}" title="{{lang === 'en' ? 'Select Baby' : '选择宝宝'}}" kicker="{{lang === 'en' ? 'Switch the baby you are viewing' : '切换当前查看的宝宝'}}" bind:close="closeBabySwitcher">
     <view class="baby-switch-body">
       <view
         wx:for="{{babyList}}"
@@ -206,8 +206,8 @@
         <view class="baby-switch-meta">
           <view class="baby-switch-name-row">
             <text class="baby-switch-name">{{item.name}}</text>
-            <text class="baby-switch-tag" wx:if="{{item.isShared}}">共享</text>
-            <text class="baby-switch-tag" wx:elif="{{item.id === currentBabyId}}">当前</text>
+            <text class="baby-switch-tag" wx:if="{{item.isShared}}">{{lang === 'en' ? 'Shared' : '共享'}}</text>
+            <text class="baby-switch-tag" wx:elif="{{item.id === currentBabyId}}">{{lang === 'en' ? 'Current' : '当前'}}</text>
           </view>
           <text class="baby-switch-age">{{item.ageText}}</text>
         </view>

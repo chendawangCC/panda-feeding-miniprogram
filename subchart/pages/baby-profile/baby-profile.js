@@ -54,13 +54,39 @@ const WHO_STD = {
 };
 
 const CURVE_TABS = [
-  { key: 'height', label: '身高', unit: 'cm', color: '#e2a93a' },
-  { key: 'weight', label: '体重', unit: 'kg', color: '#a0812f' },
-  { key: 'head', label: '头围', unit: 'cm', color: '#b97b05' }
+  { key: 'height', label: '身高', labelEn: 'Height', unit: 'cm', color: '#e2a93a' },
+  { key: 'weight', label: '体重', labelEn: 'Weight', unit: 'kg', color: '#a0812f' },
+  { key: 'head', label: '头围', labelEn: 'Head', unit: 'cm', color: '#b97b05' }
 ];
 
+/* 疫苗名称英文（英文界面用国际通用缩写，中文仍为全称） */
+const VACCINE_EN = {
+  '乙肝疫苗': 'Hepatitis B', '卡介苗': 'BCG', '脊灰疫苗': 'Polio', '百白破疫苗': 'DTaP',
+  '白破疫苗': 'DT', '麻腮风疫苗': 'MMR', '乙脑减毒活疫苗': 'JE (live)', 'A群流脑疫苗': 'MenA',
+  'A+C群流脑疫苗': 'MenAC', '甲肝减毒活疫苗': 'HepA (live)', '13价肺炎球菌结合疫苗': 'PCV13',
+  '五价轮状病毒疫苗': 'RV5', '五联疫苗': 'Pentavalent', 'Hib疫苗': 'Hib',
+  'EV71手足口疫苗': 'EV71', '水痘疫苗': 'Varicella', '流感疫苗': 'Influenza'
+};
+/* 接种时间说明英文 */
+const VAX_NOTE_EN = {
+  '出生后尽早接种': 'As early as possible after birth',
+  '出生后24小时内': 'Within 24 hours of birth',
+  '1月龄': '1 month', '2月龄': '2 months', '3月龄': '3 months', '4月龄': '4 months',
+  '5月龄': '5 months', '6月龄': '6 months', '8月龄': '8 months', '9月龄': '9 months',
+  '12月龄': '12 months', '18月龄': '18 months',
+  '2月龄（可6周龄起）': '2 months (from 6 weeks)',
+  '间隔1个月': '1 month apart', '间隔4-10周': '4-10 weeks apart',
+  '12-15月龄加强': 'Booster at 12-15 months', '18月龄加强': 'Booster at 18 months',
+  '首次接种第2剂（间隔≥1月）': '2nd dose, at least 1 month apart',
+  '32周龄内完成3剂': 'Complete 3 doses by 32 weeks',
+  '6-12周龄首剂': 'First dose at 6-12 weeks',
+  '6月龄起 · 每年接种': 'From 6 months, annually',
+  '6月龄起': 'From 6 months',
+  '2岁': '2 years', '3岁': '3 years', '4岁': '4 years', '6岁': '6 years'
+};
+
 /* 月龄：X 月 Y 天 */
-function calcAge(birthday) {
+function calcAge(birthday, lang) {
   if (!birthday) return '';
   const parts = String(birthday).split('-').map(Number);
   if (parts.length !== 3) return '';
@@ -74,6 +100,10 @@ function calcAge(birthday) {
     const last = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
     days += last;
   }
+  if (lang === 'en') {
+    if (months <= 0) return days + (days > 1 ? ' days' : ' day');
+    return months + (months > 1 ? ' months ' : ' month ') + days + (days > 1 ? ' days' : ' day');
+  }
   return months + ' 月 ' + days + ' 天';
 }
 
@@ -81,12 +111,13 @@ Page({
 
   onShareAppMessage() {
     return {
-        imageUrl: '/images/share-cover.png', title: '熊宝喂养 · 我的宝贝档案', path: 'pages/baby-profile/baby-profile' };
+        imageUrl: '/images/share-cover.png', title: this._t('熊宝喂养 · 我的宝贝档案', 'Panda Feeding · My Baby Profile'), path: 'pages/baby-profile/baby-profile' };
   },
   onShareTimeline() {
-    return { title: '熊宝喂养 · 我的宝贝档案' };
+    return { title: this._t('熊宝喂养 · 我的宝贝档案', 'Panda Feeding · My Baby Profile') };
   },
   data: {
+    lang: 'zh',
     safeTop: (app.globalData && app.globalData.safeTop) || 88,
     baby: {},
     ageText: '',
@@ -117,7 +148,39 @@ Page({
     showMeasureDatePicker: false
   },
 
+  /* 是否英文界面 */
+  _en() {
+    return (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en';
+  },
+  _t(zh, en) { return this._en() ? en : zh; },
+
+  /* 当前语言下的曲线 tab / 疫苗筛选 */
+  curveTabsOf(en) {
+    return CURVE_TABS.map(t => ({ key: t.key, label: en ? t.labelEn : t.label, unit: t.unit, color: t.color }));
+  },
+  vaccineFiltersOf(en) {
+    return en
+      ? [{ key: 'all', label: 'All' }, { key: 'free', label: 'Free' }, { key: 'paid', label: 'Paid' }]
+      : [{ key: 'all', label: '全部' }, { key: 'free', label: '免费' }, { key: 'paid', label: '自费' }];
+  },
+  vaxGroup(v, en) { return en ? (VACCINE_EN[v.group] || v.short || v.group) : v.group; },
+  vaxDose(v, en) {
+    if (!en) return v.dose || '';
+    const n = String(v.dose || '').replace(/[^0-9]/g, '');
+    return n ? 'Dose ' + n : (v.dose || '');
+  },
+  vaxNote(v, en) {
+    if (!en) return v.note || '';
+    return VAX_NOTE_EN[v.note] || v.note || '';
+  },
+
   onShow() {
+    const en = (wx.getStorageSync('lang') || 'zh') === 'en';
+    this.setData({
+      lang: en ? 'en' : 'zh',
+      curveTabs: this.curveTabsOf(en),
+      vaccineFilters: this.vaccineFiltersOf(en)
+    });
     // 宝宝成长档案：需登录后使用（无宝宝时页面内显示去添加宝宝）
     if (!app.requireLogin()) {
       setTimeout(() => wx.navigateBack({ fail: () => {} }), 400);
@@ -185,27 +248,33 @@ Page({
     const measures = (g.measures || []).slice().sort((a, b) => (a.date < b.date ? -1 : 1));
     const latest = measures.length ? measures[measures.length - 1] : null;
     const prev = measures.length > 1 ? measures[measures.length - 2] : null;
+    const en = (wx.getStorageSync('lang') || this.data.lang || 'zh') === 'en';
     let deltaText = '';
     if (latest) {
       if (prev) {
         const d = latest.height - prev.height;
-        deltaText = '这一次，长高了 ' + (d >= 0 ? d.toFixed(1) : (-d).toFixed(1)) + ' cm';
+        deltaText = en
+          ? ('Grew ' + (d >= 0 ? d.toFixed(1) : (-d).toFixed(1)) + ' cm this time')
+          : ('这一次，长高了 ' + (d >= 0 ? d.toFixed(1) : (-d).toFixed(1)) + ' cm');
       } else {
-        deltaText = '这是宝宝的第一次测量';
+        deltaText = en ? "Baby's very first measurement" : '这是宝宝的第一次测量';
       }
     } else {
-      deltaText = '点击右上角「＋」记录第一次测量';
+      deltaText = en ? 'Tap + at the top right to record the first measurement' : '点击右上角「＋」记录第一次测量';
     }
     // 宝宝头像已删除，统一使用默认 logo
     const avatarSrc = '/images/brand-logo.png';
     const myOpenid = (app.globalData.user && app.globalData.user.openid) || '';
     const isShared = !!(baby.ownerOpenid && baby.ownerOpenid !== myOpenid);
     this.setData({
+      lang: en ? 'en' : 'zh',
+      curveTabs: this.curveTabsOf(en),
+      vaccineFilters: this.vaccineFiltersOf(en),
       baby,
       babyAvatarSrc: avatarSrc,
       hasBaby: !!(baby && baby.id && (baby.name || baby.birthday)),
       isShared,
-      ageText: calcAge(baby.birthday),
+      ageText: calcAge(baby.birthday, en ? 'en' : 'zh'),
       latest: latest ? { height: latest.height, weight: latest.weight, head: latest.head } : { height: 0, weight: 0, head: 0 },
       measureList: measures.slice().reverse().map((m, i) => ({ idx: measures.length - 1 - i, date: m.date, time: m.time || '', height: m.height, weight: m.weight, head: m.head })),
       deltaText,
@@ -245,6 +314,9 @@ Page({
 
   curveNoteText(gender, mode) {
     const tab = CURVE_TABS.find(t => t.key === mode) || CURVE_TABS[0];
+    if (this._en()) {
+      return 'WHO ' + (gender === '女宝宝' ? 'girls' : 'boys') + ' ' + String(tab.labelEn).toLowerCase() + ' reference · grey band is the normal range (±2SD)';
+    }
     return 'WHO ' + (gender === '女宝宝' ? '女童' : '男童') + tab.label + '参考曲线 · 灰色区间为正常范围（±2SD）';
   },
 
@@ -264,9 +336,11 @@ Page({
      双指缩放/拖动由 ECharts dataZoom(inside) 原生处理：最小缩回原始 1 倍（maxSpan=100），
      放大时横竖轴刻度/单位自动细化，曲线始终限制在横竖轴内不重叠；点击数据点十字线查看月龄与数值 */
   buildCurveOption() {
+    const en = this._en();
     const curve = this.data.curve || [];
     const mode = this.data.curveMode;
-    const tab = CURVE_TABS.find(t => t.key === mode) || CURVE_TABS[0];
+    const tabDef = CURVE_TABS.find(t => t.key === mode) || CURVE_TABS[0];
+    const tab = { key: tabDef.key, label: en ? tabDef.labelEn : tabDef.label, unit: tabDef.unit, color: tabDef.color };
     const gender = (this.data.baby.gender === '女宝宝') ? 'girl' : 'boy';
     const who = (WHO_STD[gender] || WHO_STD.boy)[mode] || WHO_STD.boy.height;
     let xMax = 24;
@@ -297,14 +371,14 @@ Page({
         formatter: (params) => {
           if (!params || !params.length) return '';
           const axis = params[0].axisValue;
-          const baby = params.find(p => p.seriesName && p.seriesName.indexOf('宝宝') === 0);
-          const lines = ['月龄：' + axis + '月'];
+          const baby = params.find(p => p.seriesName && (en ? p.seriesName.indexOf('Baby') === 0 : p.seriesName.indexOf('宝宝') === 0));
+          const lines = [en ? ('Age: ' + axis + ' mo') : ('月龄：' + axis + '月')];
           if (baby && baby.value !== null && baby.value !== undefined) {
             const v = Array.isArray(baby.value) ? baby.value[1] : baby.value;
-            lines.push(baby.seriesName + '：' + v + tab.unit);
+            lines.push(en ? (baby.seriesName + ': ' + v + tab.unit) : (baby.seriesName + '：' + v + tab.unit));
           }
           const pt = curve.find(p => p.month === Number(axis));
-          if (pt && pt.date) lines.push('测量日期：' + pt.date);
+          if (pt && pt.date) lines.push(en ? ('Measured on: ' + pt.date) : ('测量日期：' + pt.date));
           return lines.join('\n');
         }
       },
@@ -318,13 +392,13 @@ Page({
         type: 'value',
         min: 0,
         max: xMax,
-        name: '月龄',
+        name: en ? 'Age (mo)' : '月龄',
         nameLocation: 'middle',
         nameGap: 34,
         nameTextStyle: { color: '#8f896d', fontSize: 11 },
         axisLine: { lineStyle: { color: '#d8d0b8' } },
         axisTick: { lineStyle: { color: '#d8d0b8' } },
-        axisLabel: { color: '#8f896d', fontSize: 10, formatter: (v) => v + '月' },
+        axisLabel: { color: '#8f896d', fontSize: 10, formatter: (v) => (en ? v + 'mo' : v + '月') },
         splitLine: { show: false }
       },
       yAxis: {
@@ -347,7 +421,7 @@ Page({
           silent: true, tooltip: { show: false }
         },
         {
-          name: 'WHO中位数', type: 'line', data: xy(whoMed),
+          name: en ? 'WHO median' : 'WHO中位数', type: 'line', data: xy(whoMed),
           symbol: 'none', lineStyle: { color: '#c9c2a8', type: 'dashed', width: 1.5 }, silent: true, tooltip: { show: false }
         },
         // WHO +2SD 上限灰色虚线（不参与 stack，画在真实 +2SD 位置）
@@ -357,7 +431,7 @@ Page({
           silent: true, tooltip: { show: false }
         },
         {
-          name: '宝宝' + tab.label, type: 'line', data: pts,
+          name: (en ? 'Baby ' : '宝宝') + tab.label, type: 'line', data: pts,
           symbol: 'circle', symbolSize: 9, connectNulls: true, z: 6,
           lineStyle: { color: color, width: 3 },
           itemStyle: { color: color }
@@ -395,7 +469,14 @@ Page({
       if (v.status === 'done') state = 'done';
       else if (due < 0) state = 'past';
       else if (due === 0) state = 'today';
-      return Object.assign({}, v, { state, due });
+      const en = this._en();
+      return Object.assign({}, v, {
+        state, due,
+        groupText: this.vaxGroup(v, en),
+        doseText: this.vaxDose(v, en),
+        noteText: this.vaxNote(v, en),
+        typeText: en ? (v.type === '免费' ? 'Free' : 'Paid') : v.type
+      });
     }).sort((a, b) => (a.due - b.due) || (String(a.dueDate) < String(b.dueDate) ? -1 : 1));
   },
 
@@ -417,10 +498,11 @@ Page({
     const future = raw.filter(v => v.status === 'pending' && v.due >= 0);
     if (!future.length) return null;
     const nearest = future.reduce((a, b) => (a.due < b.due ? a : b));
+    const en = this._en();
     return {
-      title: nearest.group + ' ' + nearest.dose,
+      title: this.vaxGroup(nearest, en) + ' ' + this.vaxDose(nearest, en),
       dueDate: nearest.doneDate || nearest.dueDate,
-      daysText: nearest.due === 0 ? '今日应种' : ('还有 ' + nearest.due + ' 天'),
+      daysText: nearest.due === 0 ? (en ? 'Due today' : '今日应种') : (en ? ('In ' + nearest.due + ' days') : ('还有 ' + nearest.due + ' 天')),
       over: false
     };
   },
@@ -437,8 +519,8 @@ Page({
     if (!row) return;
     if (row.status === 'done') {
       wx.showModal({
-        title: '撤销接种',
-        content: '将「' + row.group + ' ' + row.dose + '」恢复为待接种？',
+        title: this._t('撤销接种', 'Undo Vaccination'),
+        content: this._t('将「' + row.groupText + ' ' + row.doseText + '」恢复为待接种？', 'Set "' + row.groupText + ' ' + row.doseText + '" back to pending?'),
         success: (r) => {
           if (!r.confirm) return;
           const v = (app.globalData.vaccinePlan || []).find(x => x.id === row.id);
@@ -468,8 +550,8 @@ Page({
     const row = this.data.vaccinePlan && this.data.vaccinePlan[idx];
     if (!row) return;
     wx.showModal({
-      title: '移除疫苗',
-      content: '从接种计划中移除「' + row.group + ' ' + row.dose + '」？（不接种）',
+      title: this._t('移除疫苗', 'Remove Vaccine'),
+      content: this._t('从接种计划中移除「' + row.groupText + ' ' + row.doseText + '」？（不接种）', 'Remove "' + row.groupText + ' ' + row.doseText + '" from the schedule? (not vaccinated)'),
       success: (r) => {
         if (!r.confirm) return;
         const list = app.globalData.vaccinePlan || [];
@@ -477,7 +559,7 @@ Page({
         if (i >= 0) list.splice(i, 1);
         app.persist();
         this.refresh();
-        wx.showToast({ title: '已移除', icon: 'none' });
+        wx.showToast({ title: this._t('已移除', 'Removed'), icon: 'none' });
       }
     });
   },
@@ -495,13 +577,13 @@ Page({
       v.dueDate = e.detail.value;
       app.persist();
       this.refresh();
-      wx.showToast({ title: '应种日期已更新', icon: 'none' });
+      wx.showToast({ title: this._t('应种日期已更新', 'Due date updated'), icon: 'none' });
     } else {
       v.status = 'done';
       v.doneDate = e.detail.value;
       app.persist();
       this.refresh();
-      wx.showToast({ title: '已标记接种', icon: 'none' });
+      wx.showToast({ title: this._t('已标记接种', 'Marked as vaccinated'), icon: 'none' });
     }
   },
 
@@ -555,9 +637,9 @@ Page({
       .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
       .map(b => ({
         id: b.id,
-        name: b.name || '未命名宝宝',
+        name: b.name || this._t('未命名宝宝', 'Unnamed baby'),
         birthday: b.birthday || '',
-        ageText: calcAge(b.birthday) || '待填写出生日期',
+        ageText: calcAge(b.birthday, this._en() ? 'en' : 'zh') || this._t('待填写出生日期', 'Birthday not set'),
         isShared: !!(b.ownerOpenid && b.ownerOpenid !== myOpenid)
       }));
     this.setData({
@@ -603,7 +685,7 @@ Page({
     this.closeBabySwitcher();
     this.refresh();
     const name = app.globalData.baby.name || '宝宝';
-    wx.showToast({ title: '已切换到「' + name + '」', icon: 'none' });
+    wx.showToast({ title: this._t('已切换到「' + name + '」', 'Switched to ' + name), icon: 'none' });
   },
 
   goAddBaby() {
@@ -614,7 +696,7 @@ Page({
   editBaby() {
     const id = app.globalData.currentBabyId;
     if (!id) {
-      wx.showToast({ title: '请先添加宝宝', icon: 'none' });
+      wx.showToast({ title: this._t('请先添加宝宝', 'Please add a baby first'), icon: 'none' });
       return;
     }
     wx.navigateTo({ url: '/pages/baby-edit/baby-edit?id=' + id });
@@ -634,7 +716,7 @@ Page({
   addMeasure() {
     const id = app.globalData.currentBabyId;
     if (!id) {
-      wx.showToast({ title: '请先添加宝宝', icon: 'none' });
+      wx.showToast({ title: this._t('请先添加宝宝', 'Please add a baby first'), icon: 'none' });
       return;
     }
     wx.navigateTo({ url: '/pages/measure-add/measure-add' });
