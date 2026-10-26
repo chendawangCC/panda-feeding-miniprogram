@@ -88,6 +88,8 @@ Page({
         cs.updateMemberPerms(fam._id, myOpenid, {}, newRole).then(r => {
           wx.hideLoading();
           this.setData({ members: r.members || [], 'family.members': r.members || [], myFamilyRole: newRole });
+          // 立即刷新家庭信息与权限缓存，首页问候语回到前台时同步显示新身份
+          cs.getMyFamily().then(f => { app.globalData.myFamily = f || null; }).catch(() => {});
           wx.showToast({ title: this._t('身份已更新为' + newRole, 'Role updated to ' + (this._roleMap()[newRole] || newRole)), icon: 'none' });
         }).catch(e => {
           wx.hideLoading();

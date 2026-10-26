@@ -147,6 +147,63 @@ Page({
     return rel ? (part + '，' + rel) : part;
   },
 
+  /* 当前用户在当前宝宝所属家庭里的身份；同一账号可能同时在自己的家庭和亲友家庭中，必须按宝宝 owner 匹配家庭 */
+  getFamilyRoleForBaby() {
+    const baby = app.globalData.baby || {};
+    const me = app.getUser() || {};
+    const myOpenid = me.openid || '';
+    const babyOwner = baby.ownerOpenid || '';
+    const babyFamilyId = baby.familyId || '';
+    if (!myOpenid || (!babyOwner && !babyFamilyId)) return '';
+
+    const candidates = [];
+    // 先放 app.globalData.myFamily（最近一次云端家庭信息），再放权限缓存，避免同一家庭旧缓存覆盖新身份
+    const currentFamily = app.globalData.myFamily;
+    if (currentFamily && currentFamily._id) candidates.push(currentFamily);
+    try {
+      const p = perm.getMyPerm();
+      if (p && p.myOpenid === myOpenid) candidates.push.apply(candidates, p.families || []);
+    } catch (e) {}
+
+    const seen = {};
+    for (let i = 0; i < candidates.length; i++) {
+      const fam = candidates[i];
+      if (!fam || !fam._id || seen[fam._id]) continue;
+      seen[fam._id] = true;
+      // 有 owner 时按 owner 匹配；老数据缺少 owner 时按宝宝 familyId 匹配
+      if (babyOwner) {
+        if (!fam.ownerOpenid || fam.ownerOpenid !== babyOwner) continue;
+      } else if (babyFamilyId && fam._id !== babyFamilyId) {
+        continue;
+      }
+      const member = (fam.members || []).find(x => x && x.openid === myOpenid);
+      const role = member && (member.familyRole || '').trim();
+      if (role) return role;
+    }
+    return '';
+  },
+
+  /* 问候称呼：家庭成员的 familyRole 优先；自己的宝宝/未加入家庭时回退到宝宝档案 relation */
+  getGreetingRole() {
+    const baby = app.globalData.baby || {};
+    const me = app.getUser() || {};
+    const myOpenid = me.openid || '';
+    const babyOwner = baby.ownerOpenid || '';
+    const familyRole = this.getFamilyRoleForBaby();
+    if (familyRole) return familyRole;
+    // 自己的宝宝，或老数据没有 owner 字段：沿用创建宝宝时设置的亲属关系
+    if (!babyOwner || !myOpenid || babyOwner === myOpenid) {
+      return (baby.relation || '').trim();
+    }
+    // 亲友的家庭角色尚未同步时，不显示宝宝创建者的“妈妈/爸爸”，避免误称
+    return '';
+  },
+
+  refreshGreeting() {
+    const g = this.timeGreeting(this.getGreetingRole());
+    if (this.data.greeting !== g) this.setData({ greeting: g });
+  },
+
   onShow() {
     const lang = wx.getStorageSync('lang') || 'zh';
     // 按语言动态设置工具卡片，保留喂养台和成长档案原中文
@@ -175,11 +232,10 @@ Page({
       app.globalData.records = [];
       app.globalData.measures = { heights: [], weights: [], headRounds: [] };
     }
-    // 问候语随当前时间变化（凌晨/早上/中午/下午/傍晚），称呼跟随宝宝亲友角色；未设置角色时不带称呼
-    const rel = (app.globalData.baby || {}).relation;
-    const g = this.timeGreeting(rel);
-    if (this.data.greeting !== g) {
-      this.setData({ greeting: g });
+    // 问候语随当前时间变化；称呼优先使用当前用户在当前宝宝所属家庭里的身份
+    this.refreshGreeting();
+    if (typeof app.onPullDone === 'function') {
+      app.onPullDone(() => this.refreshGreeting());
     }
     this.buildNextReminder();
     this.buildReminders();
@@ -214,6 +270,7 @@ Page({
           });
           this.buildNextReminder();
           this.buildReminders();
+          this.refreshGreeting();
           this._syncing = false;
         }).catch(e => {
           console.log('[index periodicSync] 拉取失败', e);
