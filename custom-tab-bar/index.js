@@ -9,14 +9,24 @@ Component({
   },
   lifetimes: {
     attached() {
-      const lang = wx.getStorageSync('lang') || 'zh';
-      this.setData({
-        homeLabel: lang === 'en' ? 'Home' : '首页',
-        meLabel: lang === 'en' ? 'Me' : '我的'
-      });
+      this.refreshLang();
+    }
+  },
+  pageLifetimes: {
+    show() {
+      this.refreshLang();
     }
   },
   methods: {
+    /* 语言切换后 tabBar 不会自动重建，页面每次显示时重新读取语言 */
+    refreshLang() {
+      const lang = wx.getStorageSync('lang') || 'zh';
+      const homeLabel = lang === 'en' ? 'Home' : '首页';
+      const meLabel = lang === 'en' ? 'Me' : '我的';
+      if (this.data.homeLabel !== homeLabel || this.data.meLabel !== meLabel) {
+        this.setData({ homeLabel, meLabel });
+      }
+    },
     switchTab(e) {
       const path = e.currentTarget.dataset.path;
       wx.switchTab({ url: path });

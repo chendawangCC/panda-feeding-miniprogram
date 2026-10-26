@@ -224,7 +224,9 @@ Page({
     this.guideFirst();
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       // 首页没有自己的遮罩层；显式复位，避免从快速记录/记录页切回时沿用 hidden 状态
-      this.getTabBar().setData({ selected: 0, hidden: false });
+      const tab = this.getTabBar();
+      if (typeof tab.refreshLang === 'function') tab.refreshLang();
+      tab.setData({ selected: 0, hidden: false });
     }
     // 如果没有宝宝，清空喂养记录（避免显示旧记录）
     const user = app.getUser();

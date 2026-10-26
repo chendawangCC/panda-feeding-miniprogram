@@ -706,8 +706,10 @@ Page({
       suppFreqList: suppFreqList, suppFreqLabelMap: suppFreqLabelMap });
 
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      // 我的=记录页：第三项高亮
-      this.getTabBar().setData({ selected: 2, hidden: (this._ovl || 0) > 0 || !!this.data.showQuick });
+      // 我的=记录页：第三项高亮；同时刷新 tabBar 文案，避免语言切换后仍显示旧语言
+      const tab = this.getTabBar();
+      if (typeof tab.refreshLang === 'function') tab.refreshLang();
+      tab.setData({ selected: 2, hidden: (this._ovl || 0) > 0 || !!this.data.showQuick });
     }
     // 引导「去登录」：进入记录页后自动弹出登录抽屉
     if (app.globalData.pendingLogin) {
